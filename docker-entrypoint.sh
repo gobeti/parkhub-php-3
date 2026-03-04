@@ -21,7 +21,7 @@ mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
 # Run migrations
-php artisan migrate --force 2>/dev/null || true
+php artisan migrate --force 
 
 # Prune expired Sanctum tokens (7 day expiry = 168 hours)
 php artisan sanctum:prune-expired --hours=168 2>/dev/null || true
