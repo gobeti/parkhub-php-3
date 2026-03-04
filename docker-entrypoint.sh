@@ -1,33 +1,39 @@
 #!/bin/bash
 set -e
 
-# Generate app key if not provided via environment and not already in .env
-if [ -z "$APP_KEY" ]; then
-    if [ ! -f .env ]; then
-        cp .env.example .env
-    fi
-    php artisan key:generate --force
-    echo "App key generated."
-else
-    echo "Using APP_KEY from environment."
-    # Ensure .env exists so artisan commands work
-    if [ ! -f .env ]; then
-        cp .env.example .env
-    fi
-fi
+# -------------------------------
+# Debug: show DB environment
+# -------------------------------
+echo "DB_CONNECTION=$DB_CONNECTION"
+echo "DB_HOST=$DB_HOST"
+echo "DB_DATABASE=$DB_DATABASE"
+echo "DB_USERNAME=$DB_USERNAME"
 
+# -------------------------------
 # Ensure storage directories exist
+# -------------------------------
 mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
+# -------------------------------
+# Force Laravel to use MySQL in production
+# -------------------------------
+export DB_CONNECTION=mysql
+
+# -------------------------------
 # Run migrations
-php artisan migrate --force 
+# -------------------------------
+echo "Running migrations..."
+php artisan migrate --force
 
+# -------------------------------
 # Prune expired Sanctum tokens (7 day expiry = 168 hours)
-php artisan sanctum:prune-expired --hours=168 2>/dev/null || true
+# -------------------------------
+php artisan sanctum:prune-expired --hours=168 || true
 
+# -------------------------------
 # Create default admin if none exists
-# Credentials configurable via PARKHUB_ADMIN_EMAIL and PARKHUB_ADMIN_PASSWORD env vars
+# -------------------------------
 ADMIN_EMAIL="${PARKHUB_ADMIN_EMAIL:-admin@parkhub.local}"
 ADMIN_PASSWORD="${PARKHUB_ADMIN_PASSWORD:-admin}"
 
@@ -48,17 +54,24 @@ if (\App\Models\User::where('role', 'admin')->orWhere('role', 'superadmin')->cou
     echo 'Default admin created: ' . \$email;
 } else {
     echo 'Admin already exists';
-}" 2>/dev/null || true
+}" 
 
-# Demo mode: seed with realistic data on every fresh start
+# -------------------------------
+# Demo mode: seed with realistic data
+# -------------------------------
 if [ "${DEMO_MODE}" = "true" ]; then
     echo "DEMO_MODE=true — running ProductionSimulationSeeder..."
-    php artisan db:seed --class=ProductionSimulationSeeder --force 2>/dev/null || true
+    php artisan db:seed --class=ProductionSimulationSeeder --force || true
     echo "Demo data seeded."
 fi
 
+# -------------------------------
 # Cache config for production
-php artisan config:cache 2>/dev/null || true
-php artisan route:cache 2>/dev/null || true
+# -------------------------------
+php artisan config:cache
+php artisan route:cache
 
+# -------------------------------
+# Start Apache
+# -------------------------------
 exec "$@"
