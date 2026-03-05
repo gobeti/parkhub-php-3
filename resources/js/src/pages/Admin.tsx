@@ -63,8 +63,7 @@ function AdminOverview() {
     setResetting(true);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const base = (import.meta.env.VITE_API_URL as string) || '';
-      const res = await fetch(`${base}/api/v1/admin/reset`, {
+      const res = await fetch(`/api/v1/admin/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ confirm: 'RESET' }),
@@ -187,7 +186,7 @@ function AdminLots() {
     setDeletingLotId(lotId);
     try {
       const token = window.__parkhub_token || localStorage.getItem('parkhub_token');
-      const res = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/admin/lots/` + lotId, {
+      const res = await fetch(`/api/v1/admin/lots/` + lotId, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token },
       });
@@ -221,14 +220,14 @@ function AdminLots() {
                   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                   if (token) headers['Authorization'] = `Bearer ${token}`;
                   const totalSlots = layout.rows.reduce((sum, r) => sum + r.slots.length, 0);
-                  const createRes = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/lots`, {
+                  const createRes = await fetch(`/api/v1/lots`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({ name, address: name, total_slots: totalSlots }),
                   });
                   const createData = await createRes.json();
                   if (createData.success && createData.data?.id && layout.rows.length > 0) {
-                    await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/lots/${createData.data.id}/layout`, {
+                    await fetch(`/api/v1/lots/${createData.data.id}/layout`, {
                       method: 'PUT',
                       headers,
                       body: JSON.stringify(layout),
@@ -262,7 +261,7 @@ function AdminLots() {
                       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                       if (token) headers['Authorization'] = `Bearer ${token}`;
                       if (layout.rows.length > 0) {
-                        await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/lots/${editingLotId}/layout`, {
+                        await fetch(`/api/v1/lots/${editingLotId}/layout`, {
                           method: 'PUT',
                           headers,
                           body: JSON.stringify(layout),
@@ -311,7 +310,7 @@ function AdminUsers() {
     setSaving(true);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/users/${userId}`, {
+      const res = await fetch(`/api/v1/admin/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editForm),
@@ -329,7 +328,7 @@ function AdminUsers() {
     setDeletingId(userId);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/users/${userId}`, {
+      const res = await fetch(`/api/v1/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -442,7 +441,7 @@ function AdminBookings() {
     setCancellingId(bookingId);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/bookings/${bookingId}/cancel`, {
+      const res = await fetch(`/api/v1/admin/bookings/${bookingId}/cancel`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -457,7 +456,7 @@ function AdminBookings() {
     setExporting(true);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/bookings/export`, {
+      const res = await fetch(`/api/v1/admin/bookings/export`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -561,7 +560,7 @@ function AdminBookings() {
   );
 }
 
-export 
+export
 function AdminSystem() {
   const { t } = useTranslation();
   const [version, setVersion] = useState('');
@@ -582,7 +581,7 @@ function AdminSystem() {
   const [updateMessage, setUpdateMessage] = useState('');
 
   useEffect(() => {
-    fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/system/version`)
+    fetch(`/api/v1/system/version`)
       .then(r => r.json())
       .then(d => {
         setVersion(d.version || '');
@@ -598,7 +597,7 @@ function AdminSystem() {
     setError('');
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/admin/updates/check', {
+      const res = await fetch('/api/v1/admin/updates/check', {
         headers: { Authorization: 'Bearer ' + token },
       });
       const data = await res.json();
@@ -633,17 +632,15 @@ function AdminSystem() {
 
         if (data.step === 'restarting' || data.step === 'complete') {
           es.close();
-          // Poll for server to come back
           const poll = setInterval(async () => {
             try {
-              const res = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/health`);
+              const res = await fetch(`/api/v1/health`);
               if (res.ok) {
                 clearInterval(poll);
                 window.location.href = '/login';
               }
             } catch { /* still restarting */ }
           }, 2000);
-          // Timeout after 5 minutes
           setTimeout(() => clearInterval(poll), 300000);
         }
 
@@ -657,12 +654,11 @@ function AdminSystem() {
 
     es.onerror = () => {
       es.close();
-      // Server might have restarted - poll
       setUpdateMessage('Server restarting...');
       setUpdateProgress(95);
       const poll = setInterval(async () => {
         try {
-          const res = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/health`);
+          const res = await fetch(`/api/v1/health`);
           if (res.ok) {
             clearInterval(poll);
             window.location.href = '/login';
@@ -729,7 +725,7 @@ function AdminSystem() {
           <a href="https://github.com/nash87/parkhub" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
             {t('system.viewOnGithub', 'View on GitHub')}
           </a>
-          <a href="https://github.com/nash87/parkhub/issues/new" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+          <a href="https://github.com/nash87/issues/new" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
             {t('system.reportIssue', 'Report issue')}
           </a>
         </div>
@@ -779,7 +775,6 @@ function AdminSystem() {
         </div>
       )}
 
-      {/* Update progress overlay */}
       {applying && (
         <div className="card p-6 border-2 border-primary-500/30 bg-primary-50 dark:bg-primary-950/20">
           <div className="flex items-center gap-3 mb-4">
