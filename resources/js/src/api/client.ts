@@ -408,6 +408,7 @@ class ApiClient {
   async pushUnsubscribe(): Promise<ApiResponse<void>> {
     return this.request<void>('/api/v1/push/unsubscribe', { method: 'DELETE' });
   }
+
   // Health
   async health() {
     return this.request<{ status: string }>('/health');
@@ -557,6 +558,7 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  password_confirmation?: string;
   name: string;
 }
 
@@ -705,6 +707,7 @@ export interface AbsencePattern {
   absence_type: string;
   weekdays: number[];
 }
+
 // Admin types
 export interface AdminStats {
   total_users: number;
