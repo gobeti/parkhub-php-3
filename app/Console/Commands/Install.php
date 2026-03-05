@@ -19,24 +19,35 @@ class Install extends Command
             ['key' => 'installed'],
             ['value' => '1', 'created_at' => now(), 'updated_at' => now()]
         );
+        $this->info('✓ Settings: app marked as installed');
 
         $email    = env('PARKHUB_ADMIN_EMAIL', 'admin@parkhub.local');
         $password = env('PARKHUB_ADMIN_PASSWORD', 'admin');
 
-        DB::table('users')->updateOrInsert(
-            ['email' => $email],
-            [
+        $exists = DB::table('users')->where('email', $email)->first();
+
+        if (!$exists) {
+            DB::table('users')->insert([
+                'id'                => 1,
                 'username'          => 'admin',
                 'name'              => 'Super Admin',
+                'email'             => $email,
                 'password'          => Hash::make($password),
                 'role'              => 'admin',
                 'email_verified_at' => now(),
                 'created_at'        => now(),
                 'updated_at'        => now(),
-            ]
-        );
+            ]);
+            $this->info('✓ Admin user created: ' . $email);
+        } else {
+            DB::table('users')->where('email', $email)->update([
+                'password'   => Hash::make($password),
+                'role'       => 'admin',
+                'updated_at' => now(),
+            ]);
+            $this->info('✓ Admin user already exists, password updated: ' . $email);
+        }
 
-        $this->info('✓ Admin user created: ' . $email);
         $this->info('ParkHub installation complete!');
 
         return Command::SUCCESS;
