@@ -15,12 +15,15 @@ class Install extends Command
     {
         $this->info('Installing ParkHub...');
 
+        // Mark app as installed — must use key 'setup_completed' with value 'true'
+        // (SetupController::status() checks: Setting::get("setup_completed", "false") === "true")
         DB::table('settings')->updateOrInsert(
-            ['key' => 'installed'],
-            ['value' => '1', 'created_at' => now(), 'updated_at' => now()]
+            ['key' => 'setup_completed'],
+            ['value' => 'true', 'created_at' => now(), 'updated_at' => now()]
         );
-        $this->info('✓ Settings: app marked as installed');
+        $this->info('✓ Settings: setup_completed = true');
 
+        // Create admin user
         $email    = env('PARKHUB_ADMIN_EMAIL', 'admin@parkhub.local');
         $password = env('PARKHUB_ADMIN_PASSWORD', 'admin');
 
@@ -28,15 +31,15 @@ class Install extends Command
 
         if (!$exists) {
             DB::table('users')->insert([
-                'id'                => 1,
-                'username'          => 'admin',
-                'name'              => 'Super Admin',
-                'email'             => $email,
-                'password'          => Hash::make($password),
-                'role'              => 'admin',
-                'email_verified_at' => now(),
-                'created_at'        => now(),
-                'updated_at'        => now(),
+                'id'                 => 1,
+                'username'           => 'admin',
+                'name'               => 'Super Admin',
+                'email'              => $email,
+                'password'           => Hash::make($password),
+                'role'               => 'admin',
+                'email_verified_at'  => now(),
+                'created_at'         => now(),
+                'updated_at'         => now(),
             ]);
             $this->info('✓ Admin user created: ' . $email);
         } else {
