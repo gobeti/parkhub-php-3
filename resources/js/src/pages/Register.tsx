@@ -55,7 +55,7 @@ export function RegisterPage() {
     if (formData.password !== formData.confirmPassword) { toast.error(t('register.passwordMismatch')); return; }
     if (formData.password.length < 8) { toast.error(t('register.passwordTooShort')); return; }
     setLoading(true);
-    const success = await register({ username: formData.username, email: formData.email, password: formData.password, name: formData.name });
+    const success = await register({ username: formData.username, email: formData.email, password: formData.password, password_confirmation: formData.password, name: formData.name } as any);
     if (success) { toast.success(t('register.welcomeMessage')); } else { toast.error(t('register.failed')); }
     setLoading(false);
   }
