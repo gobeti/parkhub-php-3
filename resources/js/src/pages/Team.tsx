@@ -27,7 +27,7 @@ export function TeamPage() {
   function loadData() {
     setLoading(true);
     api.getTeamToday().then(res => {
-      if (res.success && res.data) setMembers(res.data);
+      if (res.success && res.data) setMembers(Array.isArray(res.data) ? res.data : []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }
@@ -43,6 +43,7 @@ export function TeamPage() {
     homeoffice: filtered.filter(m => m.status === 'homeoffice'),
     vacation: filtered.filter(m => m.status === 'vacation'),
     sick: filtered.filter(m => m.status === 'sick'),
+    business_trip: filtered.filter(m => m.status === 'business_trip'),
     not_scheduled: filtered.filter(m => m.status === 'not_scheduled'),
   };
 
