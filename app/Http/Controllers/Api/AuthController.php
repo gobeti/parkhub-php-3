@@ -27,11 +27,13 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            AuditLog::create([
-                'action' => 'login_failed',
-                'details' => ['username' => $request->username],
-                'ip_address' => $request->ip(),
-            ]);
+            try {
+                AuditLog::create([
+                    'action' => 'login_failed',
+                    'details' => ['username' => $request->username],
+                    'ip_address' => $request->ip(),
+                ]);
+            } catch (\Exception $e) {}
             return response()->json(['error' => 'INVALID_CREDENTIALS', 'message' => 'Invalid username or password'], 401);
         }
 
@@ -42,12 +44,14 @@ class AuthController extends Controller
         $user->update(['last_login' => now()]);
         $token = $user->createToken('auth-token');
 
-        AuditLog::create([
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'action' => 'login',
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'action' => 'login',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Exception $e) {}
 
         return response()->json([
             'user' => $this->userResponse($user),
@@ -80,21 +84,20 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token');
 
-        AuditLog::create([
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'action' => 'register',
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'action' => 'register',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Exception $e) {}
 
-        // Send welcome email — wrapped in try/catch so missing mail config never crashes registration
         try {
             if ($user->email) {
                 Mail::to($user->email)->queue(new WelcomeEmail($user));
             }
-        } catch (\Exception $e) {
-            // Mail not configured — continue without sending
-        }
+        } catch (\Exception $e) {}
 
         return response()->json([
             'user' => $this->userResponse($user),
@@ -154,12 +157,14 @@ class AuthController extends Controller
             return response()->json(['error' => 'INVALID_PASSWORD', 'message' => 'Password confirmation failed'], 403);
         }
 
-        AuditLog::create([
-            'user_id'    => $user->id,
-            'username'   => $user->username,
-            'action'     => 'account_deleted',
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id'    => $user->id,
+                'username'   => $user->username,
+                'action'     => 'account_deleted',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Exception $e) {}
 
         $user->tokens()->delete();
         $user->delete();
@@ -189,11 +194,13 @@ class AuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        AuditLog::create([
-            'action'     => 'forgot_password',
-            'details'    => ['email_hash' => md5($request->email)],
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            AuditLog::create([
+                'action'     => 'forgot_password',
+                'details'    => ['email_hash' => md5($request->email)],
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Exception $e) {}
 
         $user = User::where('email', $request->email)->first();
 
@@ -210,15 +217,12 @@ class AuthController extends Controller
 
             $appUrl = config('app.url', 'http://localhost');
 
-            // Queue the email — wrapped in try/catch so missing mail config never crashes this endpoint
             try {
                 if ($user->email) {
                     Mail::to($user->email)
                         ->queue(new PasswordResetEmail($user->name, $token, $appUrl));
                 }
-            } catch (\Exception $e) {
-                // Mail not configured — continue without sending
-            }
+            } catch (\Exception $e) {}
         }
 
         return response()->json(['message' => 'If an account with that email exists, a reset link has been sent.']);
@@ -261,12 +265,14 @@ class AuthController extends Controller
 
         DB::table('password_reset_tokens')->where('email', $matched->email)->delete();
 
-        AuditLog::create([
-            'user_id'    => $user->id,
-            'username'   => $user->username,
-            'action'     => 'password_reset',
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id'    => $user->id,
+                'username'   => $user->username,
+                'action'     => 'password_reset',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Exception $e) {}
 
         return response()->json(['message' => 'Passwort erfolgreich zurückgesetzt. Sie können sich nun anmelden.']);
     }
@@ -284,12 +290,14 @@ class AuthController extends Controller
         $user->update(['password' => Hash::make($request->new_password)]);
         $user->tokens()->delete();
         $token = $user->createToken('auth-token');
-        AuditLog::create([
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'action' => 'password_changed',
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'action' => 'password_changed',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Exception $e) {}
         return response()->json([
             'message' => 'Password changed successfully',
             'tokens' => [
