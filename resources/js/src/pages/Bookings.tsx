@@ -22,6 +22,7 @@ function BookingCard({ booking, onCancel, cancelling, vehiclePhoto, t, dateFnsLo
 
   const statusConfig: Record<string, { label: string; class: string; icon: ComponentType<{ weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone"; className?: string }> }> = {
     active: { label: t('bookings.statusActive'), class: 'badge-success', icon: Clock },
+    confirmed: { label: t('bookings.statusConfirmed', 'Bestätigt'), class: 'badge-info', icon: CheckCircle },
     completed: { label: t('bookings.statusCompleted'), class: 'badge-gray', icon: CheckCircle },
     cancelled: { label: t('bookings.statusCancelled'), class: 'badge-error', icon: XCircle },
   };
