@@ -87,9 +87,13 @@ class AuthController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        // Send welcome email (queued — non-blocking)
-        if ($user->email) {
-            Mail::to($user->email)->queue(new WelcomeEmail($user));
+        // Send welcome email — wrapped in try/catch so missing mail config never crashes registration
+        try {
+            if ($user->email) {
+                Mail::to($user->email)->queue(new WelcomeEmail($user));
+            }
+        } catch (\Exception $e) {
+            // Mail not configured — continue without sending
         }
 
         return response()->json([
@@ -131,14 +135,12 @@ class AuthController extends Controller
             'email'      => 'sometimes|email|max:255|unique:users,email,' . $user->id,
             'phone'      => 'sometimes|nullable|string|max:50',
             'department' => 'sometimes|nullable|string|max:255',
-            // Password changes should go through /users/me/password (requires current_password)
         ]);
 
         $data = $request->only(['name', 'email', 'phone', 'department']);
         $user->update($data);
         return response()->json($this->userResponse($user->fresh()));
     }
-
 
     public function deleteAccount(Request $request)
     {
@@ -193,11 +195,9 @@ class AuthController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        // Look up user — use generic response regardless to prevent user enumeration
         $user = User::where('email', $request->email)->first();
 
         if ($user) {
-            // Delete any existing token for this email, then insert a fresh one
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
 
             $token = Str::random(64);
@@ -210,10 +210,14 @@ class AuthController extends Controller
 
             $appUrl = config('app.url', 'http://localhost');
 
-            // Queue the email — non-blocking, fails silently if mail not configured
-            if ($user->email) {
-                Mail::to($user->email)
-                    ->queue(new PasswordResetEmail($user->name, $token, $appUrl));
+            // Queue the email — wrapped in try/catch so missing mail config never crashes this endpoint
+            try {
+                if ($user->email) {
+                    Mail::to($user->email)
+                        ->queue(new PasswordResetEmail($user->name, $token, $appUrl));
+                }
+            } catch (\Exception $e) {
+                // Mail not configured — continue without sending
             }
         }
 
@@ -228,9 +232,8 @@ class AuthController extends Controller
             'password_confirmation' => 'required|same:password',
         ]);
 
-        // Find a matching token in the password_reset_tokens table
         $record = DB::table('password_reset_tokens')
-            ->where('created_at', '>', now()->subMinutes(60)) // 60-minute expiry
+            ->where('created_at', '>', now()->subMinutes(60))
             ->get();
 
         $matched = null;
@@ -254,7 +257,7 @@ class AuthController extends Controller
         }
 
         $user->update(['password' => Hash::make($request->password)]);
-        $user->tokens()->delete(); // Invalidate all existing sessions
+        $user->tokens()->delete();
 
         DB::table('password_reset_tokens')->where('email', $matched->email)->delete();
 
