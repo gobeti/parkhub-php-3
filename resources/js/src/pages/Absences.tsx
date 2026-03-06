@@ -57,7 +57,7 @@ export function AbsencesPage() {
       ]);
       if (absRes.success && absRes.data) setEntries(absRes.data);
       if (teamRes.success && teamRes.data) setTeamEntries(teamRes.data);
-      if (patRes.success && patRes.data) setPatterns(patRes.data);
+      if (patRes.success && patRes.data) { const patData = Array.isArray(patRes.data) ? patRes.data : ((patRes.data as any).pattern ?? []); setPatterns(patData); }
     } catch { /* ignore */ }
     setLoading(false);
   }, []);
