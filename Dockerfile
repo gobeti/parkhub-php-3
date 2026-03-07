@@ -33,10 +33,10 @@ RUN apt-get update && apt-get install -y \
     libzip-dev unzip sqlite3 libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql pdo_sqlite gd zip bcmath \
-    && a2enmod rewrite headers \
-    && a2dismod mpm_event mpm_worker || true \
-    && a2enmod mpm_prefork \
     && rm -rf /var/lib/apt/lists/*
+
+# Fix Apache MPM conflict: disable event/worker, enable prefork
+RUN a2dismod mpm_event mpm_worker 2>/dev/null; a2enmod mpm_prefork rewrite headers
 
 # Security hardening
 RUN echo "expose_php = Off" >> /usr/local/etc/php/conf.d/security.ini \
