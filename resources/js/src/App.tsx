@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -111,11 +111,18 @@ function ThemeInitializer({ children }: { children: React.ReactNode }) {
 }
 
 function LoginRedirectGuard() {
-  const { setupComplete } = useSetupStatus();
-  // If setup not complete, redirect to welcome/onboarding instead of showing login
-  if (setupComplete === false) {
-    return <Navigate to="/welcome" replace />;
-  }
+  const [hasAdmin, setHasAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/setup/status')
+      .then(r => r.json())
+      .then(d => setHasAdmin(!!d?.data?.has_admin))
+      .catch(() => setHasAdmin(true));
+  }, []);
+
+  if (hasAdmin === null) return <LoadingScreen />;
+  // Only redirect to /welcome if there is genuinely no admin yet
+  if (!hasAdmin) return <Navigate to="/welcome" replace />;
   return <LoginPage />;
 }
 
