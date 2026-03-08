@@ -124,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/email-settings', [AdminController::class, 'getEmailSettings']);
         Route::put('/email-settings', [AdminController::class, 'updateEmailSettings']);
         Route::post('/users/export-csv', [AdminController::class, 'exportUsersCsv']);
+        Route::get('/credits', [AdminController::class, 'creditUsage']);
     });
 
     // User
