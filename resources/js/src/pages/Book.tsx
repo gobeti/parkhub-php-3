@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Car, Clock, CheckCircle, SpinnerGap, MapPin, CalendarBlank, Repeat, Heart, Star, Sun, Moon, FloppyDisk,
+  Car, Clock, CheckCircle, SpinnerGap, MapPin, CalendarBlank, Repeat, Heart, Star, Sun, Moon, FloppyDisk, Warning,
 } from '@phosphor-icons/react';
 import { api, ParkingLot, ParkingLotDetailed, Vehicle, SlotConfig } from '../api/client';
+import { useAuth } from '../context/auth-hook';
 import { ParkingLotGrid } from '../components/ParkingLotGrid';
 import { LicensePlateInput } from '../components/LicensePlateInput';
 import { useTranslation } from 'react-i18next';
@@ -99,6 +100,10 @@ export function BookPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const preselectedLot = searchParams.get('lot');
+  const { user } = useAuth();
+
+  const [creditLimit, setCreditLimit] = useState<number>(0);
+  const [creditUsed, setCreditUsed] = useState<number>(0);
 
   const [lots, setLots] = useState<ParkingLot[]>([]);
   const [selectedLot, setSelectedLot] = useState<string>(preselectedLot || '');
@@ -142,11 +147,16 @@ export function BookPage() {
 
   const loadInitialData = useCallback(async () => {
     try {
-      const [lotsRes, vehiclesRes, privacyRes] = await Promise.all([
+      const [lotsRes, vehiclesRes, privacyRes, meRes] = await Promise.all([
         api.getLots(),
         api.getVehicles(),
         fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/settings/privacy`).then(r => r.json()).catch(() => null),
+        api.getCurrentUser(),
       ]);
+      if (meRes.success && meRes.data) {
+        setCreditLimit(meRes.data.monthly_credit_limit ?? 0);
+        setCreditUsed(meRes.data.monthly_credits_used ?? 0);
+      }
       if (privacyRes?.data?.license_plate_entry_mode !== undefined) setLicensePlateEntryMode(Number(privacyRes.data.license_plate_entry_mode));
       if (lotsRes.success && lotsRes.data) { setLots(lotsRes.data); if (preselectedLot) setSelectedLot(preselectedLot); }
       if (vehiclesRes.success && vehiclesRes.data) { setVehicles(vehiclesRes.data); const def = vehiclesRes.data.find(v => v.is_default); if (def) setSelectedVehicle(def.id); }
@@ -224,6 +234,22 @@ export function BookPage() {
 
   const selectedLotData = lots.find(l => l.id === selectedLot);
   const dayNames = (t('dayNamesShort', { returnObjects: true }) as string[]);
+
+  // Compute estimated hours for this booking
+  const estimatedBookingHours = (() => {
+    if (bookingType === 'einmalig') {
+      const timeMap = { fullDay: ['08:00', '18:00'], morning: ['08:00', '12:00'], afternoon: ['12:00', '18:00'], custom: [customStartTime, customEndTime] };
+      const [s, e] = timeMap[timeOption];
+      const diff = (new Date(`2000-01-01T${e}:00`).getTime() - new Date(`2000-01-01T${s}:00`).getTime()) / 3600000;
+      return Math.ceil(diff);
+    }
+    return null; // multi-day / recurring — don't show credit warning
+  })();
+
+  const creditRemaining = creditLimit > 0 ? Math.max(0, creditLimit - creditUsed) : null;
+  const creditAfterBooking = (creditRemaining !== null && estimatedBookingHours !== null) ? creditRemaining - estimatedBookingHours : null;
+  const creditWarning = creditAfterBooking !== null && creditAfterBooking < 0;
+  const creditLow = creditAfterBooking !== null && creditAfterBooking >= 0 && creditAfterBooking <= 5;
 
   if (loading) return <div className="flex items-center justify-center h-64"><SpinnerGap weight="bold" className="w-8 h-8 text-primary-600 animate-spin" /></div>;
 
@@ -496,10 +522,28 @@ export function BookPage() {
                 <dd className="font-medium font-mono">{selectedVehicle ? vehicles.find(v => v.id === selectedVehicle)?.plate : customPlate || '—'}</dd>
               </div>
             </dl>
+            {/* Monthly credit info / warning */}
+            {creditRemaining !== null && estimatedBookingHours !== null && (
+              <div className={`mb-4 p-3 rounded-xl flex items-start gap-3 text-sm ${
+                creditWarning
+                  ? 'bg-red-500/20 border border-red-400/50'
+                  : creditLow
+                  ? 'bg-amber-500/20 border border-amber-400/50'
+                  : 'bg-white/10 border border-white/20'
+              }`}>
+                <Warning weight="fill" className={`w-4 h-4 mt-0.5 flex-shrink-0 ${creditWarning ? 'text-red-300' : creditLow ? 'text-amber-300' : 'text-white/60'}`} />
+                <p className="text-white">
+                  {creditWarning
+                    ? <><span className="font-semibold">Not enough hours.</span> This booking needs {estimatedBookingHours}h but you only have {creditRemaining}h left this month.</>
+                    : <>This booking uses <span className="font-semibold">{estimatedBookingHours}h</span> — you'll have <span className="font-semibold">{creditAfterBooking}h</span> of your {creditLimit}h limit remaining{creditLow ? ' (running low)' : ''}.</>
+                  }
+                </p>
+              </div>
+            )}
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); handleBook(); }}
-              disabled={booking || (!selectedVehicle && licensePlateEntryMode === 1 && !customPlate)}
+              disabled={booking || creditWarning || (!selectedVehicle && licensePlateEntryMode === 1 && !customPlate)}
               aria-busy={booking}
               aria-disabled={booking || (!selectedVehicle && licensePlateEntryMode === 1 && !customPlate)}
               className="btn bg-white text-primary-700 hover:bg-white/90 w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
