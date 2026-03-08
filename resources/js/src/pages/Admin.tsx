@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Component, type ReactNode } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -429,6 +429,20 @@ function AdminUsers() {
       </div>
     </motion.div>
   );
+}
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(e: Error) { return { error: e.message }; }
+  render() {
+    if (this.state.error) return (
+      <div className="card p-6 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+        <p className="font-semibold mb-1">Something went wrong loading this page</p>
+        <p className="text-sm font-mono">{this.state.error}</p>
+      </div>
+    );
+    return this.props.children;
+  }
 }
 
 function AdminCredits() {
@@ -959,7 +973,7 @@ export function AdminPage() {
     <div>
       <div className="mb-2"><h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('admin.title')}</h1><p className="text-gray-500 dark:text-gray-400 mt-1">{t('admin.subtitle')}</p></div>
       <AdminNav />
-      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/credits" element={<AdminCredits />} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
+      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/credits" element={<ErrorBoundary><AdminCredits /></ErrorBoundary>} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
     </div>
   );
 }
