@@ -99,7 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/lots/{id}', [LotController::class, 'destroy']);
     Route::get('/lots/{id}/slots', [LotController::class, 'slots']);
     Route::get('/lots/{id}/occupancy', [LotController::class, 'occupancy']);
-    Route::get('/lots/{id}/layout', [LotController::class, 'show']); // Layout is part of lot detail
+    Route::get('/lots/{id}/layout', [LotController::class, 'show']);
     Route::put('/lots/{id}/layout', [LotController::class, 'update']);
 
     // Slots
@@ -126,10 +126,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/recurring-bookings', [RecurringBookingController::class, 'store']);
     Route::delete('/recurring-bookings/{id}', [RecurringBookingController::class, 'destroy']);
 
-    // Absences (maps homeoffice + vacation to unified absences)
+    // Absences
     Route::get('/homeoffice', function(\Illuminate\Http\Request $request) {
         $user = $request->user();
-        // Return HomeofficeSettings format expected by Rust frontend
         return response()->json([
             'pattern' => ['weekdays' => []],
             'single_days' => \App\Models\Absence::where('user_id', $user->id)
@@ -174,9 +173,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/announcements', [AdminController::class, 'createAnnouncement']);
     Route::put('/admin/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
     Route::delete('/admin/announcements/{id}', [AdminController::class, 'deleteAnnouncement']);
+    Route::get('/admin/credits', [AdminController::class, 'creditUsage']);  // ← NEW
     Route::get('/admin/updates/check', function() { return response()->json(['update_available' => false, 'current_version' => '1.0.0-php']); });
-
-
 
     // Notifications
     Route::get('/notifications', [UserController::class, 'notifications']);
@@ -206,14 +204,14 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/health/live', [\App\Http\Controllers\Api\HealthController::class, 'live']);
 Route::get('/health/ready', [\App\Http\Controllers\Api\HealthController::class, 'ready']);
 
-// Impressum — public (DDG § 5 requires it to be freely accessible)
+// Impressum — public
 Route::get('/legal/impressum', [\App\Http\Controllers\Api\AdminController::class, 'publicImpress']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // iCal export
     Route::get('/user/calendar.ics', [\App\Http\Controllers\Api\UserController::class, 'calendarExport']);
 
-    // Invoice (HTML, printer-friendly — use browser "Print → Save as PDF")
+    // Invoice
     Route::get('/bookings/{id}/invoice', [\App\Http\Controllers\Api\BookingInvoiceController::class, 'show']);
 
     // GDPR data export
@@ -223,7 +221,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicles/{id}/photo', [\App\Http\Controllers\Api\VehicleController::class, 'uploadPhoto']);
     Route::get('/vehicles/{id}/photo',  [\App\Http\Controllers\Api\VehicleController::class, 'servePhoto']);
 
-    // City codes (no photo auth needed but put behind auth to avoid abuse)
+    // City codes
     Route::get('/vehicles/city-codes', [\App\Http\Controllers\Api\VehicleController::class, 'cityCodes']);
 
     // Waitlist
@@ -235,7 +233,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/bookings/export', [\App\Http\Controllers\Api\AdminController::class, 'exportBookingsCsv']);
 });
 
-// ── Feature parity batch 2: system, auth, bookings, absences ──────────────
+// ── Feature parity batch 2 ──────────────────────────────────────────────────
 
 use App\Http\Controllers\Api\SystemController;
 
@@ -243,7 +241,7 @@ use App\Http\Controllers\Api\SystemController;
 Route::get('/system/version',     [SystemController::class, 'version']);
 Route::get('/system/maintenance', [SystemController::class, 'maintenance']);
 
-// Auth (public) — rate limited: 5 password resets per 15 min per IP
+// Auth (public)
 Route::middleware('throttle:5,15')->group(function () {
     Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\AuthController::class, 'forgotPassword']);
     Route::post('/auth/reset-password',  [\App\Http\Controllers\Api\AuthController::class, 'resetPassword']);
@@ -264,7 +262,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{id}/swap-request',  [BookingController::class, 'createSwapRequest']);
     Route::put('/swap-requests/{id}',           [BookingController::class, 'respondSwapRequest']);
 
-    // iCal import (absences + vacation)
+    // iCal import
     Route::post('/absences/import',  [AbsenceController::class, 'importIcal']);
     Route::post('/vacation/import',  [AbsenceController::class, 'importIcal']);
 
@@ -277,13 +275,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Team today
     Route::get('/team/today', [TeamController::class, 'today']);
 
-    // Notifications: mark all read
+    // Notifications
     Route::post('/notifications/read-all', [UserController::class, 'markAllNotificationsRead']);
 
-    // Push: unsubscribe
+    // Push
     Route::delete('/push/unsubscribe', [UserController::class, 'pushUnsubscribe']);
 
-    // GDPR Art. 17 — Right to Erasure (anonymize, not hard-delete)
+    // GDPR
     Route::post('/users/me/anonymize', [UserController::class, 'anonymizeAccount']);
 
     // QR codes
@@ -296,8 +294,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/branding/logo',    [AdminController::class, 'uploadBrandingLogo']);
     Route::get('/admin/privacy',           [AdminController::class, 'getPrivacy']);
     Route::put('/admin/privacy',           [AdminController::class, 'updatePrivacy']);
-
-    // Impressum admin editor (DDG § 5 fields)
     Route::get('/admin/impressum',         [AdminController::class, 'getImpress']);
     Route::put('/admin/impressum',         [AdminController::class, 'updateImpress']);
     Route::get('/admin/reports',           [AdminController::class, 'reports']);
