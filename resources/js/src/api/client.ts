@@ -545,6 +545,9 @@ export interface User {
   name: string;
   role: 'user' | 'admin' | 'superadmin';
   created_at: string;
+  monthly_credit_limit: number;
+  monthly_credits_used: number;
+  remaining_credits: number;
 }
 
 export interface AuthTokens {
