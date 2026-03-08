@@ -472,8 +472,6 @@ function AdminCredits() {
         const text = await res.text();
         console.error('[Credits] error response:', res.status, text.slice(0, 300));
         setError(`HTTP ${res.status} — check browser console for details`);
-      } else {
-        setError(`Error ${res.status}: ${res.statusText}`);
       }
     } catch (e: any) {
       setError(e?.message || 'Failed to load');
