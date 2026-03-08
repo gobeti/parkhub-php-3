@@ -5,7 +5,7 @@ import {
   ChartBar, Buildings, Users, ListChecks, Plus, CheckCircle, TrendUp, CaretRight,
   SpinnerGap, MagnifyingGlass, XCircle, Trash, PencilSimple,
   Lightning, Pulse, ShieldCheck, Clock, House, Prohibit, Palette, GearSix, ArrowsClockwise, ClockCounterClockwise, Article,
-  DownloadSimple, FloppyDisk, X,
+  DownloadSimple, FloppyDisk, X, ChartPie,
 } from '@phosphor-icons/react';
 import { api, ParkingLot, ParkingLotDetailed, User, Booking, AdminStats } from '../api/client';
 import { LotLayoutEditor } from '../components/LotLayoutEditor';
@@ -29,6 +29,7 @@ function AdminNav() {
     { name: t('admin.tabs.lots'), path: '/admin/lots', icon: Buildings },
     { name: t('admin.tabs.users'), path: '/admin/users', icon: Users },
     { name: t('admin.tabs.bookings'), path: '/admin/bookings', icon: ListChecks },
+    { name: 'Credits', path: '/admin/credits', icon: ChartPie },
     { name: t('admin.tabs.branding', 'Branding'), path: '/admin/branding', icon: Palette },
     { name: t('admin.tabs.privacy', 'Privacy'), path: '/admin/privacy', icon: ShieldCheck },
     { name: t('admin.tabs.impressum', 'Impressum'), path: '/admin/impressum', icon: Article },
@@ -288,7 +289,7 @@ function AdminUsers() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ role: string; is_active: boolean; name: string; monthly_credit_limit: number }>({ role: 'user', is_active: true, name: '', monthly_credit_limit: 40 });
+  const [editForm, setEditForm] = useState<{ role: string; is_active: boolean; name: string }>({ role: 'user', is_active: true, name: '' });
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -303,7 +304,7 @@ function AdminUsers() {
 
   function startEdit(user: EditableUser) {
     setEditingId(user.id);
-    setEditForm({ role: user.role, is_active: user.is_active ?? true, name: user.name, monthly_credit_limit: (user as any).monthly_credit_limit ?? 40 });
+    setEditForm({ role: user.role, is_active: user.is_active ?? true, name: user.name });
   }
 
   async function saveEdit(userId: string) {
@@ -360,7 +361,6 @@ function AdminUsers() {
         <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.email')}</th>
         <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.role')}</th>
         <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.status')}</th>
-        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Monthly Hours</th>
         <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.actions')}</th>
       </tr></thead><tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {filtered.map((user, i) => (
@@ -383,12 +383,6 @@ function AdminUsers() {
                     <option value="inactive">{t('common.inactive', 'Inaktiv')}</option>
                   </select>
                 </td>
-                <td className="px-6 py-3">
-                  <div className="flex items-center gap-1">
-                    <input type="number" min="0" max="9999" value={editForm.monthly_credit_limit} onChange={e => setEditForm(f => ({ ...f, monthly_credit_limit: parseInt(e.target.value) || 0 }))} className="input text-sm py-1 w-20" />
-                    <span className="text-xs text-gray-500">h</span>
-                  </div>
-                </td>
                 <td className="px-6 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => saveEdit(user.id)} disabled={saving} className="btn btn-primary btn-sm">
@@ -405,12 +399,6 @@ function AdminUsers() {
                 <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                 <td className="px-6 py-4"><span className={`badge ${user.role === 'admin' || user.role === 'superadmin' ? 'badge-error' : 'badge-info'}`}>{user.role === 'admin' || user.role === 'superadmin' ? 'Admin' : 'User'}</span></td>
                 <td className="px-6 py-4"><span className={`badge ${(user.is_active ?? true) ? 'badge-success' : 'badge-gray'}`}>{(user.is_active ?? true) ? t('common.active') : t('common.inactive', 'Inaktiv')}</span></td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <Clock weight="fill" className="w-3.5 h-3.5 text-primary-500" />
-                    {(user as any).monthly_credit_limit ?? 40}h / mo
-                  </span>
-                </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => startEdit(user)} className="btn btn-ghost btn-icon btn-sm"><PencilSimple weight="regular" className="w-4 h-4" /></button>
@@ -426,6 +414,115 @@ function AdminUsers() {
       </tbody></table></div>
       {filtered.length === 0 && <div className="p-12 text-center"><Users weight="light" className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" /><p className="text-gray-500 dark:text-gray-400">{t('admin.users.noUsers')}</p></div>}
       </div>
+    </motion.div>
+  );
+}
+
+function AdminCredits() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [month, setMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  useEffect(() => { void load(); }, [month]);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('parkhub_token');
+      const [year, mon] = month.split('-');
+      const res = await fetch(`/api/v1/admin/credits?year=${year}&month=${mon}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRows(data.data ?? []);
+      }
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monthly Credit Usage</h2>
+        <input
+          type="month"
+          value={month}
+          onChange={e => setMonth(e.target.value)}
+          className="input w-auto"
+        />
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-48"><SpinnerGap weight="bold" className="w-8 h-8 text-primary-600 animate-spin" /></div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-800/50">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bookings</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hours Used</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Limit</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px]">Usage</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {rows.length === 0 && (
+                  <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No bookings found for this month.</td></tr>
+                )}
+                {rows.map((row, i) => {
+                  const pct = row.monthly_credit_limit > 0 ? Math.min(100, Math.round((row.total_hours / row.monthly_credit_limit) * 100)) : 0;
+                  const isOver = row.total_hours > row.monthly_credit_limit && row.monthly_credit_limit > 0;
+                  const isLow = pct >= 80 && !isOver;
+                  return (
+                    <motion.tr key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="avatar text-sm">{row.name?.charAt(0) || '?'}</div>
+                          <span className="font-medium text-gray-900 dark:text-white">{row.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{row.email}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{row.total_bookings}</td>
+                      <td className="px-6 py-4">
+                        <span className={`font-semibold text-sm ${isOver ? 'text-red-600 dark:text-red-400' : isLow ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
+                          {row.total_hours}h
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        {row.monthly_credit_limit > 0 ? `${row.monthly_credit_limit}h` : <span className="text-gray-400 italic">no limit</span>}
+                      </td>
+                      <td className="px-6 py-4">
+                        {row.monthly_credit_limit > 0 ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                              <span>{pct}%</span>
+                              {isOver && <span className="text-red-500 font-medium">Over limit</span>}
+                            </div>
+                            <div className="progress h-2">
+                              <div
+                                className={`progress-bar h-2 ${isOver ? 'bg-red-500' : isLow ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                style={{ width: `${Math.min(pct, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm italic">—</span>
+                        )}
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -838,7 +935,7 @@ export function AdminPage() {
     <div>
       <div className="mb-2"><h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('admin.title')}</h1><p className="text-gray-500 dark:text-gray-400 mt-1">{t('admin.subtitle')}</p></div>
       <AdminNav />
-      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
+      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/credits" element={<AdminCredits />} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
     </div>
   );
 }
