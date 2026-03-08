@@ -555,6 +555,46 @@ public function getSettings(Request $request)
         return response()->json(['message' => 'Lot deleted']);
     }
 
+    public function creditUsage(Request $request)
+    {
+        $this->requireAdmin($request);
+
+        $year  = (int) $request->get('year',  now()->year);
+        $month = (int) $request->get('month', now()->month);
+
+        $start = \Carbon\Carbon::create($year, $month, 1)->startOfMonth();
+        $end   = $start->copy()->endOfMonth();
+
+        $users = User::where('is_active', true)->orderBy('name')->get();
+
+        $data = $users->map(function (User $user) use ($start, $end) {
+            $bookings = $user->bookings()
+                ->whereIn('status', ['confirmed', 'active'])
+                ->where('start_time', '>=', $start)
+                ->where('start_time', '<=', $end)
+                ->get(['start_time', 'end_time']);
+
+            $totalMinutes = 0;
+            foreach ($bookings as $b) {
+                $diff = \Carbon\Carbon::parse($b->start_time)
+                    ->diffInMinutes(\Carbon\Carbon::parse($b->end_time), false);
+                if ($diff > 0) $totalMinutes += $diff;
+            }
+
+            $totalHours = (int) ceil($totalMinutes / 60.0);
+
+            return [
+                'name'                 => $user->name,
+                'email'                => $user->email,
+                'monthly_credit_limit' => $user->monthly_credit_limit ?? 0,
+                'total_bookings'       => $bookings->count(),
+                'total_hours'          => $totalHours,
+            ];
+        })->filter(fn($r) => $r['total_bookings'] > 0)->values();
+
+        return response()->json(['data' => $data]);
+    }
+
     public function deleteUser(Request $request, string $id)
     {
         $this->requireAdmin($request);
