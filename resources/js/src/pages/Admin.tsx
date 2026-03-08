@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -434,15 +434,15 @@ function AdminUsers() {
 function AdminCredits() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [month, setMonth] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  useEffect(() => { void load(); }, [month]);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const token = localStorage.getItem('parkhub_token');
       const [year, mon] = month.split('-');
@@ -452,12 +452,23 @@ function AdminCredits() {
       if (res.ok) {
         const data = await res.json();
         setRows(data.data ?? []);
+      } else {
+        setError(`Error ${res.status}: ${res.statusText}`);
       }
-    } finally { setLoading(false); }
-  }
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load');
+    } finally {
+      setLoading(false);
+    }
+  }, [month]);
+
+  useEffect(() => { void load(); }, [load]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      {error && (
+        <div className="card p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">{error}</div>
+      )}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monthly Credit Usage</h2>
         <input
