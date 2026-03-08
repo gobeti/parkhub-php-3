@@ -187,6 +187,9 @@ class AuthController extends Controller
             'preferences' => $user->preferences ?? [],
             'is_active' => $user->is_active,
             'department' => $user->department,
+            'monthly_credit_limit' => $user->monthly_credit_limit,
+            'monthly_credits_used' => $user->monthly_credits_used,
+            'remaining_credits' => $user->remaining_credits,
         ];
     }
 
