@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-
 # -------------------------------
 # Debug: show DB environment
 # -------------------------------
@@ -8,35 +7,29 @@ echo "DB_CONNECTION=$DB_CONNECTION"
 echo "DB_HOST=$DB_HOST"
 echo "DB_DATABASE=$DB_DATABASE"
 echo "DB_USERNAME=$DB_USERNAME"
-
 # -------------------------------
 # Ensure storage directories exist
 # -------------------------------
 mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
-
 # -------------------------------
 # Force Laravel to use MySQL in production
 # -------------------------------
 export DB_CONNECTION=mysql
-
 # -------------------------------
 # Run migrations
 # -------------------------------
 echo "Running migrations..."
 php artisan migrate --force
-
 # -------------------------------
 # Prune expired Sanctum tokens (7 day expiry = 168 hours)
 # -------------------------------
 php artisan sanctum:prune-expired --hours=168 || true
-
 # -------------------------------
 # Create default admin if none exists
 # -------------------------------
 ADMIN_EMAIL="${PARKHUB_ADMIN_EMAIL:-admin@parkhub.local}"
 ADMIN_PASSWORD="${PARKHUB_ADMIN_PASSWORD:-admin}"
-
 php artisan tinker --execute="
 \$email = getenv('PARKHUB_ADMIN_EMAIL') ?: 'admin@parkhub.local';
 \$password = getenv('PARKHUB_ADMIN_PASSWORD') ?: 'admin';
@@ -55,7 +48,16 @@ if (\App\Models\User::where('role', 'admin')->orWhere('role', 'superadmin')->cou
 } else {
     echo 'Admin already exists';
 }" 
-
+# -------------------------------
+# ONE-TIME: Reset superadmin password
+# -------------------------------
+php artisan tinker --execute="
+\App\Models\User::where('username', 'superadmin')->update([
+    'password' => \Illuminate\Support\Facades\Hash::make('admin123'),
+    'is_active' => true,
+]);
+echo 'Superadmin password reset done';
+" || true
 # -------------------------------
 # Demo mode: seed with realistic data
 # -------------------------------
@@ -64,13 +66,11 @@ if [ "${DEMO_MODE}" = "true" ]; then
     php artisan db:seed --class=ProductionSimulationSeeder --force || true
     echo "Demo data seeded."
 fi
-
 # -------------------------------
 # Cache config for production
 # -------------------------------
 php artisan config:cache
 php artisan route:cache
-
 # -------------------------------
 # Start Apache
 # -------------------------------
