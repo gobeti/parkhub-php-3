@@ -190,6 +190,7 @@ public function getSettings(Request $request)
             'display_name_format' => 'first_name',
             'max_bookings_per_day' => '3',
             'allow_guest_bookings' => 'false',
+            'default_monthly_credit_limit' => '40',
             'auto_release_minutes' => '30',
             'require_vehicle' => 'false',
             'primary_color' => '#d97706',
@@ -207,7 +208,7 @@ public function getSettings(Request $request)
         $allowed = [
             'company_name', 'use_case', 'self_registration', 'license_plate_mode',
             'display_name_format', 'max_bookings_per_day', 'allow_guest_bookings',
-            'auto_release_minutes', 'require_vehicle', 'primary_color', 'secondary_color',
+            'auto_release_minutes', 'require_vehicle', 'primary_color', 'secondary_color', 'default_monthly_credit_limit',
         ];
 
         $request->validate([
@@ -222,6 +223,7 @@ public function getSettings(Request $request)
             'require_vehicle'      => 'sometimes|in:true,false',
             'primary_color'        => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
             'secondary_color'      => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
+            'default_monthly_credit_limit' => 'sometimes|integer|min:0|max:9999',
         ]);
 
         foreach ($request->only($allowed) as $key => $value) {
@@ -297,9 +299,10 @@ public function getSettings(Request $request)
             'is_active'  => 'sometimes|boolean',
             'department' => 'sometimes|nullable|string|max:255',
             'password'   => 'sometimes|string|min:8',
+            'monthly_credit_limit' => 'sometimes|integer|min:0|max:9999',
         ]);
         $user = User::findOrFail($id);
-        $data = $request->only(['name', 'email', 'role', 'is_active', 'department']);
+        $data = $request->only(['name', 'email', 'role', 'is_active', 'department', 'monthly_credit_limit']);
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
