@@ -466,7 +466,7 @@ function AdminCredits() {
       if (res.ok) {
         const data = await res.json();
         console.log('[Credits] status:', res.status, 'data:', JSON.stringify(data).slice(0, 300));
-        const items = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+        const items = Array.isArray(data.data?.data) ? data.data.data : (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
         setRows(items);
       } else {
         const text = await res.text();
