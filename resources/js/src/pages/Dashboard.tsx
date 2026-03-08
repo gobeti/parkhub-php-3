@@ -81,6 +81,14 @@ export function DashboardPage() {
   const availableSlots = lots.reduce((sum, lot) => sum + lot.available_slots, 0);
   const occupancyRate = totalSlots > 0 ? Math.round((1 - availableSlots / totalSlots) * 100) : 0;
 
+  // Monthly credits
+  const creditLimit = (user as any)?.monthly_credit_limit ?? 0;
+  const creditsUsed = (user as any)?.monthly_credits_used ?? 0;
+  const creditsRemaining = Math.max(0, creditLimit - creditsUsed);
+  const hasCredits = creditLimit > 0;
+  const creditsLow = hasCredits && creditsRemaining <= 10;
+  const creditsExhausted = hasCredits && creditsRemaining === 0;
+
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -98,7 +106,7 @@ export function DashboardPage() {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-6 sm:space-y-8 max-w-full">
-      {/* Welcome + Date */}
+      {/* Welcome + Date + Credits */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
@@ -108,12 +116,32 @@ export function DashboardPage() {
             {format(new Date(), "EEEE, d. MMMM yyyy", { locale: dateFnsLocale })} &middot; {organizationLabel}
           </p>
         </div>
-        {!isHoToday && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-400 self-start">
-            <Briefcase weight="fill" className="w-3.5 h-3.5" />
-            {t('dashboard.inOffice')}
-          </span>
-        )}
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+          {/* Monthly Credits Badge */}
+          {hasCredits && (
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold
+              ${creditsExhausted
+                ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
+                : creditsLow
+                ? 'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300'
+                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'
+              }`}>
+              <Clock weight="fill" className="w-4 h-4" />
+              <span>
+                {creditsExhausted
+                  ? 'No hours left this month'
+                  : `${creditsRemaining}h left this month`}
+              </span>
+              <span className="text-xs opacity-60 font-normal">/ {creditLimit}h</span>
+            </div>
+          )}
+          {!isHoToday && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-600 dark:text-gray-400">
+              <Briefcase weight="fill" className="w-3.5 h-3.5" />
+              {t('dashboard.inOffice')}
+            </span>
+          )}
+        </div>
       </motion.div>
 
       {/* Announcement Banner */}
