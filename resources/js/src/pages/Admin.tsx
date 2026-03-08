@@ -289,7 +289,7 @@ function AdminUsers() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ role: string; is_active: boolean; name: string }>({ role: 'user', is_active: true, name: '' });
+  const [editForm, setEditForm] = useState<{ role: string; is_active: boolean; name: string; monthly_credit_limit: number }>({ role: 'user', is_active: true, name: '', monthly_credit_limit: 40 });
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -304,7 +304,7 @@ function AdminUsers() {
 
   function startEdit(user: EditableUser) {
     setEditingId(user.id);
-    setEditForm({ role: user.role, is_active: user.is_active ?? true, name: user.name });
+    setEditForm({ role: user.role, is_active: user.is_active ?? true, name: user.name, monthly_credit_limit: (user as any).monthly_credit_limit ?? 40 });
   }
 
   async function saveEdit(userId: string) {
@@ -361,6 +361,7 @@ function AdminUsers() {
         <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.email')}</th>
         <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.role')}</th>
         <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.status')}</th>
+        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Monthly Hours</th>
         <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('admin.users.actions')}</th>
       </tr></thead><tbody className="divide-y divide-gray-100 dark:divide-gray-800">
         {filtered.map((user, i) => (
@@ -383,6 +384,12 @@ function AdminUsers() {
                     <option value="inactive">{t('common.inactive', 'Inaktiv')}</option>
                   </select>
                 </td>
+                <td className="px-6 py-3">
+                  <div className="flex items-center gap-1">
+                    <input type="number" min="0" max="9999" value={editForm.monthly_credit_limit} onChange={e => setEditForm(f => ({ ...f, monthly_credit_limit: parseInt(e.target.value) || 0 }))} className="input text-sm py-1 w-20" />
+                    <span className="text-xs text-gray-500">h</span>
+                  </div>
+                </td>
                 <td className="px-6 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => saveEdit(user.id)} disabled={saving} className="btn btn-primary btn-sm">
@@ -399,6 +406,12 @@ function AdminUsers() {
                 <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                 <td className="px-6 py-4"><span className={`badge ${user.role === 'admin' || user.role === 'superadmin' ? 'badge-error' : 'badge-info'}`}>{user.role === 'admin' || user.role === 'superadmin' ? 'Admin' : 'User'}</span></td>
                 <td className="px-6 py-4"><span className={`badge ${(user.is_active ?? true) ? 'badge-success' : 'badge-gray'}`}>{(user.is_active ?? true) ? t('common.active') : t('common.inactive', 'Inaktiv')}</span></td>
+                <td className="px-6 py-4">
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Clock weight="fill" className="w-3.5 h-3.5 text-primary-500" />
+                    {(user as any).monthly_credit_limit ?? 40}h / mo
+                  </span>
+                </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => startEdit(user)} className="btn btn-ghost btn-icon btn-sm"><PencilSimple weight="regular" className="w-4 h-4" /></button>
