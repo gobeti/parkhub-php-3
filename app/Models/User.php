@@ -64,13 +64,12 @@ class User extends Authenticatable
     }
 
     // ────────────────────────────────────────────────
-    //   Monthly Credit System
+    //   Monthly Credit System (always live — no cache)
     // ────────────────────────────────────────────────
 
     /**
-     * Check if the user can book the requested hours for the given month.
-     * - Current month: uses monthly_credits_used (fast, cached on user row)
-     * - Future month: queries bookings table for that month (always fresh)
+     * Check if the user can book the requested hours.
+     * Always queries the bookings table directly — no cached counter.
      */
     public function canBookHours(float|int $hours, $bookingStart = null): bool
     {
@@ -78,74 +77,32 @@ class User extends Authenticatable
             return true; // no limit configured
         }
 
-        $bookingStart = $bookingStart ?? Carbon::now();
-        $now = Carbon::now();
-
-        $isCurrentMonth = $bookingStart->month === $now->month
-                       && $bookingStart->year  === $now->year;
-
-        if ($isCurrentMonth) {
-            $this->refreshCreditsIfNeeded();
-            $used = $this->monthly_credits_used;
-        } else {
-            // For future months, count hours already booked via the bookings table
-            $used = $this->bookedHoursForMonth($bookingStart->year, $bookingStart->month);
-        }
+        $bookingStart = $bookingStart ? Carbon::parse($bookingStart) : Carbon::now();
+        $used = $this->bookedHoursForMonth($bookingStart->year, $bookingStart->month);
 
         return ($used + $hours) <= $this->monthly_credit_limit;
     }
 
     /**
-     * Consume credits after a successful booking.
-     * Only updates monthly_credits_used for current-month bookings.
-     * Future-month bookings are tracked implicitly via the bookings table.
+     * No-op: credits are now tracked purely via the bookings table.
+     * Kept for API compatibility with BookingController.
      */
     public function useCredits(float|int $hours, $bookingStart = null): void
     {
-        if ($this->monthly_credit_limit <= 0) {
-            return;
-        }
-
-        $bookingStart = $bookingStart ?? Carbon::now();
-        $now = Carbon::now();
-
-        $isCurrentMonth = $bookingStart->month === $now->month
-                       && $bookingStart->year  === $now->year;
-
-        if ($isCurrentMonth) {
-            $this->refreshCreditsIfNeeded();
-            $this->increment('monthly_credits_used', (int) ceil($hours));
-        }
-        // Future months: no increment needed — canBookHours() queries the DB directly
+        // Nothing to do — canBookHours() always queries live data
     }
 
     /**
-     * Refund credits when a booking is cancelled.
-     * Only affects monthly_credits_used for current-month bookings.
+     * No-op: cancellations are reflected automatically in bookedHoursForMonth().
+     * Kept for API compatibility with BookingController.
      */
     public function refundCredits(float|int $hours, $bookingStart = null): void
     {
-        if ($this->monthly_credit_limit <= 0) {
-            return;
-        }
-
-        $bookingStart = $bookingStart ?? Carbon::now();
-        $now = Carbon::now();
-
-        $isCurrentMonth = $bookingStart->month === $now->month
-                       && $bookingStart->year  === $now->year;
-
-        if ($isCurrentMonth) {
-            $refund = min((int) ceil($hours), $this->monthly_credits_used);
-            if ($refund > 0) {
-                $this->decrement('monthly_credits_used', $refund);
-            }
-        }
-        // Future months: no change needed — canBookHours() will re-query the DB
+        // Nothing to do — cancelled bookings are excluded by status filter
     }
 
     /**
-     * Get remaining hours the user can still book this month.
+     * Remaining hours for the current month, computed live.
      */
     public function getRemainingCreditsAttribute(): int
     {
@@ -153,15 +110,17 @@ class User extends Authenticatable
             return 999999;
         }
 
-        $this->refreshCreditsIfNeeded();
+        $now = Carbon::now();
+        $used = $this->bookedHoursForMonth($now->year, $now->month);
 
-        return max(0, $this->monthly_credit_limit - $this->monthly_credits_used);
+        return max(0, $this->monthly_credit_limit - $used);
     }
 
     /**
-     * Sum of confirmed/active booking hours for a given year+month.
+     * Sum confirmed/active booking hours for a given year+month.
+     * This is the single source of truth for credit consumption.
      */
-    public function bookedHoursForMonth(int $year, int $month): int
+    public function bookedHoursForMonth(int $year, int $month): float
     {
         $start = Carbon::create($year, $month, 1)->startOfMonth();
         $end   = $start->copy()->endOfMonth();
@@ -176,28 +135,12 @@ class User extends Authenticatable
         foreach ($bookings as $booking) {
             $s = Carbon::parse($booking->start_time);
             $e = Carbon::parse($booking->end_time);
-            $totalMinutes += $s->diffInMinutes($e);
+            $diff = $s->diffInMinutes($e, false); // false = signed, catches bad data
+            if ($diff > 0) {
+                $totalMinutes += $diff;
+            }
         }
 
-        return (int) ceil($totalMinutes / 60.0);
-    }
-
-    /**
-     * Reset used credits if we are in a new calendar month.
-     */
-    protected function refreshCreditsIfNeeded(): void
-    {
-        $now = Carbon::now();
-
-        $shouldReset = !$this->credits_reset_at ||
-                       $this->credits_reset_at->month !== $now->month ||
-                       $this->credits_reset_at->year  !== $now->year;
-
-        if ($shouldReset) {
-            $this->updateQuietly([
-                'monthly_credits_used' => 0,
-                'credits_reset_at'     => $now,
-            ]);
-        }
+        return ceil($totalMinutes / 60.0);
     }
 }
