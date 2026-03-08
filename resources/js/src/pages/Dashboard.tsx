@@ -35,6 +35,8 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [quickBooking, setQuickBooking] = useState(false);
+  const [creditLimit, setCreditLimit] = useState<number>(0);
+  const [creditsUsed, setCreditsUsed] = useState<number>(0);
   const { canInstall, install, dismiss } = useInstallPrompt();
   const { useCase } = useUseCaseStore();
   const organizationLabel = t(`usecase.${useCase}.labels.organization`);
@@ -43,9 +45,13 @@ export function DashboardPage() {
 
   async function loadData() {
     try {
-      const [lotsRes, bookingsRes, hoRes, annRes] = await Promise.all([
-        api.getLots(), api.getBookings(), api.getHomeofficeSettings(), api.getActiveAnnouncements(),
+      const [lotsRes, bookingsRes, hoRes, annRes, meRes] = await Promise.all([
+        api.getLots(), api.getBookings(), api.getHomeofficeSettings(), api.getActiveAnnouncements(), api.getCurrentUser(),
       ]);
+      if (meRes.success && meRes.data) {
+        setCreditLimit(meRes.data.monthly_credit_limit ?? 0);
+        setCreditsUsed(meRes.data.monthly_credits_used ?? 0);
+      }
       if (hoRes.success && hoRes.data) setHoSettings(hoRes.data);
       if (annRes.success && annRes.data) setAnnouncements(annRes.data);
       if (lotsRes.success && lotsRes.data) {
@@ -82,8 +88,6 @@ export function DashboardPage() {
   const occupancyRate = totalSlots > 0 ? Math.round((1 - availableSlots / totalSlots) * 100) : 0;
 
   // Monthly credits
-  const creditLimit = (user as any)?.monthly_credit_limit ?? 0;
-  const creditsUsed = (user as any)?.monthly_credits_used ?? 0;
   const creditsRemaining = Math.max(0, creditLimit - creditsUsed);
   const hasCredits = creditLimit > 0;
   const creditsLow = hasCredits && creditsRemaining <= 10;
