@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 
 class User extends Authenticatable
 {
@@ -72,7 +72,7 @@ class User extends Authenticatable
      * - Current month: uses monthly_credits_used (fast, cached on user row)
      * - Future month: queries bookings table for that month (always fresh)
      */
-    public function canBookHours(float|int $hours, ?Carbon $bookingStart = null): bool
+    public function canBookHours(float|int $hours, $bookingStart = null): bool
     {
         if ($this->monthly_credit_limit <= 0) {
             return true; // no limit configured
@@ -100,7 +100,7 @@ class User extends Authenticatable
      * Only updates monthly_credits_used for current-month bookings.
      * Future-month bookings are tracked implicitly via the bookings table.
      */
-    public function useCredits(float|int $hours, ?Carbon $bookingStart = null): void
+    public function useCredits(float|int $hours, $bookingStart = null): void
     {
         if ($this->monthly_credit_limit <= 0) {
             return;
@@ -123,7 +123,7 @@ class User extends Authenticatable
      * Refund credits when a booking is cancelled.
      * Only affects monthly_credits_used for current-month bookings.
      */
-    public function refundCredits(float|int $hours, ?Carbon $bookingStart = null): void
+    public function refundCredits(float|int $hours, $bookingStart = null): void
     {
         if ($this->monthly_credit_limit <= 0) {
             return;
