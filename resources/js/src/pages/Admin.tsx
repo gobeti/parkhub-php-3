@@ -465,7 +465,8 @@ function AdminCredits() {
       });
       if (res.ok) {
         const data = await res.json();
-        setRows(data.data ?? []);
+        const items = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+        setRows(items);
       } else {
         setError(`Error ${res.status}: ${res.statusText}`);
       }
