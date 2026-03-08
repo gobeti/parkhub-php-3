@@ -65,15 +65,18 @@ class BookingController extends Controller
             ], 422);
         }
 
-        // Enforce monthly credit limit
-        if (!$user->canBookHours($hoursRequested)) {
+        // Enforce monthly credit limit — checks the correct month based on booking start
+        if (!$user->canBookHours($hoursRequested, $startTime)) {
+            $remaining = $user->monthly_credit_limit - $user->bookedHoursForMonth(
+                $startTime->year, $startTime->month
+            );
             return response()->json([
                 'success' => false,
                 'data'    => null,
                 'error'   => [
                     'code'              => 'MONTHLY_LIMIT_EXCEEDED',
-                    'message'           => "This booking would exceed your monthly limit. Remaining: {$user->remaining_credits} hours (limit: {$user->monthly_credit_limit}).",
-                    'remaining_credits' => $user->remaining_credits,
+                    'message'           => "This booking would exceed your monthly limit for " . $startTime->format('F Y') . ". Remaining: {$remaining} hours (limit: {$user->monthly_credit_limit}).",
+                    'remaining_credits' => max(0, $remaining),
                     'requested_hours'   => $hoursRequested,
                 ],
                 'meta'    => null
@@ -142,7 +145,7 @@ class BookingController extends Controller
         }
 
         // Consume credits only after successful creation
-        $user->useCredits($hoursRequested);
+        $user->useCredits($hoursRequested, $startTime);
 
         AuditLog::create([
             'user_id'  => $user->id,
@@ -194,15 +197,8 @@ class BookingController extends Controller
 
         $user = $request->user();
 
-        // Refund credits only if booking starts in current month
-        $now = now();
-        if ($start->month === $now->month && $start->year === $now->year) {
-            // Safety: never go below 0
-            $refund = min($hours, $user->monthly_credits_used);
-            if ($refund > 0) {
-                $user->decrement('monthly_credits_used', $refund);
-            }
-        }
+        // Refund credits based on the month the booking was for
+        $user->refundCredits($hours, $start);
 
         $booking->update(['status' => 'cancelled']);
 
