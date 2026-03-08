@@ -188,7 +188,7 @@ class AuthController extends Controller
             'is_active' => $user->is_active,
             'department' => $user->department,
             'monthly_credit_limit' => $user->monthly_credit_limit,
-            'monthly_credits_used' => $user->monthly_credits_used,
+            'monthly_credits_used' => $user->bookedHoursForMonth(now()->year, now()->month),
             'remaining_credits' => $user->remaining_credits,
         ];
     }
