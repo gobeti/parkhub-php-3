@@ -49,16 +49,6 @@ if (\App\Models\User::where('role', 'admin')->orWhere('role', 'superadmin')->cou
     echo 'Admin already exists';
 }" 
 # -------------------------------
-# ONE-TIME: Reset superadmin password
-# -------------------------------
-php artisan tinker --execute="
-\App\Models\User::where('username', 'superadmin')->update([
-    'password' => \Illuminate\Support\Facades\Hash::make('admin123'),
-    'is_active' => true,
-]);
-echo 'Superadmin password reset done';
-" || true
-# -------------------------------
 # Demo mode: seed with realistic data
 # -------------------------------
 if [ "${DEMO_MODE}" = "true" ]; then
