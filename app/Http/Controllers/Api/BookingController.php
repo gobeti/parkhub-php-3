@@ -52,8 +52,18 @@ class BookingController extends Controller
             ], 422);
         }
 
-        $endTime = $request->end_time ? Carbon::parse($request->end_time) : now()->addHours(8);
-        $hoursRequested = ceil($startTime->diffInMinutes($endTime) / 60.0);
+        $endTime = $request->end_time ? Carbon::parse($request->end_time) : $startTime->copy()->addHours(8);
+        $hoursRequested = (int) ceil($startTime->diffInMinutes($endTime) / 60.0);
+
+        // Safety: ensure hoursRequested is positive
+        if ($hoursRequested <= 0) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => ['code' => 'INVALID_BOOKING_TIME', 'message' => 'End time must be after start time.'],
+                'meta'    => null
+            ], 422);
+        }
 
         // Enforce monthly credit limit
         if (!$user->canBookHours($hoursRequested)) {
@@ -61,8 +71,8 @@ class BookingController extends Controller
                 'success' => false,
                 'data'    => null,
                 'error'   => [
-                    'code'             => 'MONTHLY_LIMIT_EXCEEDED',
-                    'message'          => "This booking would exceed your monthly limit. Remaining: {$user->remaining_credits} hours (limit: {$user->monthly_credit_limit}).",
+                    'code'              => 'MONTHLY_LIMIT_EXCEEDED',
+                    'message'           => "This booking would exceed your monthly limit. Remaining: {$user->remaining_credits} hours (limit: {$user->monthly_credit_limit}).",
                     'remaining_credits' => $user->remaining_credits,
                     'requested_hours'   => $hoursRequested,
                 ],
@@ -180,17 +190,17 @@ class BookingController extends Controller
 
         $start = Carbon::parse($booking->start_time);
         $end   = Carbon::parse($booking->end_time);
-        $hours = ceil($start->diffInMinutes($end) / 60.0);
+        $hours = (int) ceil($start->diffInMinutes($end) / 60.0);
 
         $user = $request->user();
 
         // Refund credits only if booking starts in current month
         $now = now();
         if ($start->month === $now->month && $start->year === $now->year) {
-            $user->decrement('monthly_credits_used', (int) $hours);
-            // Safety: prevent negative value
-            if ($user->monthly_credits_used < 0) {
-                $user->update(['monthly_credits_used' => 0]);
+            // Safety: never go below 0
+            $refund = min($hours, $user->monthly_credits_used);
+            if ($refund > 0) {
+                $user->decrement('monthly_credits_used', $refund);
             }
         }
 
@@ -239,15 +249,8 @@ class BookingController extends Controller
         }
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // The remaining methods are unchanged — quickBook, guestBooking,
-    // swap, updateNotes, checkin, update, calendarEvents, etc.
-    // You can leave them as-is or apply similar credit checks if desired.
-    // ──────────────────────────────────────────────────────────────
-
     public function quickBook(Request $request)
     {
-        // Accepts either slot_id directly, or lot_id+date to auto-pick
         if ($request->has('slot_id')) {
             $slot = ParkingSlot::findOrFail($request->slot_id);
         } elseif ($request->has('lot_id')) {
