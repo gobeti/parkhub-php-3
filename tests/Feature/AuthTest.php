@@ -16,6 +16,7 @@ class AuthTest extends TestCase
             'username' => 'testuser',
             'email' => 'test@example.com',
             'password' => 'password123',
+            'password_confirmation' => 'password123',
             'name' => 'Test User',
         ]);
 
@@ -97,11 +98,11 @@ class AuthTest extends TestCase
 
     public function test_user_can_delete_account(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['password' => bcrypt('password123')]);
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->deleteJson('/api/v1/users/me/delete');
+            ->deleteJson('/api/v1/users/me/delete', ['password' => 'password123']);
 
         $response->assertStatus(200);
         $this->assertDatabaseMissing('users', ['id' => $user->id]);

@@ -48,7 +48,10 @@ class BookingController extends Controller
             ], 422);
         }
 
-        $endTime = $request->end_time ?? now()->addHours(8)->toDateTimeString();
+        $endTime = $request->end_time
+            ? \Carbon\Carbon::parse($request->end_time)->toDateTimeString()
+            : now()->addHours(8)->toDateTimeString();
+        $startTimeStr = $startTime->toDateTimeString();
         $slotId  = $request->slot_id;
 
         // Auto-assign slot if not provided (outside transaction — read-only scan)
@@ -56,7 +59,7 @@ class BookingController extends Controller
             $bookedSlotIds = Booking::where('lot_id', $request->lot_id)
                 ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                 ->where('start_time', '<', $endTime)
-                ->where('end_time', '>', $request->start_time)
+                ->where('end_time', '>', $startTimeStr)
                 ->pluck('slot_id');
             $slot = ParkingSlot::where('lot_id', $request->lot_id)
                 ->whereNotIn('id', $bookedSlotIds)
@@ -71,7 +74,7 @@ class BookingController extends Controller
 
         try {
             // Use a transaction with exclusive slot lock to prevent race conditions
-            DB::transaction(function () use ($request, $slotId, $endTime, &$booking) {
+            DB::transaction(function () use ($request, $slotId, $endTime, $startTimeStr, &$booking) {
                 // Lock the slot row for this transaction
                 $slot = ParkingSlot::where('id', $slotId)->lockForUpdate()->firstOrFail();
 
@@ -79,7 +82,7 @@ class BookingController extends Controller
                 $conflict = Booking::where('slot_id', $slotId)
                     ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                     ->where('start_time', '<', $endTime)
-                    ->where('end_time', '>', $request->start_time)
+                    ->where('end_time', '>', $startTimeStr)
                     ->exists();
 
                 if ($conflict) {
