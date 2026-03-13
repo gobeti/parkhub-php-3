@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class DemoController extends Controller
 {
-    private const VOTE_THRESHOLD = 5;
+    private const VOTE_THRESHOLD = 3;
     private const TIMER_DURATION = 1800; // 30 minutes in seconds
     private const CACHE_PREFIX = 'demo_';
 
@@ -86,6 +86,26 @@ class DemoController extends Controller
             'votes' => count($votes),
             'threshold' => self::VOTE_THRESHOLD,
         ]);
+    }
+
+    public function reset(Request $request): JsonResponse
+    {
+        if (!config('parkhub.demo_mode')) {
+            return response()->json(['error' => 'Demo mode is not enabled'], 403);
+        }
+
+        // Only allow solo reset when 1 or fewer active viewers
+        $viewers = Cache::get(self::CACHE_PREFIX . 'viewers', []);
+        $viewers = array_filter($viewers, fn($ts) => now()->timestamp - $ts < 300);
+
+        if (count($viewers) > 1) {
+            return response()->json([
+                'error' => 'Solo reset not available with multiple viewers. Use voting instead.',
+                'viewers' => count($viewers),
+            ], 409);
+        }
+
+        return $this->performReset();
     }
 
     private function performReset(): JsonResponse
