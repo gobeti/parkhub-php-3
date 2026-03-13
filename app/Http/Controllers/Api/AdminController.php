@@ -11,6 +11,7 @@ use App\Models\Absence;
 use App\Models\AuditLog;
 use App\Models\Announcement;
 use App\Models\Setting;
+use App\Models\CreditTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -735,6 +736,89 @@ public function getSettings(Request $request)
             'vat_id'              => Setting::get('impressum_vat_id', ''),
             'responsible_person'  => Setting::get('impressum_responsible', ''),
             'custom_text'         => Setting::get('impressum_custom_text', ''),
+        ]);
+    }
+
+    // ── Credits Management ──────────────────────────────────────────────────
+
+    public function grantCredits(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|integer|min:1|max:1000',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->increment('credits_balance', $validated['amount']);
+
+        CreditTransaction::create([
+            'user_id' => $user->id,
+            'amount' => $validated['amount'],
+            'type' => 'grant',
+            'description' => $validated['description'] ?? 'Admin grant',
+            'granted_by' => $request->user()->id,
+        ]);
+
+        AuditLog::create([
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->username,
+            'action' => 'credits_granted',
+            'details' => ['target_user' => $user->id, 'amount' => $validated['amount']],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => ['credits_balance' => $user->fresh()->credits_balance],
+        ]);
+    }
+
+    public function creditTransactions(Request $request)
+    {
+        $query = CreditTransaction::with('user:id,username,name')
+            ->orderBy('created_at', 'desc');
+
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $query->limit(200)->get(),
+        ]);
+    }
+
+    public function refillAllCredits(Request $request)
+    {
+        $validated = $request->validate([
+            'amount' => 'nullable|integer|min:1|max:1000',
+        ]);
+
+        $amount = $validated['amount'] ?? null;
+        $users = User::where('role', 'user')->where('is_active', true)->get();
+        $count = 0;
+
+        foreach ($users as $user) {
+            $refillAmount = $amount ?? $user->credits_monthly_quota;
+            $user->update([
+                'credits_balance' => $refillAmount,
+                'credits_last_refilled' => now(),
+            ]);
+            CreditTransaction::create([
+                'user_id' => $user->id,
+                'amount' => $refillAmount,
+                'type' => 'monthly_refill',
+                'description' => 'Monthly credit refill',
+                'granted_by' => $request->user()->id,
+            ]);
+            $count++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => ['users_refilled' => $count],
         ]);
     }
 }

@@ -1,6 +1,9 @@
 # Dependencies — reinstalled inside the image by composer/npm
 vendor/
 node_modules/
+parkhub-web/node_modules/
+parkhub-web/dist/
+parkhub-web/.astro/
 
 # Frontend build output — rebuilt inside the image by the frontend stage
 public/build/

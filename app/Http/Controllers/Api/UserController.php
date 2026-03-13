@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\Booking;
+use App\Models\CreditTransaction;
 use App\Models\Favorite;
 use App\Models\Notification;
 use App\Models\Setting;
@@ -81,6 +82,23 @@ class UserController extends Controller
                 ->groupBy('slot_number')
                 ->orderByDesc('cnt')
                 ->first()?->slot_number,
+        ]);
+    }
+
+    public function credits(Request $request)
+    {
+        $user = $request->user();
+        $creditsEnabled = Setting::get('credits_enabled', 'false') === 'true';
+
+        return response()->json([
+            'enabled' => $creditsEnabled,
+            'balance' => $user->credits_balance,
+            'monthly_quota' => $user->credits_monthly_quota,
+            'last_refilled' => $user->credits_last_refilled,
+            'transactions' => $user->creditTransactions()
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get(),
         ]);
     }
 

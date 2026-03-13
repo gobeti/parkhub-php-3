@@ -195,6 +195,11 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::put('/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
         Route::delete('/announcements/{id}', [AdminController::class, 'deleteAnnouncement']);
         Route::get('/updates/check', function() { return response()->json(['update_available' => false, 'current_version' => '1.0.0-php']); });
+
+        // Credits management
+        Route::post('/users/{id}/credits', [AdminController::class, 'grantCredits']);
+        Route::get('/credits/transactions', [AdminController::class, 'creditTransactions']);
+        Route::post('/credits/refill-all', [AdminController::class, 'refillAllCredits']);
     });
 
 
@@ -207,6 +212,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/user/preferences', [UserController::class, 'preferences']);
     Route::put('/user/preferences', [UserController::class, 'updatePreferences']);
     Route::get('/user/stats', [UserController::class, 'stats']);
+    Route::get('/user/credits', [UserController::class, 'credits']);
     Route::get('/user/favorites', [UserController::class, 'favorites']);
     Route::post('/user/favorites', [UserController::class, 'addFavorite']);
     Route::delete('/user/favorites/{slotId}', [UserController::class, 'removeFavorite']);
