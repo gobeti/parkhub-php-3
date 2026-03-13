@@ -18,7 +18,7 @@ class AdminTest extends TestCase
         $token = $admin->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/admin/stats');
+            ->getJson('/api/v1/admin/stats');
 
         $response->assertStatus(200)
             ->assertJsonStructure(['data' => ['total_users', 'total_lots', 'total_bookings', 'available_slots']]);
@@ -30,7 +30,7 @@ class AdminTest extends TestCase
         $token = $admin->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/admin/heatmap');
+            ->getJson('/api/v1/admin/heatmap');
 
         $response->assertStatus(200);
     }
@@ -42,7 +42,7 @@ class AdminTest extends TestCase
         $token = $admin->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/admin/users');
+            ->getJson('/api/v1/admin/users');
 
         $response->assertStatus(200);
     }
@@ -54,7 +54,7 @@ class AdminTest extends TestCase
         $token = $admin->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/admin/users/' . $user->id, [
+            ->putJson('/api/v1/admin/users/' . $user->id, [
                 'role' => 'admin',
                 'is_active' => true,
             ]);
@@ -69,7 +69,7 @@ class AdminTest extends TestCase
         $token = $admin->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/admin/settings');
+            ->getJson('/api/v1/admin/settings');
 
         $response->assertStatus(200);
     }
@@ -80,7 +80,7 @@ class AdminTest extends TestCase
         $token = $admin->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/admin/settings', [
+            ->putJson('/api/v1/admin/settings', [
                 'company_name' => 'New Company',
                 'self_registration' => true,
             ]);
@@ -94,7 +94,7 @@ class AdminTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/admin/stats');
+            ->getJson('/api/v1/admin/stats');
 
         $response->assertStatus(403);
     }

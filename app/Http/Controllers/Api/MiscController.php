@@ -86,11 +86,15 @@ class MiscController extends Controller
             abort(403, 'Admin access required');
         }
         $request->validate([
-            'url'    => 'required|url|max:2048',
+            'url'    => ['required', 'url', 'max:2048', 'regex:/^https?:\/\//'],
             'events' => 'nullable|array',
             'secret' => 'nullable|string|max:255',
             'active' => 'nullable|boolean',
         ]);
+        // SSRF protection: reject private/internal IP ranges
+        if (!$this->isExternalUrl($request->url)) {
+            return response()->json(['error' => 'SSRF_BLOCKED', 'message' => 'Webhook URL must not target internal/private networks'], 422);
+        }
         $webhook = Webhook::create($request->only(['url', 'events', 'secret', 'active']));
         return response()->json($webhook, 201);
     }
@@ -101,14 +105,39 @@ class MiscController extends Controller
             abort(403, 'Admin access required');
         }
         $request->validate([
-            'url'    => 'sometimes|url|max:2048',
+            'url'    => ['sometimes', 'url', 'max:2048', 'regex:/^https?:\/\//'],
             'events' => 'nullable|array',
             'secret' => 'nullable|string|max:255',
             'active' => 'nullable|boolean',
         ]);
+        if ($request->has('url') && !$this->isExternalUrl($request->url)) {
+            return response()->json(['error' => 'SSRF_BLOCKED', 'message' => 'Webhook URL must not target internal/private networks'], 422);
+        }
         $webhook = Webhook::findOrFail($id);
         $webhook->update($request->only(['url', 'events', 'secret', 'active']));
         return response()->json($webhook);
+    }
+
+    private function isExternalUrl(string $url): bool
+    {
+        if (!preg_match('#^https?://#i', $url)) {
+            return false;
+        }
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? '';
+        if (empty($host)) {
+            return false;
+        }
+        $ips = gethostbynamel($host);
+        if ($ips === false) {
+            return false;
+        }
+        foreach ($ips as $ip) {
+            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public function deleteWebhook(Request $request, string $id)

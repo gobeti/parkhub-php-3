@@ -36,8 +36,16 @@ class LotController extends Controller
         return response()->json($lots);
     }
 
+    private function requireAdmin(Request $request): void
+    {
+        if (!$request->user() || !$request->user()->isAdmin()) {
+            abort(403, 'Admin access required');
+        }
+    }
+
     public function store(Request $request)
     {
+        $this->requireAdmin($request);
         $request->validate(['name' => 'required|string', 'total_slots' => 'sometimes|integer|min:1|max:1000']);
         $lot = ParkingLot::create($request->only(['name', 'address', 'total_slots', 'layout', 'status']));
 
@@ -107,13 +115,15 @@ class LotController extends Controller
 
     public function update(Request $request, string $id)
     {
+        $this->requireAdmin($request);
         $lot = ParkingLot::findOrFail($id);
         $lot->update($request->only(['name', 'address', 'total_slots', 'layout', 'status']));
         return response()->json($lot);
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+        $this->requireAdmin($request);
         ParkingLot::findOrFail($id)->delete();
         return response()->json(['message' => 'Deleted']);
     }
@@ -178,11 +188,19 @@ class LotController extends Controller
         return max(0, $totalSlots - $occupied);
     }
 
+    /**
+     * Generate QR code for a lot.
+     *
+     * NOTE: Currently delegates to an external API (api.qrserver.com) which means
+     * the booking URL is sent to a third-party server — a privacy concern.
+     * TODO: Replace with a local QR library (e.g. `bacon/bacon-qr-code` which is
+     * already a transitive Laravel dependency, or `chillerlan/php-qrcode`) to
+     * generate QR codes server-side without leaking URLs to external services.
+     */
     public function qrCode(\Illuminate\Http\Request $request, string $id)
     {
         $lot = \App\Models\ParkingLot::findOrFail($id);
         $data = urlencode(url('/') . '/book?lot=' . $id);
-        // Return QR code as SVG via free API
         return response()->json([
             'lot_id'  => $id,
             'lot_name'=> $lot->name,
@@ -191,6 +209,7 @@ class LotController extends Controller
         ]);
     }
 
+    /** @see self::qrCode() for privacy note about external QR API */
     public function slotQrCode(\Illuminate\Http\Request $request, string $lotId, string $slotId)
     {
         $slot = \App\Models\ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);

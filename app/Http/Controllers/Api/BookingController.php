@@ -54,7 +54,7 @@ class BookingController extends Controller
         // Auto-assign slot if not provided (outside transaction — read-only scan)
         if (!$slotId) {
             $bookedSlotIds = Booking::where('lot_id', $request->lot_id)
-                ->whereIn('status', ['confirmed', 'active'])
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                 ->where('start_time', '<', $endTime)
                 ->where('end_time', '>', $request->start_time)
                 ->pluck('slot_id');
@@ -77,7 +77,7 @@ class BookingController extends Controller
 
                 // Re-check conflict with locked data
                 $conflict = Booking::where('slot_id', $slotId)
-                    ->whereIn('status', ['confirmed', 'active'])
+                    ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                     ->where('start_time', '<', $endTime)
                     ->where('end_time', '>', $request->start_time)
                     ->exists();
@@ -98,7 +98,7 @@ class BookingController extends Controller
                     'vehicle_plate' => $request->license_plate ?? $request->vehicle_plate,
                     'start_time'    => $request->start_time,
                     'end_time'      => $endTime,
-                    'status'        => 'confirmed',
+                    'status'        => Booking::STATUS_CONFIRMED,
                     'notes'         => $request->notes,
                     'recurrence'    => $request->recurrence,
                 ]);
@@ -159,7 +159,7 @@ class BookingController extends Controller
         $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
 
         // Mark as cancelled instead of hard-deleting — preserves audit trail
-        $booking->update(['status' => 'cancelled']);
+        $booking->update(['status' => Booking::STATUS_CANCELLED]);
 
         AuditLog::create([
             'user_id' => $request->user()->id,
@@ -216,7 +216,7 @@ class BookingController extends Controller
             $dayStart   = $date->copy()->startOfDay();
             $dayEnd     = $date->copy()->endOfDay();
             $taken      = Booking::where('lot_id', $request->lot_id)
-                ->whereIn('status', ['confirmed', 'active'])
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                 ->where('start_time', '<', $dayEnd)
                 ->where('end_time', '>', $dayStart)
                 ->pluck('slot_id');
@@ -232,34 +232,44 @@ class BookingController extends Controller
         }
 
         $startTime = $request->date ? now()->parse($request->date)->startOfDay() : now();
-        $endTime   = $request->date ? now()->parse($request->date)->endOfDay()   : now()->endOfDay();
+        $endOfDay  = $request->date ? now()->parse($request->date)->endOfDay()   : now()->endOfDay();
 
-        $today      = $startTime;
-        $endOfDay   = $endTime;
-        $request->slot_id = $slot->id;
+        $booking = null;
 
-        $conflict = Booking::where('slot_id', $slot->id)
-            ->whereIn('status', ['confirmed', 'active'])
-            ->where('start_time', '<', $endOfDay)
-            ->where('end_time', '>', $today)
-            ->exists();
+        try {
+            DB::transaction(function () use ($request, $slot, $startTime, $endOfDay, &$booking) {
+                // Lock the slot row to prevent race conditions
+                ParkingSlot::where('id', $slot->id)->lockForUpdate()->firstOrFail();
 
-        if ($conflict) {
-            return response()->json(['error' => 'SLOT_UNAVAILABLE', 'message' => 'Slot taken'], 409);
+                $conflict = Booking::where('slot_id', $slot->id)
+                    ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
+                    ->where('start_time', '<', $endOfDay)
+                    ->where('end_time', '>', $startTime)
+                    ->exists();
+
+                if ($conflict) {
+                    throw new \Exception('SLOT_CONFLICT');
+                }
+
+                $booking = Booking::create([
+                    'user_id' => $request->user()->id,
+                    'lot_id' => $slot->lot_id,
+                    'slot_id' => $slot->id,
+                    'booking_type' => 'einmalig',
+                    'lot_name' => $slot->lot?->name,
+                    'slot_number' => $slot->slot_number,
+                    'vehicle_plate' => $request->license_plate,
+                    'start_time' => now(),
+                    'end_time' => $endOfDay,
+                    'status' => Booking::STATUS_CONFIRMED,
+                ]);
+            }, 3);
+        } catch (\Exception $e) {
+            if ($e->getMessage() === 'SLOT_CONFLICT') {
+                return response()->json(['error' => 'SLOT_UNAVAILABLE', 'message' => 'Slot taken'], 409);
+            }
+            throw $e;
         }
-
-        $booking = Booking::create([
-            'user_id' => $request->user()->id,
-            'lot_id' => $slot->lot_id,
-            'slot_id' => $slot->id,
-            'booking_type' => 'einmalig',
-            'lot_name' => $slot->lot?->name,
-            'slot_number' => $slot->slot_number,
-            'vehicle_plate' => $request->license_plate,
-            'start_time' => now(),
-            'end_time' => $endOfDay,
-            'status' => 'confirmed',
-        ]);
 
         return response()->json($booking, 200);
     }
@@ -277,7 +287,7 @@ class BookingController extends Controller
         if (!$slotId) {
             $startTime = $request->start_time ?? now();
             $bookedSlotIds = Booking::where('lot_id', $request->lot_id)
-                ->whereIn('status', ['confirmed', 'active'])
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                 ->where('start_time', '<', $request->end_time)
                 ->where('end_time', '>', $startTime)
                 ->pluck('slot_id');
@@ -290,29 +300,56 @@ class BookingController extends Controller
             $slotId = $slot->id;
         }
 
-        $guest = GuestBooking::create([
-            'created_by' => $request->user()->id,
-            'lot_id' => $request->lot_id,
-            'slot_id' => $slotId,
-            'guest_name' => $request->guest_name,
-            'guest_code' => strtoupper(Str::random(8)),
-            'start_time' => $request->start_time ?? now(),
-            'end_time' => $request->end_time,
-            'vehicle_plate' => $request->vehicle_plate,
-            'status' => 'confirmed',
-        ]);
+        $guest = null;
 
-        Booking::create([
-            'user_id' => $request->user()->id,
-            'lot_id' => $request->lot_id,
-            'slot_id' => $slotId,
-            'booking_type' => 'einmalig',
-            'vehicle_plate' => $request->vehicle_plate,
-            'start_time' => $request->start_time ?? now(),
-            'end_time' => $request->end_time,
-            'status' => 'confirmed',
-            'notes' => 'Guest: ' . $request->guest_name,
-        ]);
+        try {
+            DB::transaction(function () use ($request, $slotId, &$guest) {
+                // Lock the slot row to prevent race conditions
+                ParkingSlot::where('id', $slotId)->lockForUpdate()->firstOrFail();
+
+                $guestStartTime = $request->start_time ?? now();
+
+                // Re-check conflict with locked data
+                $conflict = Booking::where('slot_id', $slotId)
+                    ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
+                    ->where('start_time', '<', $request->end_time)
+                    ->where('end_time', '>', $guestStartTime)
+                    ->exists();
+
+                if ($conflict) {
+                    throw new \Exception('SLOT_CONFLICT');
+                }
+
+                $guest = GuestBooking::create([
+                    'created_by' => $request->user()->id,
+                    'lot_id' => $request->lot_id,
+                    'slot_id' => $slotId,
+                    'guest_name' => $request->guest_name,
+                    'guest_code' => strtoupper(Str::random(8)),
+                    'start_time' => $guestStartTime,
+                    'end_time' => $request->end_time,
+                    'vehicle_plate' => $request->vehicle_plate,
+                    'status' => Booking::STATUS_CONFIRMED,
+                ]);
+
+                Booking::create([
+                    'user_id' => $request->user()->id,
+                    'lot_id' => $request->lot_id,
+                    'slot_id' => $slotId,
+                    'booking_type' => 'einmalig',
+                    'vehicle_plate' => $request->vehicle_plate,
+                    'start_time' => $guestStartTime,
+                    'end_time' => $request->end_time,
+                    'status' => Booking::STATUS_CONFIRMED,
+                    'notes' => 'Guest: ' . $request->guest_name,
+                ]);
+            }, 3);
+        } catch (\Exception $e) {
+            if ($e->getMessage() === 'SLOT_CONFLICT') {
+                return response()->json(['error' => 'SLOT_UNAVAILABLE', 'message' => 'Slot is already booked'], 409);
+            }
+            throw $e;
+        }
 
         return response()->json($guest, 201);
     }
@@ -326,8 +363,15 @@ class BookingController extends Controller
 
         $booking = Booking::where('user_id', $request->user()->id)->findOrFail($request->booking_id);
 
+        $newSlot = ParkingSlot::findOrFail($request->target_slot_id);
+
+        // Validate that the target slot belongs to the same lot as the booking
+        if ($newSlot->lot_id !== $booking->lot_id) {
+            return response()->json(['error' => 'CROSS_LOT_SWAP', 'message' => 'Target slot must belong to the same lot as the current booking'], 422);
+        }
+
         $conflict = Booking::where('slot_id', $request->target_slot_id)
-            ->whereIn('status', ['confirmed', 'active'])
+            ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
             ->where('start_time', '<', $booking->end_time)
             ->where('end_time', '>', $booking->start_time)
             ->exists();
@@ -335,8 +379,6 @@ class BookingController extends Controller
         if ($conflict) {
             return response()->json(['error' => 'SLOT_UNAVAILABLE'], 409);
         }
-
-        $newSlot = ParkingSlot::findOrFail($request->target_slot_id);
         $booking->update([
             'slot_id' => $request->target_slot_id,
             'slot_number' => $newSlot->slot_number,
@@ -377,7 +419,7 @@ class BookingController extends Controller
     public function checkin(Request $request, string $id)
     {
         $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
-        $booking->update(['checked_in_at' => now(), 'status' => 'active']);
+        $booking->update(['checked_in_at' => now(), 'status' => Booking::STATUS_ACTIVE]);
         AuditLog::create([
             'user_id' => $request->user()->id,
             'username' => $request->user()->username,

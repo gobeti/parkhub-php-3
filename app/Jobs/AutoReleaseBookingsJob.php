@@ -31,21 +31,22 @@ class AutoReleaseBookingsJob implements ShouldQueue
         // Find bookings that started more than $timeoutMinutes ago, still active, but no check-in
         $staleBookings = Booking::whereIn('status', ['confirmed', 'active'])
             ->where('start_time', '<=', $cutoff)
-            ->whereNull('check_in_at')
+            ->whereNull('checked_in_at')
             ->get();
 
         foreach ($staleBookings as $booking) {
-            $booking->update(['status' => 'cancelled', 'cancellation_reason' => 'auto_release']);
+            $booking->status = 'cancelled';
+            $booking->save();
             Log::info("Auto-released booking {$booking->id} (no check-in after {$timeoutMinutes}min)");
 
             // Notify first waitlist entry
             $waitlist = WaitlistEntry::where('lot_id', $booking->lot_id)
                 ->whereNotNull('user_id')
-                ->where('status', 'waiting')
+                ->whereNull('notified_at')
                 ->orderBy('created_at')
                 ->first();
             if ($waitlist) {
-                $waitlist->update(['status' => 'notified', 'notified_at' => now()]);
+                $waitlist->update(['notified_at' => now()]);
                 $user = $waitlist->user;
                 $lot = $booking->lot ?? ParkingLot::find($booking->lot_id);
                 if ($user && $lot) {

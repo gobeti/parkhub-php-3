@@ -73,10 +73,11 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'name' => $request->name,
-            'role' => 'user',
             'is_active' => true,
             'preferences' => ['language' => 'en', 'theme' => 'system', 'notifications_enabled' => true],
         ]);
+        $user->role = 'user';
+        $user->save();
 
         $token = $user->createToken('auth-token');
 
@@ -223,32 +224,26 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
+            'email'                 => 'required|email',
             'token'                 => 'required|string',
             'password'              => 'required|string|min:8',
             'password_confirmation' => 'required|same:password',
         ]);
 
-        // Find a matching token in the password_reset_tokens table
+        // Look up the single token row by email (O(1) instead of scanning all rows)
         $record = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
             ->where('created_at', '>', now()->subMinutes(60)) // 60-minute expiry
-            ->get();
+            ->first();
 
-        $matched = null;
-        foreach ($record as $row) {
-            if (Hash::check($request->token, $row->token)) {
-                $matched = $row;
-                break;
-            }
-        }
-
-        if (!$matched) {
+        if (!$record || !Hash::check($request->token, $record->token)) {
             return response()->json([
                 'error'   => 'INVALID_TOKEN',
                 'message' => 'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.',
             ], 422);
         }
 
-        $user = User::where('email', $matched->email)->first();
+        $user = User::where('email', $record->email)->first();
         if (!$user) {
             return response()->json(['error' => 'USER_NOT_FOUND', 'message' => 'Benutzer nicht gefunden.'], 404);
         }

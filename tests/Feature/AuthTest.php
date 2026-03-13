@@ -12,7 +12,7 @@ class AuthTest extends TestCase
 
     public function test_user_can_register(): void
     {
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'username' => 'testuser',
             'email' => 'test@example.com',
             'password' => 'password123',
@@ -32,7 +32,7 @@ class AuthTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'username' => 'testuser',
             'password' => 'password123',
         ]);
@@ -48,7 +48,7 @@ class AuthTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'username' => 'testuser',
             'password' => 'wrongpassword',
         ]);
@@ -62,7 +62,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/me');
+            ->getJson('/api/v1/users/me');
 
         $response->assertStatus(200)
             ->assertJsonPath('data.username', $user->username);
@@ -74,7 +74,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/me', [
+            ->putJson('/api/v1/users/me', [
                 'name' => 'Updated Name',
                 'email' => 'updated@example.com',
             ]);
@@ -89,7 +89,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/refresh');
+            ->postJson('/api/v1/auth/refresh');
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true);

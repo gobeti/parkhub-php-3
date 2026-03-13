@@ -27,29 +27,39 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/auth/refresh',  [AuthController::class, 'refresh']);
 });
 
-// Setup
+// Setup — status is always public; mutation endpoints are blocked once setup is completed
 Route::get('/setup/status', [SetupController::class, 'status']);
 Route::post('/setup', [SetupController::class, 'init']);
-Route::post('/setup/change-password', function(\Illuminate\Http\Request $request) {
-    $request->validate(['current_password' => 'required', 'new_password' => 'required|min:8']);
-    $admin = \App\Models\User::where('role', 'admin')->first();
-    if (!$admin || !\Illuminate\Support\Facades\Hash::check($request->current_password, $admin->password)) {
-        return response()->json(['success' => false, 'error' => ['code' => 'INVALID_PASSWORD', 'message' => 'Current password is incorrect']], 401);
-    }
-    $admin->password = bcrypt($request->new_password);
-    $admin->save();
-    \App\Models\Setting::set('needs_password_change', 'false');
-    $token = $admin->createToken('auth-token');
-    return response()->json(['success' => true, 'data' => [
-        'user' => $admin,
-        'tokens' => ['access_token' => $token->plainTextToken, 'token_type' => 'Bearer', 'expires_at' => now()->addDays(7)->toISOString()],
-    ]]);
-});
-Route::post('/setup/complete', function(\Illuminate\Http\Request $request) {
-    \App\Models\Setting::set('setup_completed', 'true');
-    if ($request->company_name) \App\Models\Setting::set('company_name', $request->company_name);
-    if ($request->use_case) \App\Models\Setting::set('use_case', $request->use_case);
-    return response()->json(['success' => true, 'data' => ['message' => 'Setup completed']]);
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/setup/change-password', function(\Illuminate\Http\Request $request) {
+        // Guard: reject if setup is already completed
+        if (\App\Models\Setting::get('setup_completed') === 'true') {
+            return response()->json(['success' => false, 'error' => ['code' => 'SETUP_COMPLETED', 'message' => 'Setup has already been completed']], 403);
+        }
+        $request->validate(['current_password' => 'required', 'new_password' => 'required|min:8']);
+        $admin = \App\Models\User::where('role', 'admin')->first();
+        if (!$admin || !\Illuminate\Support\Facades\Hash::check($request->current_password, $admin->password)) {
+            return response()->json(['success' => false, 'error' => ['code' => 'INVALID_PASSWORD', 'message' => 'Current password is incorrect']], 401);
+        }
+        $admin->password = bcrypt($request->new_password);
+        $admin->save();
+        \App\Models\Setting::set('needs_password_change', 'false');
+        $token = $admin->createToken('auth-token');
+        return response()->json(['success' => true, 'data' => [
+            'user' => $admin,
+            'tokens' => ['access_token' => $token->plainTextToken, 'token_type' => 'Bearer', 'expires_at' => now()->addDays(7)->toISOString()],
+        ]]);
+    });
+    Route::post('/setup/complete', function(\Illuminate\Http\Request $request) {
+        // Guard: reject if setup is already completed
+        if (\App\Models\Setting::get('setup_completed') === 'true') {
+            return response()->json(['success' => false, 'error' => ['code' => 'SETUP_COMPLETED', 'message' => 'Setup has already been completed']], 403);
+        }
+        \App\Models\Setting::set('setup_completed', 'true');
+        if ($request->company_name) \App\Models\Setting::set('company_name', $request->company_name);
+        if ($request->use_case) \App\Models\Setting::set('use_case', $request->use_case);
+        return response()->json(['success' => true, 'data' => ['message' => 'Setup completed']]);
+    });
 });
 
 // Public
@@ -84,7 +94,7 @@ Route::get('/announcements/active', function() {
 });
 
 // Protected
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Users
     Route::get('/users/me', [AuthController::class, 'me']);
     Route::put('/users/me', [AuthController::class, 'updateMe']);
@@ -159,22 +169,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // Team
     Route::get('/team', [TeamController::class, 'index']);
 
-    // Admin
-    Route::get('/admin/stats', [AdminController::class, 'stats']);
-    Route::get('/admin/heatmap', [AdminController::class, 'heatmap']);
-    Route::get('/admin/audit-log', [AdminController::class, 'auditLog']);
-    Route::get('/admin/settings', [AdminController::class, 'getSettings']);
-    Route::put('/admin/settings', [AdminController::class, 'updateSettings']);
-    Route::get('/admin/users', [AdminController::class, 'users']);
-    Route::put('/admin/users/{id}', [AdminController::class, 'updateUser']);
-    Route::post('/admin/users/import', [AdminController::class, 'importUsers']);
-    Route::get('/admin/bookings', [AdminController::class, 'bookings']);
-    Route::patch('/admin/bookings/{id}/cancel', [AdminController::class, 'cancelBooking']);
-    Route::get('/admin/announcements', [AdminController::class, 'announcements']);
-    Route::post('/admin/announcements', [AdminController::class, 'createAnnouncement']);
-    Route::put('/admin/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
-    Route::delete('/admin/announcements/{id}', [AdminController::class, 'deleteAnnouncement']);
-    Route::get('/admin/updates/check', function() { return response()->json(['update_available' => false, 'current_version' => '1.0.0-php']); });
+    // Admin — middleware enforces admin role at the routing layer (defense in depth)
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('/stats', [AdminController::class, 'stats']);
+        Route::get('/heatmap', [AdminController::class, 'heatmap']);
+        Route::get('/audit-log', [AdminController::class, 'auditLog']);
+        Route::get('/settings', [AdminController::class, 'getSettings']);
+        Route::put('/settings', [AdminController::class, 'updateSettings']);
+        Route::get('/users', [AdminController::class, 'users']);
+        Route::put('/users/{id}', [AdminController::class, 'updateUser']);
+        Route::post('/users/import', [AdminController::class, 'importUsers']);
+        Route::get('/bookings', [AdminController::class, 'bookings']);
+        Route::patch('/bookings/{id}/cancel', [AdminController::class, 'cancelBooking']);
+        Route::get('/announcements', [AdminController::class, 'announcements']);
+        Route::post('/announcements', [AdminController::class, 'createAnnouncement']);
+        Route::put('/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
+        Route::delete('/announcements/{id}', [AdminController::class, 'deleteAnnouncement']);
+        Route::get('/updates/check', function() { return response()->json(['update_available' => false, 'current_version' => '1.0.0-php']); });
+    });
 
 
 
@@ -209,7 +221,7 @@ Route::get('/health/ready', [\App\Http\Controllers\Api\HealthController::class, 
 // Impressum — public (DDG § 5 requires it to be freely accessible)
 Route::get('/legal/impressum', [\App\Http\Controllers\Api\AdminController::class, 'publicImpress']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // iCal export
     Route::get('/user/calendar.ics', [\App\Http\Controllers\Api\UserController::class, 'calendarExport']);
 
@@ -232,7 +244,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/waitlist/{id}',[\App\Http\Controllers\Api\WaitlistController::class, 'destroy']);
 
     // Admin CSV export
-    Route::get('/admin/bookings/export', [\App\Http\Controllers\Api\AdminController::class, 'exportBookingsCsv']);
+    Route::middleware('admin')->get('/admin/bookings/export', [\App\Http\Controllers\Api\AdminController::class, 'exportBookingsCsv']);
 });
 
 // ── Feature parity batch 2: system, auth, bookings, absences ──────────────
@@ -252,7 +264,7 @@ Route::middleware('throttle:5,15')->group(function () {
 // Branding logo (public)
 Route::get('/branding/logo', [\App\Http\Controllers\Api\AdminController::class, 'serveBrandingLogo']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Auth (protected)
     Route::patch('/users/me/password', [\App\Http\Controllers\Api\AuthController::class, 'changePassword']);
@@ -291,25 +303,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/lots/{lotId}/slots/{slotId}/qr',  [LotController::class, 'slotQrCode']);
 
     // Admin: branding, privacy, reports, charts, settings, reset
-    Route::get('/admin/branding',          [AdminController::class, 'getBranding']);
-    Route::put('/admin/branding',          [AdminController::class, 'updateBranding']);
-    Route::post('/admin/branding/logo',    [AdminController::class, 'uploadBrandingLogo']);
-    Route::get('/admin/privacy',           [AdminController::class, 'getPrivacy']);
-    Route::put('/admin/privacy',           [AdminController::class, 'updatePrivacy']);
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('/branding',          [AdminController::class, 'getBranding']);
+        Route::put('/branding',          [AdminController::class, 'updateBranding']);
+        Route::post('/branding/logo',    [AdminController::class, 'uploadBrandingLogo']);
+        Route::get('/privacy',           [AdminController::class, 'getPrivacy']);
+        Route::put('/privacy',           [AdminController::class, 'updatePrivacy']);
 
-    // Impressum admin editor (DDG § 5 fields)
-    Route::get('/admin/impressum',         [AdminController::class, 'getImpress']);
-    Route::put('/admin/impressum',         [AdminController::class, 'updateImpress']);
-    Route::get('/admin/reports',           [AdminController::class, 'reports']);
-    Route::get('/admin/dashboard/charts',  [AdminController::class, 'dashboardCharts']);
-    Route::post('/admin/reset',            [AdminController::class, 'resetDatabase']);
-    Route::get('/admin/settings/auto-release',  [AdminController::class, 'getAutoReleaseSettings']);
-    Route::put('/admin/settings/auto-release',  [AdminController::class, 'updateAutoReleaseSettings']);
-    Route::get('/admin/settings/email',    [AdminController::class, 'getEmailSettings']);
-    Route::put('/admin/settings/email',    [AdminController::class, 'updateEmailSettings']);
-    Route::get('/admin/settings/webhooks', [AdminController::class, 'getWebhookSettings']);
-    Route::put('/admin/settings/webhooks', [AdminController::class, 'updateWebhookSettings']);
-    Route::patch('/admin/slots/{id}',      [AdminController::class, 'updateSlot']);
-    Route::delete('/admin/lots/{id}',      [AdminController::class, 'deleteLot']);
-    Route::delete('/admin/users/{id}',     [AdminController::class, 'deleteUser']);
+        // Impressum admin editor (DDG § 5 fields)
+        Route::get('/impressum',         [AdminController::class, 'getImpress']);
+        Route::put('/impressum',         [AdminController::class, 'updateImpress']);
+        Route::get('/reports',           [AdminController::class, 'reports']);
+        Route::get('/dashboard/charts',  [AdminController::class, 'dashboardCharts']);
+        Route::post('/reset',            [AdminController::class, 'resetDatabase']);
+        Route::get('/settings/auto-release',  [AdminController::class, 'getAutoReleaseSettings']);
+        Route::put('/settings/auto-release',  [AdminController::class, 'updateAutoReleaseSettings']);
+        Route::get('/settings/email',    [AdminController::class, 'getEmailSettings']);
+        Route::put('/settings/email',    [AdminController::class, 'updateEmailSettings']);
+        Route::get('/settings/webhooks', [AdminController::class, 'getWebhookSettings']);
+        Route::put('/settings/webhooks', [AdminController::class, 'updateWebhookSettings']);
+        Route::patch('/slots/{id}',      [AdminController::class, 'updateSlot']);
+        Route::delete('/lots/{id}',      [AdminController::class, 'deleteLot']);
+        Route::delete('/users/{id}',     [AdminController::class, 'deleteUser']);
+    });
 });

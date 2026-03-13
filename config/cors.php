@@ -19,12 +19,10 @@ return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
     'allowed_origins' => array_values(array_unique(array_merge($baseOrigins, $extraOrigins))),
+    // Specific origin patterns can be added via APP_EXTRA_ALLOWED_ORIGINS env var
+    // (comma-separated). Do NOT use wildcard patterns for PaaS provider domains
+    // as they would allow any tenant on those platforms to make cross-origin requests.
     'allowed_origins_patterns' => array_filter([
-        // Auto-allow subdomains on common free hosting platforms
-        '^https://[\w-]+\.onrender\.com$',
-        '^https://[\w-]+\.railway\.app$',
-        '^https://[\w-]+\.fly\.dev$',
-        '^https://[\w-]+\.koyeb\.app$',
         // Allow demos page on GitHub Pages
         '^https://nash87\.github\.io$',
     ]),

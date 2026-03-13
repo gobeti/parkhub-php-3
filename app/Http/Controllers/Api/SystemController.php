@@ -11,7 +11,6 @@ class SystemController extends Controller
     {
         return response()->json([
             'version' => '1.0.0-php',
-            'php_version' => PHP_VERSION,
             'build' => 'php-laravel',
         ]);
     }

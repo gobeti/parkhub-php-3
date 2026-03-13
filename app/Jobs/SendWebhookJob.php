@@ -51,8 +51,11 @@ class SendWebhookJob implements ShouldQueue
                 'webhook_id' => $this->webhookId,
                 'event'      => $this->event,
                 'status'     => $response->status(),
+                'attempt'    => $this->attempts(),
             ]);
-            $this->fail("HTTP {$response->status()}");
+            // Throw exception to trigger retry (up to $tries attempts).
+            // The failed() method handles permanent failure after all retries are exhausted.
+            throw new \RuntimeException("Webhook delivery failed with HTTP {$response->status()}");
         }
     }
 

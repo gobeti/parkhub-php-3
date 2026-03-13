@@ -25,7 +25,7 @@ class ExpandRecurringBookingsJob implements ShouldQueue
     public function handle(): void
     {
         $created = 0;
-        $active = RecurringBooking::where('is_active', true)
+        $active = RecurringBooking::where('active', true)
             ->where('start_date', '<=', now()->toDateString())
             ->where(function ($q) {
                 $q->whereNull('end_date')->orWhere('end_date', '>=', now()->toDateString());
