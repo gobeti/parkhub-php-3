@@ -96,6 +96,7 @@ Route::get('/announcements/active', function() {
 Route::prefix('demo')->group(function () {
     Route::get('/status', [\App\Http\Controllers\Api\DemoController::class, 'status']);
     Route::post('/vote', [\App\Http\Controllers\Api\DemoController::class, 'vote']);
+    Route::post('/reset', [\App\Http\Controllers\Api\DemoController::class, 'reset']);
     Route::get('/config', [\App\Http\Controllers\Api\DemoController::class, 'config']);
 });
 
