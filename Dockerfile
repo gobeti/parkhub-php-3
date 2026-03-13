@@ -53,8 +53,9 @@ RUN chown -R www-data:www-data /var/www/html \
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Apache must start as root to bind port 80, then drops worker processes to www-data automatically.
-# The entrypoint also needs root for chown. Non-root is enforced at the worker level by Apache itself.
-EXPOSE 80
-# Use CMD (not ENTRYPOINT) so Render's dockerCommand can override cleanly
+# Configure Apache to listen on port 10000 (Render expects this on free tier)
+RUN sed -i 's/Listen 80/Listen 10000/' /etc/apache2/ports.conf \
+    && sed -i 's/:80/:10000/' /etc/apache2/sites-available/*.conf
+
+EXPOSE 10000
 CMD ["/usr/local/bin/docker-entrypoint.sh", "apache2-foreground"]
