@@ -61,6 +61,10 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        if (Setting::get('self_registration', 'true') !== 'true') {
+            return response()->json(['message' => 'Registration is currently disabled'], 403);
+        }
+
         $request->validate([
             'username' => 'required|string|min:3|max:50|unique:users|alpha_dash',
             'email'    => 'required|email|max:255|unique:users',
@@ -253,7 +257,7 @@ class AuthController extends Controller
         $user->update(['password' => Hash::make($request->password)]);
         $user->tokens()->delete(); // Invalidate all existing sessions
 
-        DB::table('password_reset_tokens')->where('email', $matched->email)->delete();
+        DB::table('password_reset_tokens')->where('email', $record->email)->delete();
 
         AuditLog::create([
             'user_id'    => $user->id,

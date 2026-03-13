@@ -51,7 +51,7 @@ export const api = {
       method: 'POST', body: JSON.stringify({ username, password }),
     }),
 
-  register: (data: { username: string; email: string; password: string; name: string }) =>
+  register: (data: { username: string; email: string; password: string; password_confirmation: string; name: string }) =>
     request('/api/v1/auth/register', { method: 'POST', body: JSON.stringify(data) }),
 
   me: () => request<User>('/api/v1/me'),
