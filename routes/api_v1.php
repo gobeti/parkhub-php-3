@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/auth/login',    [AuthController::class, 'login']);
     Route::post('/auth/register', [AuthController::class, 'register']);
-    Route::post('/auth/refresh',  [AuthController::class, 'refresh']);
 });
 
 // Setup — status is always public; mutation endpoints are blocked once setup is completed
@@ -95,6 +94,9 @@ Route::get('/announcements/active', function() {
 
 // Protected
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
+    // Auth (protected)
+    Route::post('/auth/refresh',  [AuthController::class, 'refresh']);
+
     // Users
     Route::get('/users/me', [AuthController::class, 'me']);
     Route::put('/users/me', [AuthController::class, 'updateMe']);

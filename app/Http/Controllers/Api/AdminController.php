@@ -214,13 +214,13 @@ public function getSettings(Request $request)
         $request->validate([
             'company_name'         => 'sometimes|string|max:255',
             'use_case'             => 'sometimes|in:corporate,university,residential,other',
-            'self_registration'    => 'sometimes|in:true,false',
+            'self_registration'    => 'sometimes|boolean',
             'license_plate_mode'   => 'sometimes|in:required,optional,disabled',
             'display_name_format'  => 'sometimes|in:first_name,full_name,username',
             'max_bookings_per_day' => 'sometimes|integer|min:1|max:50',
-            'allow_guest_bookings' => 'sometimes|in:true,false',
+            'allow_guest_bookings' => 'sometimes|boolean',
             'auto_release_minutes' => 'sometimes|integer|min:0|max:480',
-            'require_vehicle'      => 'sometimes|in:true,false',
+            'require_vehicle'      => 'sometimes|boolean',
             'primary_color'        => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
             'secondary_color'      => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
         ]);
@@ -300,11 +300,16 @@ public function getSettings(Request $request)
             'password'   => 'sometimes|string|min:8',
         ]);
         $user = User::findOrFail($id);
-        $data = $request->only(['name', 'email', 'role', 'is_active', 'department']);
+        $data = $request->only(['name', 'email', 'is_active', 'department']);
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
         $user->update($data);
+        // Handle role separately — it's excluded from $fillable to prevent mass-assignment escalation
+        if ($request->filled('role')) {
+            $user->role = $request->role;
+            $user->save();
+        }
         // Return via toArray() to respect $hidden
         return response()->json($user->fresh()->toArray());
     }
