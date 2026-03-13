@@ -187,7 +187,7 @@ function AdminLots() {
     setDeletingLotId(lotId);
     try {
       const token = window.__parkhub_token || localStorage.getItem('parkhub_token');
-      const res = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/admin/lots/` + lotId, {
+      const res = await fetch(`/api/v1/admin/lots/` + lotId, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token },
       });
@@ -221,14 +221,14 @@ function AdminLots() {
                   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                   if (token) headers['Authorization'] = `Bearer ${token}`;
                   const totalSlots = layout.rows.reduce((sum, r) => sum + r.slots.length, 0);
-                  const createRes = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/lots`, {
+                  const createRes = await fetch(`/api/v1/lots`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({ name, address: name, total_slots: totalSlots }),
                   });
                   const createData = await createRes.json();
                   if (createData.success && createData.data?.id && layout.rows.length > 0) {
-                    await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/lots/${createData.data.id}/layout`, {
+                    await fetch(`/api/v1/lots/${createData.data.id}/layout`, {
                       method: 'PUT',
                       headers,
                       body: JSON.stringify(layout),
@@ -262,7 +262,7 @@ function AdminLots() {
                       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
                       if (token) headers['Authorization'] = `Bearer ${token}`;
                       if (layout.rows.length > 0) {
-                        await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/lots/${editingLotId}/layout`, {
+                        await fetch(`/api/v1/lots/${editingLotId}/layout`, {
                           method: 'PUT',
                           headers,
                           body: JSON.stringify(layout),
@@ -311,7 +311,7 @@ function AdminUsers() {
     setSaving(true);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/users/${userId}`, {
+      const res = await fetch(`/api/v1/admin/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(editForm),
@@ -329,7 +329,7 @@ function AdminUsers() {
     setDeletingId(userId);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/users/${userId}`, {
+      const res = await fetch(`/api/v1/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -442,7 +442,7 @@ function AdminBookings() {
     setCancellingId(bookingId);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/bookings/${bookingId}/cancel`, {
+      const res = await fetch(`/api/v1/admin/bookings/${bookingId}/cancel`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -457,7 +457,7 @@ function AdminBookings() {
     setExporting(true);
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/admin/bookings/export`, {
+      const res = await fetch(`/api/v1/admin/bookings/export`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -582,7 +582,7 @@ function AdminSystem() {
   const [updateMessage, setUpdateMessage] = useState('');
 
   useEffect(() => {
-    fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/system/version`)
+    fetch(`/api/v1/system/version`)
       .then(r => r.json())
       .then(d => {
         setVersion(d.version || '');
@@ -598,7 +598,7 @@ function AdminSystem() {
     setError('');
     try {
       const token = localStorage.getItem('parkhub_token');
-      const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/v1/admin/updates/check', {
+      const res = await fetch('/api/v1/admin/updates/check', {
         headers: { Authorization: 'Bearer ' + token },
       });
       const data = await res.json();
@@ -636,7 +636,7 @@ function AdminSystem() {
           // Poll for server to come back
           const poll = setInterval(async () => {
             try {
-              const res = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/health`);
+              const res = await fetch(`/api/v1/health`);
               if (res.ok) {
                 clearInterval(poll);
                 window.location.href = '/login';
@@ -662,7 +662,7 @@ function AdminSystem() {
       setUpdateProgress(95);
       const poll = setInterval(async () => {
         try {
-          const res = await fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/health`);
+          const res = await fetch(`/api/v1/health`);
           if (res.ok) {
             clearInterval(poll);
             window.location.href = '/login';
