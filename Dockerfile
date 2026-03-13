@@ -2,9 +2,8 @@
 FROM node:20-slim AS frontend
 WORKDIR /app
 COPY package.json package-lock.json* ./
-# Use ci for reproducible installs; omit dev deps since we only need the build output
-ENV NODE_ENV=production
-RUN npm ci --omit=dev
+# Install all deps (vite, tailwind, postcss are devDependencies needed for build)
+RUN npm ci
 COPY vite.config.* tsconfig* tailwind.config.* postcss.config.* ./
 COPY resources/ resources/
 ARG VITE_BASE_PATH=
@@ -14,7 +13,7 @@ RUN if [ -n "$VITE_BASE_PATH" ]; then npm run build -- --base=$VITE_BASE_PATH/; 
 
 # Stage 2: PHP + Apache
 # Pin to bookworm (Debian 12) for reproducible OS packages; update major version intentionally
-FROM php:8.3-apache-bookworm
+FROM php:8.4-apache-bookworm
 
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev \
@@ -43,7 +42,7 @@ COPY --chown=www-data:www-data --from=frontend /app/public/ /var/www/html/public
 
 ENV APP_ENV=production
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || true
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 storage bootstrap/cache \
@@ -57,5 +56,5 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Apache must start as root to bind port 80, then drops worker processes to www-data automatically.
 # The entrypoint also needs root for chown. Non-root is enforced at the worker level by Apache itself.
 EXPOSE 80
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["apache2-foreground"]
+# Use CMD (not ENTRYPOINT) so Render's dockerCommand can override cleanly
+CMD ["/usr/local/bin/docker-entrypoint.sh", "apache2-foreground"]
