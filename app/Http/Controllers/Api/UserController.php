@@ -218,6 +218,9 @@ class UserController extends Controller
                 ->get(['id', 'absence_type', 'start_date', 'end_date', 'note']),
             'vehicles'    => Vehicle::where('user_id', $user->id)
                 ->get(['id', 'plate', 'make', 'model', 'color', 'is_default']),
+            'credit_transactions' => CreditTransaction::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get(['id', 'type', 'amount', 'balance_after', 'description', 'created_at']),
             'preferences' => $user->preferences ?? [],
         ];
 

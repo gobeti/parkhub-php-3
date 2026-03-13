@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class DemoController extends Controller
 {
-    private const VOTE_THRESHOLD = 3;
+    private const VOTE_THRESHOLD = 5;
     private const TIMER_DURATION = 1800; // 30 minutes in seconds
     private const CACHE_PREFIX = 'demo_';
 
@@ -96,7 +96,7 @@ class DemoController extends Controller
 
         // Re-seed demo data
         try {
-            Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+            Artisan::call('migrate:refresh', ['--seed' => true, '--force' => true]);
         } catch (\Exception $e) {
             // Log but don't fail - timer still resets
             \Log::warning('Demo reset seed failed: ' . $e->getMessage());
