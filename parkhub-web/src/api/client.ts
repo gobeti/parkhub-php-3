@@ -247,10 +247,17 @@ export interface AdminStats {
 }
 
 export interface DemoStatus {
-  timer_seconds: number;
-  votes: number;
-  vote_threshold: number;
+  enabled: boolean;
+  timer: {
+    remaining: number;
+    duration: number;
+    started_at: number;
+  };
+  votes: {
+    current: number;
+    threshold: number;
+    has_voted: boolean;
+  };
   viewers: number;
-  has_voted: boolean;
   reset?: boolean;
 }
