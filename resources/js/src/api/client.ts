@@ -423,6 +423,24 @@ class ApiClient {
     return this.request<UserStats>('/api/v1/user/stats');
   }
 
+  async getUserCredits(): Promise<ApiResponse<UserCredits>> {
+    return this.request<UserCredits>('/api/v1/user/credits');
+  }
+
+  async adminGrantCredits(userId: string, amount: number, description?: string): Promise<ApiResponse<{ credits_balance: number }>> {
+    return this.request('/api/v1/admin/users/' + userId + '/credits', {
+      method: 'POST',
+      body: JSON.stringify({ amount, description }),
+    });
+  }
+
+  async adminRefillAllCredits(amount?: number): Promise<ApiResponse<{ users_refilled: number }>> {
+    return this.request('/api/v1/admin/credits/refill-all', {
+      method: 'POST',
+      body: JSON.stringify(amount ? { amount } : {}),
+    });
+  }
+
   async getAdminHeatmap(): Promise<ApiResponse<HeatmapEntry[]>> {
     return this.request<HeatmapEntry[]>('/api/v1/admin/heatmap');
   }
@@ -836,6 +854,25 @@ export interface RecurringBookingData {
   end_date: string;
   license_plate?: string;
   notes?: string;
+}
+
+export interface CreditTransaction {
+  id: string;
+  user_id: string;
+  booking_id?: string;
+  amount: number;
+  type: 'grant' | 'deduction' | 'refund' | 'monthly_refill';
+  description?: string;
+  granted_by?: string;
+  created_at: string;
+}
+
+export interface UserCredits {
+  enabled: boolean;
+  balance: number;
+  monthly_quota: number;
+  last_refilled?: string;
+  transactions: CreditTransaction[];
 }
 
 export interface GuestBookingData {

@@ -9,6 +9,8 @@ use App\Models\ParkingLot;
 use App\Models\GuestBooking;
 use App\Models\BookingNote;
 use App\Models\AuditLog;
+use App\Models\CreditTransaction;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -46,6 +48,25 @@ class BookingController extends Controller
                 'error' => ['code' => 'INVALID_BOOKING_TIME', 'message' => 'Booking start time must be in the future.'],
                 'meta' => null
             ], 422);
+        }
+
+        // Credits check — if credits system is enabled, verify balance
+        $creditsEnabled = Setting::get('credits_enabled', 'false') === 'true';
+        $creditsPerBooking = (int) Setting::get('credits_per_booking', '1');
+        $user = $request->user();
+
+        if ($creditsEnabled && !$user->isAdmin()) {
+            if ($user->credits_balance < $creditsPerBooking) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'error' => [
+                        'code' => 'INSUFFICIENT_CREDITS',
+                        'message' => 'Not enough credits. Required: ' . $creditsPerBooking . ', Available: ' . $user->credits_balance,
+                    ],
+                    'meta' => null,
+                ], 422);
+            }
         }
 
         $endTime = $request->end_time
@@ -105,6 +126,17 @@ class BookingController extends Controller
                     'notes'         => $request->notes,
                     'recurrence'    => $request->recurrence,
                 ]);
+                // Deduct credits within the same transaction
+                if ($creditsEnabled && !$request->user()->isAdmin()) {
+                    $request->user()->decrement('credits_balance', $creditsPerBooking);
+                    CreditTransaction::create([
+                        'user_id' => $request->user()->id,
+                        'booking_id' => $booking->id,
+                        'amount' => -$creditsPerBooking,
+                        'type' => 'deduction',
+                        'description' => 'Booking #' . substr($booking->id, 0, 8),
+                    ]);
+                }
             }, 3); // 3 retries on deadlock
         } catch (\Exception $e) {
             if ($e->getMessage() === 'SLOT_CONFLICT') {
@@ -163,6 +195,20 @@ class BookingController extends Controller
 
         // Mark as cancelled instead of hard-deleting — preserves audit trail
         $booking->update(['status' => Booking::STATUS_CANCELLED]);
+
+        // Refund credits if credits system is enabled
+        $creditsEnabled = Setting::get('credits_enabled', 'false') === 'true';
+        $creditsPerBooking = (int) Setting::get('credits_per_booking', '1');
+        if ($creditsEnabled && !$request->user()->isAdmin()) {
+            $request->user()->increment('credits_balance', $creditsPerBooking);
+            CreditTransaction::create([
+                'user_id' => $request->user()->id,
+                'booking_id' => $booking->id,
+                'amount' => $creditsPerBooking,
+                'type' => 'refund',
+                'description' => 'Cancelled booking #' . substr($booking->id, 0, 8),
+            ]);
+        }
 
         AuditLog::create([
             'user_id' => $request->user()->id,

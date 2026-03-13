@@ -14,6 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'username', 'email', 'password', 'name', 'picture', 'phone',
         'preferences', 'is_active', 'department', 'last_login',
+        'credits_balance', 'credits_monthly_quota', 'credits_last_refilled',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -25,6 +26,9 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login' => 'datetime',
             'email_verified_at' => 'datetime',
+            'credits_balance' => 'integer',
+            'credits_monthly_quota' => 'integer',
+            'credits_last_refilled' => 'datetime',
         ];
     }
 
@@ -34,6 +38,7 @@ class User extends Authenticatable
     public function notifications_list() { return $this->hasMany(Notification::class); }
     public function favorites() { return $this->hasMany(Favorite::class); }
     public function recurringBookings() { return $this->hasMany(RecurringBooking::class); }
+    public function creditTransactions() { return $this->hasMany(CreditTransaction::class); }
 
     public function isAdmin(): bool
     {

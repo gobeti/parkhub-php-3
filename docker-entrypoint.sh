@@ -26,35 +26,15 @@ php artisan migrate --force 2>/dev/null || true
 # Prune expired Sanctum tokens (7 day expiry = 168 hours)
 php artisan sanctum:prune-expired --hours=168 2>/dev/null || true
 
-# Create default admin if none exists
-# Credentials configurable via PARKHUB_ADMIN_EMAIL and PARKHUB_ADMIN_PASSWORD env vars
-ADMIN_EMAIL="${PARKHUB_ADMIN_EMAIL:-admin@parkhub.local}"
-ADMIN_PASSWORD="${PARKHUB_ADMIN_PASSWORD:-admin}"
-
-php artisan tinker --execute="
-\$email = getenv('PARKHUB_ADMIN_EMAIL') ?: 'admin@parkhub.local';
-\$password = getenv('PARKHUB_ADMIN_PASSWORD') ?: 'admin';
-if (\App\Models\User::where('role', 'admin')->orWhere('role', 'superadmin')->count() === 0) {
-    \App\Models\User::create([
-        'username' => 'admin',
-        'email' => \$email,
-        'password' => bcrypt(\$password),
-        'name' => 'Admin',
-        'role' => 'admin',
-        'is_active' => true,
-        'preferences' => json_encode(['language' => 'en', 'theme' => 'system', 'notifications_enabled' => true]),
-    ]);
-    \App\Models\Setting::set('needs_password_change', 'true');
-    echo 'Default admin created: ' . \$email;
-} else {
-    echo 'Admin already exists';
-}" 2>/dev/null || true
-
 # Demo mode: seed with realistic data on every fresh start
+# The seeder creates admin users with known credentials (admin@parkhub-demo.de / ParkHub2026!)
 if [ "${DEMO_MODE}" = "true" ]; then
     echo "DEMO_MODE=true — running ProductionSimulationSeeder..."
     php artisan db:seed --class=ProductionSimulationSeeder --force 2>/dev/null || true
     echo "Demo data seeded."
+else
+    # Non-demo: create default admin if none exists (works without tinker in --no-dev)
+    php artisan parkhub:create-admin 2>/dev/null || true
 fi
 
 # Cache config for production

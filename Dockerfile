@@ -1,15 +1,10 @@
-# Stage 1: Build frontend
-FROM node:20-slim AS frontend
+# Stage 1: Build Astro frontend
+FROM node:22-slim AS frontend
 WORKDIR /app
-COPY package.json package-lock.json* ./
-# Install all deps (vite, tailwind, postcss are devDependencies needed for build)
+COPY parkhub-web/package*.json ./
 RUN npm ci
-COPY vite.config.* tsconfig* tailwind.config.* postcss.config.* ./
-COPY resources/ resources/
-ARG VITE_BASE_PATH=
-ENV VITE_API_URL=${VITE_BASE_PATH}
-RUN if [ -n "$VITE_BASE_PATH" ]; then echo "VITE_API_URL=${VITE_BASE_PATH}" > .env; fi
-RUN if [ -n "$VITE_BASE_PATH" ]; then npm run build -- --base=$VITE_BASE_PATH/; else npm run build; fi
+COPY parkhub-web/ ./
+RUN npm run build
 
 # Stage 2: PHP + Apache
 # Pin to bookworm (Debian 12) for reproducible OS packages; update major version intentionally
@@ -37,8 +32,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY --chown=www-data:www-data . /var/www/html
 WORKDIR /var/www/html
 
-# Overlay built frontend assets (already chowned above via COPY --chown)
-COPY --chown=www-data:www-data --from=frontend /app/public/ /var/www/html/public/
+# Overlay built Astro frontend assets into Laravel's public directory
+COPY --chown=www-data:www-data --from=frontend /app/dist/ /var/www/html/public/
 
 ENV APP_ENV=production
 

@@ -126,6 +126,8 @@ class ProductionSimulationSeeder extends Seeder
             ['key' => 'impressum_phone',     'value' => '+49 89 123456'],
             ['key' => 'max_booking_days',    'value' => '30'],
             ['key' => 'license_plate_mode',  'value' => 'visible'],
+            ['key' => 'credits_enabled',     'value' => 'true'],
+            ['key' => 'credits_per_booking', 'value' => '1'],
         ];
 
         foreach ($settings as $s) {
@@ -278,6 +280,9 @@ class ProductionSimulationSeeder extends Seeder
                 'role'       => 'user',
                 'department' => self::DEPARTMENTS[array_rand(self::DEPARTMENTS)],
                 'is_active'  => true,
+                'credits_balance' => rand(3, 10),
+                'credits_monthly_quota' => 10,
+                'credits_last_refilled' => now()->startOfMonth(),
                 'created_at' => now()->subDays(rand(30, 365)),
                 'updated_at' => now()->subDays(rand(0, 30)),
             ]);
