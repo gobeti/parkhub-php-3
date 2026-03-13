@@ -91,9 +91,21 @@ Falls E-Mail-Benachrichtigungen aktiviert sind:
 
 ## 5. Cookies und lokaler Speicher
 
-**Technisch notwendige Token:**
-ParkHub verwendet localStorage (keine Cookies) für den Authentifizierungstoken.
-Dieser Token ist technisch notwendig für den Betrieb und enthält keine Tracking-Informationen.
+ParkHub verwendet **keine HTTP-Cookies**. Stattdessen wird der lokale Speicher des Browsers
+(localStorage) für folgende technisch notwendige Zwecke genutzt:
+
+| Schlüssel | Zweck | Inhalt | Rechtsgrundlage |
+|-----------|-------|--------|-----------------|
+| `parkhub_token` | Authentifizierung | Session-Token (Bearer) | § 25 Abs. 2 Nr. 2 TTDSG |
+| `parkhub_theme` | Darstellungseinstellung | `light`, `dark` oder `system` | § 25 Abs. 2 Nr. 2 TTDSG |
+| `parkhub_features` | Aktivierte Funktionsmodule | Liste der Modulnamen (z. B. `["vehicles","credits"]`) | § 25 Abs. 2 Nr. 2 TTDSG |
+| `parkhub_usecase` | Nutzungsszenario | `business`, `residential` oder `personal` | § 25 Abs. 2 Nr. 2 TTDSG |
+| `parkhub_hint_*` | Onboarding-Hinweis-Status | `1` (Hinweis geschlossen) | § 25 Abs. 2 Nr. 2 TTDSG |
+| `i18nextLng` | Spracheinstellung | Sprachcode (z. B. `de`, `en`) | § 25 Abs. 2 Nr. 2 TTDSG |
+
+Alle Einträge sind **technisch notwendig** für den ordnungsgemäßen Betrieb der Anwendung und
+enthalten keine personenbezogenen Daten (mit Ausnahme des Authentifizierungstokens, der nach
+Abmeldung gelöscht wird). Eine Einwilligung ist nach § 25 Abs. 2 Nr. 2 TTDSG nicht erforderlich.
 
 **Keine Analyse-Cookies, keine Werbe-Cookies, kein Google Analytics.**
 
