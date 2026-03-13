@@ -17,7 +17,7 @@ class AbsenceTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/absences', [
+            ->postJson('/api/v1/absences', [
                 'absence_type' => 'vacation',
                 'start_date' => now()->addDay()->format('Y-m-d'),
                 'end_date' => now()->addDays(5)->format('Y-m-d'),
@@ -37,7 +37,7 @@ class AbsenceTest extends TestCase
 
         foreach ($types as $type) {
             $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-                ->postJson('/api/absences', [
+                ->postJson('/api/v1/absences', [
                     'absence_type' => $type,
                     'start_date' => now()->addDay()->format('Y-m-d'),
                     'end_date' => now()->addDays(2)->format('Y-m-d'),

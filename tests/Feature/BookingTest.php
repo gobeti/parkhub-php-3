@@ -36,7 +36,7 @@ class BookingTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/bookings', [
+            ->postJson('/api/v1/bookings', [
                 'lot_id' => $lot->id,
                 'slot_id' => $slot->id,
                 'start_time' => now()->addHour()->toISOString(),
@@ -63,7 +63,7 @@ class BookingTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/bookings');
+            ->getJson('/api/v1/bookings');
 
         $response->assertStatus(200);
     }
@@ -83,10 +83,10 @@ class BookingTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->deleteJson('/api/bookings/' . $booking->id);
+            ->deleteJson('/api/v1/bookings/' . $booking->id);
 
         $response->assertStatus(200);
-        $this->assertDatabaseMissing('bookings', ['id' => $booking->id]);
+        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'status' => 'cancelled']);
     }
 
     public function test_quick_booking_works(): void
@@ -95,7 +95,7 @@ class BookingTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/bookings/quick', [
+            ->postJson('/api/v1/bookings/quick', [
                 'lot_id' => $lot->id,
                 'date' => now()->addDay()->format('Y-m-d'),
                 'booking_type' => 'full_day',
@@ -110,7 +110,7 @@ class BookingTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/bookings/guest', [
+            ->postJson('/api/v1/bookings/guest', [
                 'lot_id' => $lot->id,
                 'slot_id' => $slot->id,
                 'start_time' => now()->addHour()->toISOString(),
@@ -137,7 +137,7 @@ class BookingTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/bookings/' . $booking->id . '/notes', [
+            ->putJson('/api/v1/bookings/' . $booking->id . '/notes', [
                 'notes' => 'Test note',
             ]);
 
@@ -159,7 +159,7 @@ class BookingTest extends TestCase
         // First booking succeeds
         $token1 = $user->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $token1)
-            ->postJson('/api/bookings', [
+            ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
                 'start_time'   => $start,
@@ -171,7 +171,7 @@ class BookingTest extends TestCase
         // Second booking for the exact same slot and time window must be rejected with 409
         $token2 = $user2->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $token2)
-            ->postJson('/api/bookings', [
+            ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
                 'start_time'   => $start,
@@ -195,7 +195,7 @@ class BookingTest extends TestCase
         // First booking: 10:00–14:00
         $token1 = $user->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $token1)
-            ->postJson('/api/bookings', [
+            ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
                 'start_time'   => now()->setHour(10)->setMinute(0)->toISOString(),
@@ -207,7 +207,7 @@ class BookingTest extends TestCase
         // Second booking: 12:00–16:00 overlaps the first — must fail
         $token2 = $user2->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $token2)
-            ->postJson('/api/bookings', [
+            ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
                 'start_time'   => now()->setHour(12)->setMinute(0)->toISOString(),
@@ -228,7 +228,7 @@ class BookingTest extends TestCase
         // First booking: 08:00–12:00
         $token1 = $user->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $token1)
-            ->postJson('/api/bookings', [
+            ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
                 'start_time'   => now()->setHour(8)->setMinute(0)->toISOString(),
@@ -240,7 +240,7 @@ class BookingTest extends TestCase
         // Second booking: 13:00–17:00 — no overlap, must succeed
         $token2 = $user2->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $token2)
-            ->postJson('/api/bookings', [
+            ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
                 'start_time'   => now()->setHour(13)->setMinute(0)->toISOString(),
@@ -271,7 +271,7 @@ class BookingTest extends TestCase
 
         $attackerToken = $attacker->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $attackerToken)
-            ->putJson('/api/bookings/' . $booking->id . '/notes', ['notes' => 'Hacked'])
+            ->putJson('/api/v1/bookings/' . $booking->id . '/notes', ['notes' => 'Hacked'])
             ->assertStatus(404); // findOrFail scoped to user_id should return 404
     }
 }

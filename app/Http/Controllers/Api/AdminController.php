@@ -161,16 +161,17 @@ class AdminController extends Controller
             if (User::where('username', $userData['username'])->orWhere('email', $userData['email'])->exists()) {
                 continue;
             }
-            User::create([
+            $user = User::create([
                 'username'   => $userData['username'],
                 'email'      => $userData['email'],
                 'password'   => Hash::make($userData['password'] ?? \Illuminate\Support\Str::random(16)),
                 'name'       => $userData['name'] ?? $userData['username'],
-                'role'       => $userData['role'] ?? 'user',
                 'is_active'  => true,
                 'department' => $userData['department'] ?? null,
                 'preferences'=> ['language' => 'en', 'theme' => 'system'],
             ]);
+            $user->role = $userData['role'] ?? 'user';
+            $user->save();
             $imported++;
         }
 
@@ -275,7 +276,7 @@ public function getSettings(Request $request)
         $this->requireAdmin($request);
 
         $booking = Booking::findOrFail($id);
-        $booking->update(['status' => 'cancelled']);
+        $booking->update(['status' => \App\Models\Booking::STATUS_CANCELLED]);
 
         AuditLog::create([
             'user_id'  => $request->user()->id,
@@ -525,8 +526,13 @@ public function getSettings(Request $request)
         if ($request->has('webhooks')) {
             \App\Models\Webhook::query()->delete();
             foreach ($request->input('webhooks') as $hook) {
+                $url = $hook['url'] ?? '';
+                // SSRF protection: reject private/internal IP ranges
+                if (!$this->isExternalUrl($url)) {
+                    return response()->json(['error' => 'SSRF_BLOCKED', 'message' => 'Webhook URL must not target internal/private networks'], 422);
+                }
                 \App\Models\Webhook::create([
-                    'url' => $hook['url'],
+                    'url' => $url,
                     'events' => $hook['events'] ?? [],
                     'secret' => $hook['secret'] ?? null,
                     'active' => $hook['active'] ?? true,
@@ -534,6 +540,51 @@ public function getSettings(Request $request)
             }
         }
         return response()->json(['message' => 'Webhook settings updated']);
+    }
+
+    /**
+     * Validate that a URL does not target internal/private networks (SSRF protection).
+     */
+    private function isExternalUrl(string $url): bool
+    {
+        // Must be http or https
+        if (!preg_match('#^https?://#i', $url)) {
+            return false;
+        }
+
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? '';
+        if (empty($host)) {
+            return false;
+        }
+
+        // Resolve hostname to IP(s)
+        $ips = gethostbynamel($host);
+        if ($ips === false) {
+            // Unresolvable hostname — block to be safe
+            return false;
+        }
+
+        foreach ($ips as $ip) {
+            if ($this->isPrivateIp($ip)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isPrivateIp(string $ip): bool
+    {
+        // Loopback: 127.0.0.0/8
+        // RFC1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+        // Link-local: 169.254.0.0/16
+        // IPv6 mapped: ::1, ::ffff:127.0.0.1, etc.
+        return !filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        );
     }
 
     public function updateSlot(Request $request, string $id)

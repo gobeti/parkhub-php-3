@@ -8,6 +8,12 @@ class Booking extends Model
 {
     use HasUuids;
 
+    const STATUS_CONFIRMED = 'confirmed';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_NO_SHOW = 'no_show';
+
     protected $fillable = [
         'user_id', 'lot_id', 'slot_id', 'booking_type', 'lot_name', 'slot_number',
         'vehicle_plate', 'start_time', 'end_time', 'status', 'notes',

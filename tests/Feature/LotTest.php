@@ -17,7 +17,7 @@ class LotTest extends TestCase
         $token = $admin->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/lots', [
+            ->postJson('/api/v1/lots', [
                 'name' => 'Test Parking Lot',
                 'address' => '123 Main St',
                 'total_slots' => 20,
@@ -40,7 +40,7 @@ class LotTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/lots');
+            ->getJson('/api/v1/lots');
 
         $response->assertStatus(200);
     }
@@ -58,7 +58,7 @@ class LotTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/lots/' . $lot->id);
+            ->getJson('/api/v1/lots/' . $lot->id);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.name', 'Lot 1');
@@ -77,7 +77,7 @@ class LotTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/lots/' . $lot->id, [
+            ->putJson('/api/v1/lots/' . $lot->id, [
                 'name' => 'New Name',
                 'total_slots' => 15,
             ]);
@@ -99,7 +99,7 @@ class LotTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->deleteJson('/api/lots/' . $lot->id);
+            ->deleteJson('/api/v1/lots/' . $lot->id);
 
         $response->assertStatus(200);
         $this->assertDatabaseMissing('parking_lots', ['id' => $lot->id]);
