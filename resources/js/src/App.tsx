@@ -24,6 +24,7 @@ import { SetupGuard } from './components/SetupGuard';
 import { useSetupStatus } from './components/setup-status-hook';
 import { SetupPage } from './pages/Setup';
 import { MaintenanceScreen } from './components/MaintenanceScreen';
+import { DemoOverlay } from './components/DemoOverlay';
 
 const AdminPage = lazy(() => import('./pages/Admin').then(m => ({ default: m.AdminPage })));
 const AbsencesPage = lazy(() => import('./pages/Absences').then(m => ({ default: m.AbsencesPage })));
@@ -166,6 +167,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename={import.meta.env.VITE_BASE_URL || '/'}>
+        <DemoOverlay />
         <ThemeInitializer>
           <BrandingProvider>
             <SetupGuard>

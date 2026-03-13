@@ -92,6 +92,13 @@ Route::get('/announcements/active', function() {
     ]);
 });
 
+// Demo mode (public, no auth required)
+Route::prefix('demo')->group(function () {
+    Route::get('/status', [\App\Http\Controllers\Api\DemoController::class, 'status']);
+    Route::post('/vote', [\App\Http\Controllers\Api\DemoController::class, 'vote']);
+    Route::get('/config', [\App\Http\Controllers\Api\DemoController::class, 'config']);
+});
+
 // Protected
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Auth (protected)

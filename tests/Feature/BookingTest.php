@@ -225,14 +225,17 @@ class BookingTest extends TestCase
         list($user, $lot, $slot) = $this->createUserAndLot();
         $user2 = User::factory()->create(['role' => 'user']);
 
+        // Use tomorrow to avoid "start time must be in the future" validation
+        $tomorrow = now()->addDay();
+
         // First booking: 08:00–12:00
         $token1 = $user->createToken('test')->plainTextToken;
         $this->withHeader('Authorization', 'Bearer ' . $token1)
             ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
-                'start_time'   => now()->setHour(8)->setMinute(0)->toISOString(),
-                'end_time'     => now()->setHour(12)->setMinute(0)->toISOString(),
+                'start_time'   => $tomorrow->copy()->setHour(8)->setMinute(0)->toISOString(),
+                'end_time'     => $tomorrow->copy()->setHour(12)->setMinute(0)->toISOString(),
                 'booking_type' => 'single',
             ])
             ->assertStatus(201);
@@ -243,8 +246,8 @@ class BookingTest extends TestCase
             ->postJson('/api/v1/bookings', [
                 'lot_id'       => $lot->id,
                 'slot_id'      => $slot->id,
-                'start_time'   => now()->setHour(13)->setMinute(0)->toISOString(),
-                'end_time'     => now()->setHour(17)->setMinute(0)->toISOString(),
+                'start_time'   => $tomorrow->copy()->setHour(13)->setMinute(0)->toISOString(),
+                'end_time'     => $tomorrow->copy()->setHour(17)->setMinute(0)->toISOString(),
                 'booking_type' => 'single',
             ])
             ->assertStatus(201);
