@@ -108,7 +108,7 @@ class BookingController extends Controller
 
         try {
             // Use a transaction with exclusive slot lock to prevent race conditions
-            DB::transaction(function () use ($request, $slotId, $endTime, $startTimeStr, &$booking) {
+            DB::transaction(function () use ($request, $slotId, $endTime, $startTimeStr, &$booking, $creditsEnabled, $creditsPerBooking) {
                 // Lock the slot row for this transaction
                 $slot = ParkingSlot::where('id', $slotId)->lockForUpdate()->firstOrFail();
 
