@@ -219,6 +219,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::post('/users/import', [AdminController::class, 'importUsers']);
         Route::get('/bookings', [AdminController::class, 'bookings']);
         Route::patch('/bookings/{id}/cancel', [AdminController::class, 'cancelBooking']);
+        Route::get('/guest-bookings', [AdminController::class, 'guestBookings']);
+        Route::patch('/guest-bookings/{id}/cancel', [AdminController::class, 'cancelGuestBooking']);
         Route::get('/announcements', [AdminController::class, 'announcements']);
         Route::post('/announcements', [AdminController::class, 'createAnnouncement']);
         Route::put('/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
