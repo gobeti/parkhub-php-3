@@ -211,7 +211,7 @@ These variables are read by `docker-entrypoint.sh` and `public/install.php` duri
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.local` | Email address for the initial admin account created on first startup. Change before first run. |
+| `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.test` | Email address for the initial admin account created on first startup. Change before first run. |
 | `PARKHUB_ADMIN_PASSWORD` | `admin` | Password for the initial admin account. **Always change this before exposing the instance to a network.** |
 | `DEMO_MODE` | `false` | Set `true` to seed realistic German demo data (10 lots, 200 users, ~3,500 bookings) on container start. Intended for demo instances only — not for production. |
 

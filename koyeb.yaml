@@ -55,7 +55,7 @@ services:
       - key: QUEUE_CONNECTION
         value: "sync"
       - key: PARKHUB_ADMIN_EMAIL
-        value: "admin@parkhub.local"
+        value: "admin@parkhub.test"
       # PARKHUB_ADMIN_PASSWORD: set as secret in Koyeb dashboard
       - key: PARKHUB_ADMIN_PASSWORD
         value: ""

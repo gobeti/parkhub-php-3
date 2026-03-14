@@ -168,7 +168,7 @@ These variables apply on all PaaS platforms:
 | `DB_DATABASE` | If MySQL | Database name |
 | `DB_USERNAME` | If MySQL | Database username |
 | `DB_PASSWORD` | If MySQL | Database password |
-| `PARKHUB_ADMIN_EMAIL` | No | Initial admin email (default: `admin@parkhub.local`) |
+| `PARKHUB_ADMIN_EMAIL` | No | Initial admin email (default: `admin@parkhub.test`) |
 | `PARKHUB_ADMIN_PASSWORD` | No | Initial admin password (default: `admin`) — **change this** |
 | `QUEUE_CONNECTION` | No | `sync` (default for PaaS — no worker needed) |
 | `MAIL_MAILER` | No | `log` (default — no emails sent) or `smtp` |

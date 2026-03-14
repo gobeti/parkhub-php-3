@@ -24,7 +24,7 @@ services:
       - key: DEMO_MODE
         value: "true"
       - key: PARKHUB_ADMIN_EMAIL
-        value: admin@parkhub.local
+        value: admin@parkhub.test
       - key: PARKHUB_ADMIN_PASSWORD
         value: admin
       - key: ALLOW_SELF_REGISTRATION

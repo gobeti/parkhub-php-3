@@ -18,7 +18,7 @@ Open **http://localhost:8080**. The setup wizard guides you through the first-ru
 > The first `docker compose up -d` builds the image from source. This takes **2–5 minutes**.
 > Watch progress: `docker compose logs -f app`
 
-Default credentials: `admin@parkhub.local` / `admin` — **change immediately after login**.
+Default credentials: `admin@parkhub.test` / `admin` — **change immediately after login**.
 
 ---
 
@@ -103,7 +103,7 @@ Images are tagged by branch (`main`), semver (`v1.2.0`), and short SHA (`sha-abc
 | `DB_DATABASE` | `parkhub` | Database name |
 | `DB_USERNAME` | `parkhub` | Database user |
 | `DB_PASSWORD` | `secret` | Database password — **change for production** |
-| `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.local` | Initial admin email (first-run only) |
+| `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.test` | Initial admin email (first-run only) |
 | `PARKHUB_ADMIN_PASSWORD` | `admin` | Initial admin password — **change before exposing** |
 | `DEMO_MODE` | _(unset)_ | Set `true` to seed German demo data on startup |
 | `QUEUE_CONNECTION` | `database` | `database` for async email/webhooks, `sync` for simplicity |
