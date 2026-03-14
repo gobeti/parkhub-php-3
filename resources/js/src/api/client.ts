@@ -406,6 +406,23 @@ class ApiClient {
     });
   }
 
+  // Webhooks (admin)
+  async getWebhooks(): Promise<ApiResponse<Webhook[]>> {
+    return this.request<Webhook[]>('/api/v1/admin/settings/webhooks');
+  }
+
+  async createWebhook(data: { url: string; events?: string[]; secret?: string; active?: boolean }): Promise<ApiResponse<Webhook>> {
+    return this.request<Webhook>('/api/webhooks', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateWebhook(id: string, data: Partial<{ url: string; events: string[]; secret: string; active: boolean }>): Promise<ApiResponse<Webhook>> {
+    return this.request<Webhook>(`/api/webhooks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  async deleteWebhook(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/api/webhooks/${id}`, { method: 'DELETE' });
+  }
+
   // Favorites
   async addFavoriteSlot(slotId: string): Promise<ApiResponse<void>> {
     return this.request<void>('/api/v1/user/favorites', { method: 'POST', body: JSON.stringify({ slot_id: slotId }) });
@@ -978,6 +995,16 @@ export interface GuestBookingData {
   start_time: string;
   end_time: string;
   license_plate?: string;
+}
+
+export interface Webhook {
+  id: string;
+  url: string;
+  events: string[] | null;
+  secret: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WaitlistEntry {

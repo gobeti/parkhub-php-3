@@ -19,6 +19,7 @@ import { AdminSlotsPage } from './AdminSlots';
 import { AdminGuestBookingsPage } from './AdminGuestBookings';
 import { AdminReportsPage } from './AdminReports';
 import { AdminCreditsPage } from './AdminCredits';
+import { AdminWebhooksPage } from './AdminWebhooks';
 import { useTranslation } from 'react-i18next';
 
 declare global {
@@ -45,6 +46,7 @@ function AdminNav() {
     { name: t('admin.tabs.system', 'System'), path: '/admin/system', icon: GearSix },
     { name: t('admin.tabs.announcements', 'Announcements'), path: '/admin/announcements', icon: Megaphone },
     { name: t('admin.tabs.credits', 'Kontingent'), path: '/admin/credits', icon: Coins },
+    { name: t('admin.tabs.webhooks', 'Webhooks'), path: '/admin/webhooks', icon: Lightning },
     { name: t('admin.tabs.auditLog', 'Audit Log'), path: '/admin/audit-log', icon: ClockCounterClockwise },
   ];
   return (
@@ -1008,7 +1010,7 @@ export function AdminPage() {
     <div>
       <div className="mb-2"><h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('admin.title')}</h1><p className="text-gray-500 dark:text-gray-400 mt-1">{t('admin.subtitle')}</p></div>
       <AdminNav />
-      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/slots" element={<AdminSlotsPage />} /><Route path="/guests" element={<AdminGuestBookingsPage />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/reports" element={<AdminReportsPage />} /><Route path="/settings" element={<AdminSettingsPage />} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/announcements" element={<AdminAnnouncementsPage />} /><Route path="/credits" element={<AdminCreditsPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
+      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/slots" element={<AdminSlotsPage />} /><Route path="/guests" element={<AdminGuestBookingsPage />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/reports" element={<AdminReportsPage />} /><Route path="/settings" element={<AdminSettingsPage />} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/announcements" element={<AdminAnnouncementsPage />} /><Route path="/credits" element={<AdminCreditsPage />} /><Route path="/webhooks" element={<AdminWebhooksPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
     </div>
   );
 }
