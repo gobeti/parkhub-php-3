@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -9,9 +10,13 @@ class Booking extends Model
     use HasUuids;
 
     const STATUS_CONFIRMED = 'confirmed';
+
     const STATUS_ACTIVE = 'active';
+
     const STATUS_CANCELLED = 'cancelled';
+
     const STATUS_COMPLETED = 'completed';
+
     const STATUS_NO_SHOW = 'no_show';
 
     protected $fillable = [
@@ -30,8 +35,23 @@ class Booking extends Model
         ];
     }
 
-    public function user() { return $this->belongsTo(User::class); }
-    public function lot() { return $this->belongsTo(ParkingLot::class, 'lot_id'); }
-    public function slot() { return $this->belongsTo(ParkingSlot::class, 'slot_id'); }
-    public function bookingNotes() { return $this->hasMany(BookingNote::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function lot()
+    {
+        return $this->belongsTo(ParkingLot::class, 'lot_id');
+    }
+
+    public function slot()
+    {
+        return $this->belongsTo(ParkingSlot::class, 'slot_id');
+    }
+
+    public function bookingNotes()
+    {
+        return $this->hasMany(BookingNote::class);
+    }
 }

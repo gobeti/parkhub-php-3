@@ -16,7 +16,18 @@ class WaitlistEntry extends Model
         return ['notified_at' => 'datetime'];
     }
 
-    public function user()  { return $this->belongsTo(User::class); }
-    public function lot()   { return $this->belongsTo(ParkingLot::class, 'lot_id'); }
-    public function slot()  { return $this->belongsTo(ParkingSlot::class, 'slot_id'); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function lot()
+    {
+        return $this->belongsTo(ParkingLot::class, 'lot_id');
+    }
+
+    public function slot()
+    {
+        return $this->belongsTo(ParkingSlot::class, 'slot_id');
+    }
 }

@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\ApiResponseWrapper;
+use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\RequireAdmin;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,17 +18,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Security headers on every response (web + API)
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
 
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);
         $middleware->api(prepend: [
-            \App\Http\Middleware\ForceJsonResponse::class,
-            \App\Http\Middleware\ApiResponseWrapper::class,
+            ForceJsonResponse::class,
+            ApiResponseWrapper::class,
         ]);
 
-        $middleware->alias(['admin' => \App\Http\Middleware\RequireAdmin::class]);
+        $middleware->alias(['admin' => RequireAdmin::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

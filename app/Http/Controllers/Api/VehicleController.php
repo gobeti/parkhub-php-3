@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class VehicleController extends Controller
 {
@@ -22,6 +21,7 @@ class VehicleController extends Controller
             $request->only(['plate', 'make', 'model', 'color', 'is_default']),
             ['user_id' => $request->user()->id]
         ));
+
         return response()->json($vehicle, 201);
     }
 
@@ -29,6 +29,7 @@ class VehicleController extends Controller
     {
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
         $vehicle->update($request->only(['plate', 'make', 'model', 'color', 'is_default']));
+
         return response()->json($vehicle);
     }
 
@@ -42,6 +43,7 @@ class VehicleController extends Controller
         }
 
         $vehicle->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 
@@ -50,7 +52,7 @@ class VehicleController extends Controller
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
 
         $request->validate([
-            'photo'        => 'required_without:photo_base64|image|mimes:jpeg,png,gif,webp|max:5120',
+            'photo' => 'required_without:photo_base64|image|mimes:jpeg,png,gif,webp|max:5120',
             'photo_base64' => 'required_without:photo|string|max:8388608', // 8 MB base64 cap
         ]);
 
@@ -78,8 +80,10 @@ class VehicleController extends Controller
         // Resize using GD to max 800px
         $imageData = $this->resizeImage($imageData, 800);
 
-        $dir  = storage_path('app/vehicles');
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $dir = storage_path('app/vehicles');
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
 
         file_put_contents("{$dir}/{$vehicle->id}.jpg", $imageData);
 
@@ -94,13 +98,13 @@ class VehicleController extends Controller
         // Verify ownership before serving — prevents IDOR where any authenticated
         // user could enumerate and download other users' vehicle photos by UUID.
         $vehicle = Vehicle::where('user_id', $request->user()->id)->find($id);
-        if (!$vehicle) {
+        if (! $vehicle) {
             return response()->json(['error' => 'Photo not found'], 404);
         }
 
         $path = storage_path("app/vehicles/{$id}.jpg");
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return response()->json(['error' => 'Photo not found'], 404);
         }
 
@@ -110,7 +114,7 @@ class VehicleController extends Controller
     private function resizeImage(string $data, int $maxPx): string
     {
         $src = @imagecreatefromstring($data);
-        if (!$src) {
+        if (! $src) {
             return $data; // can't decode — return as-is
         }
 
@@ -123,6 +127,7 @@ class VehicleController extends Controller
             imagejpeg($src, null, 85);
             $out = ob_get_clean();
             imagedestroy($src);
+
             return $out;
         }
 

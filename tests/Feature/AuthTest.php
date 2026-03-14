@@ -62,7 +62,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/users/me');
 
         $response->assertStatus(200)
@@ -74,7 +74,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/users/me', [
                 'name' => 'Updated Name',
                 'email' => 'updated@example.com',
@@ -89,7 +89,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/auth/refresh');
 
         $response->assertStatus(200)
@@ -101,7 +101,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create(['password' => bcrypt('password123')]);
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->deleteJson('/api/v1/users/me/delete', ['password' => 'password123']);
 
         $response->assertStatus(200);

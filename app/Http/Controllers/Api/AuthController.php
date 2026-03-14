@@ -1,12 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\PasswordResetEmail;
 use App\Mail\WelcomeEmail;
-use App\Models\User;
 use App\Models\AuditLog;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -26,16 +27,17 @@ class AuthController extends Controller
             ->orWhere('email', $request->username)
             ->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             AuditLog::create([
                 'action' => 'login_failed',
                 'details' => ['username' => $request->username],
                 'ip_address' => $request->ip(),
             ]);
+
             return response()->json(['error' => 'INVALID_CREDENTIALS', 'message' => 'Invalid username or password'], 401);
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             return response()->json(['error' => 'ACCOUNT_DISABLED', 'message' => 'Account is disabled'], 403);
         }
 
@@ -67,9 +69,9 @@ class AuthController extends Controller
 
         $request->validate([
             'username' => 'required|string|min:3|max:50|unique:users|alpha_dash',
-            'email'    => 'required|email|max:255|unique:users',
+            'email' => 'required|email|max:255|unique:users',
             'password' => 'required|string|min:8|max:128|confirmed',
-            'name'     => 'required|string|max:255',
+            'name' => 'required|string|max:255',
         ]);
 
         $user = User::create([
@@ -132,18 +134,18 @@ class AuthController extends Controller
         $user = $request->user();
 
         $request->validate([
-            'name'       => 'sometimes|string|max:255',
-            'email'      => 'sometimes|email|max:255|unique:users,email,' . $user->id,
-            'phone'      => 'sometimes|nullable|string|max:50',
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255|unique:users,email,'.$user->id,
+            'phone' => 'sometimes|nullable|string|max:50',
             'department' => 'sometimes|nullable|string|max:255',
             // Password changes should go through /users/me/password (requires current_password)
         ]);
 
         $data = $request->only(['name', 'email', 'phone', 'department']);
         $user->update($data);
+
         return response()->json($this->userResponse($user->fresh()));
     }
-
 
     public function deleteAccount(Request $request)
     {
@@ -153,19 +155,20 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($request->password, $user->password)) {
+        if (! Hash::check($request->password, $user->password)) {
             return response()->json(['error' => 'INVALID_PASSWORD', 'message' => 'Password confirmation failed'], 403);
         }
 
         AuditLog::create([
-            'user_id'    => $user->id,
-            'username'   => $user->username,
-            'action'     => 'account_deleted',
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'action' => 'account_deleted',
             'ip_address' => $request->ip(),
         ]);
 
         $user->tokens()->delete();
         $user->delete();
+
         return response()->json(['message' => 'Account deleted']);
     }
 
@@ -195,8 +198,8 @@ class AuthController extends Controller
         $request->validate(['email' => 'required|email']);
 
         AuditLog::create([
-            'action'     => 'forgot_password',
-            'details'    => ['email_hash' => md5($request->email)],
+            'action' => 'forgot_password',
+            'details' => ['email_hash' => md5($request->email)],
             'ip_address' => $request->ip(),
         ]);
 
@@ -210,8 +213,8 @@ class AuthController extends Controller
             $token = Str::random(64);
 
             DB::table('password_reset_tokens')->insert([
-                'email'      => $user->email,
-                'token'      => Hash::make($token),
+                'email' => $user->email,
+                'token' => Hash::make($token),
                 'created_at' => now(),
             ]);
 
@@ -230,9 +233,9 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'email'                 => 'required|email',
-            'token'                 => 'required|string',
-            'password'              => 'required|string|min:8',
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:8',
             'password_confirmation' => 'required|same:password',
         ]);
 
@@ -242,15 +245,15 @@ class AuthController extends Controller
             ->where('created_at', '>', now()->subMinutes(60)) // 60-minute expiry
             ->first();
 
-        if (!$record || !Hash::check($request->token, $record->token)) {
+        if (! $record || ! Hash::check($request->token, $record->token)) {
             return response()->json([
-                'error'   => 'INVALID_TOKEN',
+                'error' => 'INVALID_TOKEN',
                 'message' => 'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.',
             ], 422);
         }
 
         $user = User::where('email', $record->email)->first();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'USER_NOT_FOUND', 'message' => 'Benutzer nicht gefunden.'], 404);
         }
 
@@ -260,9 +263,9 @@ class AuthController extends Controller
         DB::table('password_reset_tokens')->where('email', $record->email)->delete();
 
         AuditLog::create([
-            'user_id'    => $user->id,
-            'username'   => $user->username,
-            'action'     => 'password_reset',
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'action' => 'password_reset',
             'ip_address' => $request->ip(),
         ]);
 
@@ -276,7 +279,7 @@ class AuthController extends Controller
             'new_password' => 'required|string|min:8',
         ]);
         $user = $request->user();
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json(['error' => 'INVALID_PASSWORD', 'message' => 'Current password is incorrect'], 400);
         }
         $user->update(['password' => Hash::make($request->new_password)]);
@@ -288,6 +291,7 @@ class AuthController extends Controller
             'action' => 'password_changed',
             'ip_address' => $request->ip(),
         ]);
+
         return response()->json([
             'message' => 'Password changed successfully',
             'tokens' => [

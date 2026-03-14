@@ -89,8 +89,8 @@ class ProductionSimulationSeeder extends Seeder
 
         $this->seedSettings();
         $adminIds = $this->seedAdmins();
-        $lotData  = $this->seedLots();
-        $userIds  = $this->seedUsers();
+        $lotData = $this->seedLots();
+        $userIds = $this->seedUsers();
         $this->seedBookings($lotData, $userIds);
 
         DB::statement('PRAGMA foreign_keys = ON');
@@ -145,26 +145,26 @@ class ProductionSimulationSeeder extends Seeder
     {
         $admins = [
             [
-                'id'         => Str::uuid(),
-                'name'       => 'Administrator',
-                'username'   => 'admin',
-                'email'      => 'admin@parkhub.test',
-                'password'   => Hash::make('ParkHub2026!'),
-                'role'       => 'superadmin',
+                'id' => Str::uuid(),
+                'name' => 'Administrator',
+                'username' => 'admin',
+                'email' => 'admin@parkhub.test',
+                'password' => Hash::make('ParkHub2026!'),
+                'role' => 'superadmin',
                 'department' => 'IT',
-                'is_active'  => true,
+                'is_active' => true,
                 'created_at' => now()->subDays(35),
                 'updated_at' => now()->subDays(35),
             ],
             [
-                'id'         => Str::uuid(),
-                'name'       => 'Parkhaus Manager',
-                'username'   => 'manager',
-                'email'      => 'manager@parkhub.test',
-                'password'   => Hash::make('Manager2026!'),
-                'role'       => 'admin',
+                'id' => Str::uuid(),
+                'name' => 'Parkhaus Manager',
+                'username' => 'manager',
+                'email' => 'manager@parkhub.test',
+                'password' => Hash::make('Manager2026!'),
+                'role' => 'admin',
                 'department' => 'Verwaltung',
-                'is_active'  => true,
+                'is_active' => true,
                 'created_at' => now()->subDays(35),
                 'updated_at' => now()->subDays(35),
             ],
@@ -172,6 +172,7 @@ class ProductionSimulationSeeder extends Seeder
 
         DB::table('users')->insertOrIgnore($admins);
         $this->command->line('  → Admin users seeded');
+
         return array_column($admins, 'id');
     }
 
@@ -186,14 +187,14 @@ class ProductionSimulationSeeder extends Seeder
         foreach (self::LOTS as $lotDef) {
             $lotId = Str::uuid()->toString();
             DB::table('parking_lots')->insert([
-                'id'               => $lotId,
-                'name'             => $lotDef['name'],
-                'address'          => $lotDef['address'],
-                'total_slots'      => $lotDef['slots'],
-                'available_slots'  => $lotDef['slots'],
-                'status'           => 'open',
-                'created_at'       => now()->subDays(35),
-                'updated_at'       => now(),
+                'id' => $lotId,
+                'name' => $lotDef['name'],
+                'address' => $lotDef['address'],
+                'total_slots' => $lotDef['slots'],
+                'available_slots' => $lotDef['slots'],
+                'status' => 'open',
+                'created_at' => now()->subDays(35),
+                'updated_at' => now(),
             ]);
 
             // Zones
@@ -201,20 +202,20 @@ class ProductionSimulationSeeder extends Seeder
             foreach ($lotDef['zones'] as $zoneName) {
                 $zoneId = Str::uuid()->toString();
                 DB::table('zones')->insert([
-                    'id'          => $zoneId,
-                    'lot_id'      => $lotId,
-                    'name'        => $zoneName,
-                    'color'       => $this->zoneColor(),
+                    'id' => $zoneId,
+                    'lot_id' => $lotId,
+                    'name' => $zoneName,
+                    'color' => $this->zoneColor(),
                     'description' => null,
-                    'created_at'  => now()->subDays(35),
-                    'updated_at'  => now()->subDays(35),
+                    'created_at' => now()->subDays(35),
+                    'updated_at' => now()->subDays(35),
                 ]);
                 $zoneIds[] = $zoneId;
             }
 
             // Slots — distributed across zones
-            $slotIds    = [];
-            $zoneCount  = count($zoneIds);
+            $slotIds = [];
+            $zoneCount = count($zoneIds);
             $slotsPerZone = (int) ceil($lotDef['slots'] / $zoneCount);
 
             for ($i = 1; $i <= $lotDef['slots']; $i++) {
@@ -223,25 +224,26 @@ class ProductionSimulationSeeder extends Seeder
                 $assignedZone = $zoneIds[min($zoneIndex, $zoneCount - 1)];
 
                 DB::table('parking_slots')->insert([
-                    'id'          => $slotId,
-                    'lot_id'      => $lotId,
+                    'id' => $slotId,
+                    'lot_id' => $lotId,
                     'slot_number' => str_pad((string) $i, 3, '0', STR_PAD_LEFT),
-                    'status'      => 'available',
-                    'zone_id'     => $assignedZone,
-                    'created_at'  => now()->subDays(35),
-                    'updated_at'  => now()->subDays(35),
+                    'status' => 'available',
+                    'zone_id' => $assignedZone,
+                    'created_at' => now()->subDays(35),
+                    'updated_at' => now()->subDays(35),
                 ]);
                 $slotIds[] = $slotId;
             }
 
             $lotData[] = [
-                'id'       => $lotId,
-                'name'     => $lotDef['name'],
+                'id' => $lotId,
+                'name' => $lotDef['name'],
                 'slot_ids' => $slotIds,
             ];
         }
 
-        $this->command->line('  → ' . count($lotData) . ' parking lots seeded');
+        $this->command->line('  → '.count($lotData).' parking lots seeded');
+
         return $lotData;
     }
 
@@ -251,35 +253,35 @@ class ProductionSimulationSeeder extends Seeder
 
     private function seedUsers(): array
     {
-        $userIds   = [];
+        $userIds = [];
         $userCount = 198;
         $usedNames = [];
 
-        $this->command->line('  → Seeding ' . $userCount . ' users...');
+        $this->command->line('  → Seeding '.$userCount.' users...');
 
         for ($i = 0; $i < $userCount; $i++) {
             $firstName = self::FIRST_NAMES[array_rand(self::FIRST_NAMES)];
-            $lastName  = self::LAST_NAMES[array_rand(self::LAST_NAMES)];
+            $lastName = self::LAST_NAMES[array_rand(self::LAST_NAMES)];
 
             // Ensure unique usernames
-            $baseUser = strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $firstName . '.' . $lastName));
+            $baseUser = strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $firstName.'.'.$lastName));
             $username = $baseUser;
-            $attempt  = 1;
+            $attempt = 1;
             while (in_array($username, $usedNames)) {
-                $username = $baseUser . $attempt++;
+                $username = $baseUser.$attempt++;
             }
             $usedNames[] = $username;
 
             $userId = Str::uuid()->toString();
             DB::table('users')->insert([
-                'id'         => $userId,
-                'name'       => $firstName . ' ' . $lastName,
-                'username'   => $username,
-                'email'      => $username . '@example.de',
-                'password'   => Hash::make('Demo2026!'),
-                'role'       => 'user',
+                'id' => $userId,
+                'name' => $firstName.' '.$lastName,
+                'username' => $username,
+                'email' => $username.'@example.de',
+                'password' => Hash::make('Demo2026!'),
+                'role' => 'user',
                 'department' => self::DEPARTMENTS[array_rand(self::DEPARTMENTS)],
-                'is_active'  => true,
+                'is_active' => true,
                 'credits_balance' => rand(3, 10),
                 'credits_monthly_quota' => 10,
                 'credits_last_refilled' => now()->startOfMonth(),
@@ -289,19 +291,19 @@ class ProductionSimulationSeeder extends Seeder
 
             // 1–2 vehicles per user
             $vehicleCount = rand(1, 2);
-            $plates       = [];
+            $plates = [];
             for ($v = 0; $v < $vehicleCount; $v++) {
                 $plate = $this->generatePlate($plates);
                 $plates[] = $plate;
 
                 $car = self::CAR_MAKES[array_rand(self::CAR_MAKES)];
                 DB::table('vehicles')->insert([
-                    'id'         => Str::uuid(),
-                    'user_id'    => $userId,
-                    'plate'      => $plate,
-                    'make'       => $car['make'],
-                    'model'      => $car['models'][array_rand($car['models'])],
-                    'color'      => self::COLORS[array_rand(self::COLORS)],
+                    'id' => Str::uuid(),
+                    'user_id' => $userId,
+                    'plate' => $plate,
+                    'make' => $car['make'],
+                    'model' => $car['models'][array_rand($car['models'])],
+                    'color' => self::COLORS[array_rand(self::COLORS)],
                     'is_default' => ($v === 0),
                     'created_at' => now()->subDays(rand(0, 30)),
                     'updated_at' => now()->subDays(rand(0, 10)),
@@ -312,6 +314,7 @@ class ProductionSimulationSeeder extends Seeder
         }
 
         $this->command->line('  → Users + vehicles seeded');
+
         return $userIds;
     }
 
@@ -322,21 +325,21 @@ class ProductionSimulationSeeder extends Seeder
     private function seedBookings(array $lotData, array $userIds): void
     {
         $bookings = [];
-        $now      = Carbon::now();
-        $start    = $now->copy()->subDays(30)->startOfDay();
+        $now = Carbon::now();
+        $start = $now->copy()->subDays(30)->startOfDay();
 
         $this->command->line('  → Generating ~3500 bookings over 30 days...');
 
         for ($day = 0; $day < 30; $day++) {
-            $date      = $start->copy()->addDays($day);
+            $date = $start->copy()->addDays($day);
             $dayOfWeek = $date->dayOfWeek; // 0=Sun, 6=Sat
             $isWeekend = ($dayOfWeek === 0 || $dayOfWeek === 6);
-            $target    = $isWeekend ? rand(40, 70) : rand(130, 170);
+            $target = $isWeekend ? rand(40, 70) : rand(130, 170);
 
             for ($b = 0; $b < $target; $b++) {
-                $user    = $userIds[array_rand($userIds)];
-                $lot     = $lotData[array_rand($lotData)];
-                $slotId  = $lot['slot_ids'][array_rand($lot['slot_ids'])];
+                $user = $userIds[array_rand($userIds)];
+                $lot = $lotData[array_rand($lotData)];
+                $slotId = $lot['slot_ids'][array_rand($lot['slot_ids'])];
 
                 [$startTime, $endTime] = $this->bookingWindow($date, $isWeekend);
 
@@ -354,20 +357,20 @@ class ProductionSimulationSeeder extends Seeder
                 }
 
                 $bookings[] = [
-                    'id'            => Str::uuid()->toString(),
-                    'user_id'       => $user['id'],
-                    'lot_id'        => $lot['id'],
-                    'slot_id'       => $slotId,
-                    'lot_name'      => $lot['name'],
-                    'slot_number'   => DB::table('parking_slots')->where('id', $slotId)->value('slot_number') ?? '001',
+                    'id' => Str::uuid()->toString(),
+                    'user_id' => $user['id'],
+                    'lot_id' => $lot['id'],
+                    'slot_id' => $slotId,
+                    'lot_name' => $lot['name'],
+                    'slot_number' => DB::table('parking_slots')->where('id', $slotId)->value('slot_number') ?? '001',
                     'vehicle_plate' => $user['plate'],
-                    'booking_type'  => 'einmalig',
-                    'start_time'    => $startTime->toDateTimeString(),
-                    'end_time'      => $endTime->toDateTimeString(),
-                    'status'        => $status,
+                    'booking_type' => 'einmalig',
+                    'start_time' => $startTime->toDateTimeString(),
+                    'end_time' => $endTime->toDateTimeString(),
+                    'status' => $status,
                     'checked_in_at' => ($status === 'completed') ? $startTime->copy()->addMinutes(rand(1, 15))->toDateTimeString() : null,
-                    'created_at'    => $startTime->copy()->subHours(rand(1, 48))->toDateTimeString(),
-                    'updated_at'    => $startTime->copy()->subHours(rand(0, 2))->toDateTimeString(),
+                    'created_at' => $startTime->copy()->subHours(rand(1, 48))->toDateTimeString(),
+                    'updated_at' => $startTime->copy()->subHours(rand(0, 2))->toDateTimeString(),
                 ];
 
                 // Bulk insert every 200 rows to stay memory-efficient
@@ -378,11 +381,11 @@ class ProductionSimulationSeeder extends Seeder
             }
         }
 
-        if (!empty($bookings)) {
+        if (! empty($bookings)) {
             DB::table('bookings')->insert($bookings);
         }
 
-        $this->command->line('  → ' . DB::table('bookings')->count() . ' bookings inserted');
+        $this->command->line('  → '.DB::table('bookings')->count().' bookings inserted');
     }
 
     // -------------------------------------------------------------------------
@@ -394,22 +397,22 @@ class ProductionSimulationSeeder extends Seeder
         if ($isWeekend) {
             // Weekends: spread across 09:00-17:00
             $startHour = rand(9, 15);
-            $startMin  = rand(0, 3) * 15;
+            $startMin = rand(0, 3) * 15;
         } else {
             // Weekdays: peaks at 07-09 and 16-18
             $peakMorning = rand(1, 100) <= 40;
             if ($peakMorning) {
                 $startHour = rand(7, 8);
-                $startMin  = rand(0, 3) * 15;
+                $startMin = rand(0, 3) * 15;
             } else {
                 $startHour = rand(9, 17);
-                $startMin  = rand(0, 3) * 15;
+                $startMin = rand(0, 3) * 15;
             }
         }
 
         $durationMinutes = $this->bookingDuration($isWeekend);
-        $startTime       = $date->copy()->setHour($startHour)->setMinute($startMin)->setSecond(0);
-        $endTime         = $startTime->copy()->addMinutes($durationMinutes);
+        $startTime = $date->copy()->setHour($startHour)->setMinute($startMin)->setSecond(0);
+        $endTime = $startTime->copy()->addMinutes($durationMinutes);
 
         return [$startTime, $endTime];
     }
@@ -420,8 +423,13 @@ class ProductionSimulationSeeder extends Seeder
             return rand(2, 6) * 60; // 2–6 hours on weekends
         }
         $r = rand(1, 100);
-        if ($r <= 30) return rand(30, 90);         // short: 30–90 min (commuters)
-        if ($r <= 70) return rand(120, 300);        // medium: 2–5 hours
+        if ($r <= 30) {
+            return rand(30, 90);
+        }         // short: 30–90 min (commuters)
+        if ($r <= 70) {
+            return rand(120, 300);
+        }        // medium: 2–5 hours
+
         return rand(360, 540);                      // long: 6–9 hours (full day)
     }
 
@@ -429,10 +437,10 @@ class ProductionSimulationSeeder extends Seeder
     {
         $attempts = 0;
         do {
-            $prefix  = self::PLATE_PREFIXES[array_rand(self::PLATE_PREFIXES)];
-            $letters = strtoupper(chr(rand(65, 90)) . chr(rand(65, 90)));
-            $digits  = rand(100, 9999);
-            $plate   = $prefix . '-' . $letters . ' ' . $digits;
+            $prefix = self::PLATE_PREFIXES[array_rand(self::PLATE_PREFIXES)];
+            $letters = strtoupper(chr(rand(65, 90)).chr(rand(65, 90)));
+            $digits = rand(100, 9999);
+            $plate = $prefix.'-'.$letters.' '.$digits;
             $attempts++;
         } while (in_array($plate, $used) && $attempts < 20);
 
@@ -442,6 +450,7 @@ class ProductionSimulationSeeder extends Seeder
     private function zoneColor(): string
     {
         $colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+
         return $colors[array_rand($colors)];
     }
 }

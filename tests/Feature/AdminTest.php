@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\ParkingLot;
-use App\Models\Booking;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +15,7 @@ class AdminTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $token = $admin->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/stats');
 
         $response->assertStatus(200)
@@ -29,7 +27,7 @@ class AdminTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $token = $admin->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/heatmap');
 
         $response->assertStatus(200);
@@ -41,7 +39,7 @@ class AdminTest extends TestCase
         User::factory()->count(3)->create();
         $token = $admin->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/users');
 
         $response->assertStatus(200);
@@ -53,8 +51,8 @@ class AdminTest extends TestCase
         $user = User::factory()->create(['role' => 'user']);
         $token = $admin->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/v1/admin/users/' . $user->id, [
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/admin/users/'.$user->id, [
                 'role' => 'admin',
                 'is_active' => true,
             ]);
@@ -68,7 +66,7 @@ class AdminTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $token = $admin->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/settings');
 
         $response->assertStatus(200);
@@ -79,7 +77,7 @@ class AdminTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $token = $admin->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/settings', [
                 'company_name' => 'New Company',
                 'self_registration' => true,
@@ -93,7 +91,7 @@ class AdminTest extends TestCase
         $user = User::factory()->create(['role' => 'user']);
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/stats');
 
         $response->assertStatus(403);

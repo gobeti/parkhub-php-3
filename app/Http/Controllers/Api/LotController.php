@@ -1,11 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
-use App\Models\Booking;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class LotController extends Controller
 {
@@ -27,9 +29,10 @@ class LotController extends Controller
             ->pluck('occupied', 'lot_id');
 
         $lots = ParkingLot::all()->map(function ($lot) use ($slotCounts, $occupiedCounts) {
-            $total    = $slotCounts->get($lot->id, 0);
+            $total = $slotCounts->get($lot->id, 0);
             $occupied = $occupiedCounts->get($lot->id, 0);
             $lot->available_slots = max(0, $total - $occupied);
+
             return $lot;
         });
 
@@ -38,7 +41,7 @@ class LotController extends Controller
 
     private function requireAdmin(Request $request): void
     {
-        if (!$request->user() || !$request->user()->isAdmin()) {
+        if (! $request->user() || ! $request->user()->isAdmin()) {
             abort(403, 'Admin access required');
         }
     }
@@ -55,12 +58,12 @@ class LotController extends Controller
             $slots = [];
             for ($i = 1; $i <= $totalSlots; $i++) {
                 $slots[] = [
-                    'id'          => \Illuminate\Support\Str::uuid()->toString(),
-                    'lot_id'      => $lot->id,
+                    'id' => Str::uuid()->toString(),
+                    'lot_id' => $lot->id,
                     'slot_number' => str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'status'      => 'available',
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
+                    'status' => 'available',
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
             }
             ParkingSlot::insert($slots);
@@ -75,7 +78,7 @@ class LotController extends Controller
         $lot->available_slots = $this->calculateAvailable($lot);
 
         // Auto-generate layout from slots if not set (Rust frontend requires layout)
-        if (!$lot->layout) {
+        if (! $lot->layout) {
             $slots = $lot->slots()->get();
             $activeBookings = Booking::with('user')
                 ->where('lot_id', $id)
@@ -87,6 +90,7 @@ class LotController extends Controller
 
             $slotConfigs = $slots->map(function ($slot) use ($activeBookings) {
                 $booking = $activeBookings->get($slot->id);
+
                 return [
                     'id' => $slot->id,
                     'number' => $slot->slot_number,
@@ -101,10 +105,10 @@ class LotController extends Controller
             $rows = [];
             foreach ($chunks as $i => $chunk) {
                 $rows[] = [
-                    'id' => 'row-' . ($i + 1),
+                    'id' => 'row-'.($i + 1),
                     'side' => $i % 2 === 0 ? 'top' : 'bottom',
                     'slots' => $chunk,
-                    'label' => 'Row ' . ($i + 1),
+                    'label' => 'Row '.($i + 1),
                 ];
             }
             $lot->layout = ['rows' => $rows, 'roadLabel' => 'Main Road'];
@@ -118,6 +122,7 @@ class LotController extends Controller
         $this->requireAdmin($request);
         $lot = ParkingLot::findOrFail($id);
         $lot->update($request->only(['name', 'address', 'total_slots', 'layout', 'status']));
+
         return response()->json($lot);
     }
 
@@ -125,6 +130,7 @@ class LotController extends Controller
     {
         $this->requireAdmin($request);
         ParkingLot::findOrFail($id)->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 
@@ -145,15 +151,16 @@ class LotController extends Controller
             $activeBooking = $activeBookings->get($slot->id);
 
             $slot->current_booking = $activeBooking ? [
-                'booking_id'    => $activeBooking->id,
-                'user_id'       => $activeBooking->user_id,
+                'booking_id' => $activeBooking->id,
+                'user_id' => $activeBooking->user_id,
                 'license_plate' => $activeBooking->vehicle_plate,
-                'start_time'    => $activeBooking->start_time->toISOString(),
-                'end_time'      => $activeBooking->end_time->toISOString(),
+                'start_time' => $activeBooking->start_time->toISOString(),
+                'end_time' => $activeBooking->end_time->toISOString(),
             ] : null;
 
             return $slot;
         });
+
         return response()->json($slots);
     }
 
@@ -185,6 +192,7 @@ class LotController extends Controller
             ->where('start_time', '<=', now())
             ->where('end_time', '>=', now())
             ->count();
+
         return max(0, $totalSlots - $occupied);
     }
 
@@ -197,29 +205,31 @@ class LotController extends Controller
      * already a transitive Laravel dependency, or `chillerlan/php-qrcode`) to
      * generate QR codes server-side without leaking URLs to external services.
      */
-    public function qrCode(\Illuminate\Http\Request $request, string $id)
+    public function qrCode(Request $request, string $id)
     {
-        $lot = \App\Models\ParkingLot::findOrFail($id);
-        $data = urlencode(url('/') . '/book?lot=' . $id);
+        $lot = ParkingLot::findOrFail($id);
+        $data = urlencode(url('/').'/book?lot='.$id);
+
         return response()->json([
-            'lot_id'  => $id,
-            'lot_name'=> $lot->name,
-            'qr_url'  => "https://api.qrserver.com/v1/create-qr-code/?data={$data}&size=256x256",
-            'data'    => urldecode($data),
+            'lot_id' => $id,
+            'lot_name' => $lot->name,
+            'qr_url' => "https://api.qrserver.com/v1/create-qr-code/?data={$data}&size=256x256",
+            'data' => urldecode($data),
         ]);
     }
 
     /** @see self::qrCode() for privacy note about external QR API */
-    public function slotQrCode(\Illuminate\Http\Request $request, string $lotId, string $slotId)
+    public function slotQrCode(Request $request, string $lotId, string $slotId)
     {
-        $slot = \App\Models\ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);
-        $data = urlencode(url('/') . '/book?lot=' . $lotId . '&slot=' . $slotId);
+        $slot = ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);
+        $data = urlencode(url('/').'/book?lot='.$lotId.'&slot='.$slotId);
+
         return response()->json([
-            'lot_id'     => $lotId,
-            'slot_id'    => $slotId,
-            'slot_number'=> $slot->slot_number,
-            'qr_url'     => "https://api.qrserver.com/v1/create-qr-code/?data={$data}&size=256x256",
-            'data'       => urldecode($data),
+            'lot_id' => $lotId,
+            'slot_id' => $slotId,
+            'slot_number' => $slot->slot_number,
+            'qr_url' => "https://api.qrserver.com/v1/create-qr-code/?data={$data}&size=256x256",
+            'data' => urldecode($data),
         ]);
     }
 }

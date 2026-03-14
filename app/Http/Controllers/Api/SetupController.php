@@ -1,20 +1,23 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
-use App\Models\User;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
+use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class SetupController extends Controller
 {
     public function status()
     {
-$completed = Setting::get("setup_completed", "false") === "true";        $hasAdmin = User::where("role", "admin")->orWhere("role", "superadmin")->exists();        return response()->json([            "setup_complete" => $completed,            "setup_completed" => $completed,            "has_admin" => $hasAdmin,            "has_parking_lots" => \App\Models\ParkingLot::count() > 0,            "has_users" => User::count() > 0,            "needs_password_change" => \App\Models\Setting::get("needs_password_change", "false") === "true",            "total_lots" => \App\Models\ParkingLot::count(),            "total_users" => User::count(),        ]);
+        $completed = Setting::get('setup_completed', 'false') === 'true';
+        $hasAdmin = User::where('role', 'admin')->orWhere('role', 'superadmin')->exists();
+
+        return response()->json(['setup_complete' => $completed,            'setup_completed' => $completed,            'has_admin' => $hasAdmin,            'has_parking_lots' => ParkingLot::count() > 0,            'has_users' => User::count() > 0,            'needs_password_change' => Setting::get('needs_password_change', 'false') === 'true',            'total_lots' => ParkingLot::count(),            'total_users' => User::count()]);
     }
 
     public function init(Request $request)
@@ -63,7 +66,7 @@ $completed = Setting::get("setup_completed", "false") === "true";        $hasAdm
             for ($i = 1; $i <= 10; $i++) {
                 ParkingSlot::create([
                     'lot_id' => $lot->id,
-                    'slot_number' => 'A' . $i,
+                    'slot_number' => 'A'.$i,
                     'status' => 'available',
                 ]);
             }

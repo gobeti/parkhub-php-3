@@ -1,20 +1,21 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\SetupController;
-use App\Http\Controllers\Api\LotController;
-use App\Http\Controllers\Api\SlotController;
-use App\Http\Controllers\Api\BookingController;
-use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\AbsenceController;
 use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\PublicController;
-use App\Http\Controllers\Api\TeamController;
-use App\Http\Controllers\Api\VehicleController;
-use App\Http\Controllers\Api\ZoneController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MiscController;
+use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\RecurringBookingController;
+use App\Http\Controllers\Api\SetupController;
+use App\Http\Controllers\Api\SlotController;
+use App\Http\Controllers\Api\TeamController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WaitlistController;
+use App\Http\Controllers\Api\ZoneController;
+use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 
 // Public routes (no auth) — rate limited to prevent brute-force and registration spam
@@ -182,7 +183,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Active announcements
     Route::get('/announcements/active', function () {
-        return response()->json(\App\Models\Announcement::where('active', true)
+        return response()->json(Announcement::where('active', true)
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })->orderBy('created_at', 'desc')->get());

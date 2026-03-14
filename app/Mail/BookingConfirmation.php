@@ -24,6 +24,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $company = Setting::get('company_name', 'ParkHub');
+
         return new Envelope(
             subject: "[{$company}] Buchungsbestätigung – Stellplatz {$this->booking->slot_number}",
         );
@@ -38,15 +39,15 @@ class BookingConfirmation extends Mailable implements ShouldQueue
 
     private function buildHtml(): string
     {
-        $company  = e(Setting::get('company_name', 'ParkHub'));
-        $name     = e($this->recipient->name);
-        $lot      = e($this->booking->lot_name ?? '—');
-        $slot     = e($this->booking->slot_number ?? '—');
-        $plate    = e($this->booking->vehicle_plate ?? '—');
-        $start    = $this->booking->start_time
+        $company = e(Setting::get('company_name', 'ParkHub'));
+        $name = e($this->recipient->name);
+        $lot = e($this->booking->lot_name ?? '—');
+        $slot = e($this->booking->slot_number ?? '—');
+        $plate = e($this->booking->vehicle_plate ?? '—');
+        $start = $this->booking->start_time
             ? date('d.m.Y H:i', strtotime($this->booking->start_time))
             : '—';
-        $end      = $this->booking->end_time
+        $end = $this->booking->end_time
             ? date('d.m.Y H:i', strtotime($this->booking->end_time))
             : '—';
         $bookingId = e($this->booking->id);

@@ -1,28 +1,29 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Absence;
+use App\Models\Announcement;
+use App\Models\AuditLog;
 use App\Models\Booking;
+use App\Models\CreditTransaction;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
-use App\Models\Vehicle;
-use App\Models\Absence;
-use App\Models\AuditLog;
-use App\Models\Announcement;
 use App\Models\Setting;
-use App\Models\CreditTransaction;
+use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\Webhook;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
-
-
     private function requireAdmin($request): void
     {
-        if (!$request->user() || !$request->user()->isAdmin()) {
+        if (! $request->user() || ! $request->user()->isAdmin()) {
             abort(403, 'Admin access required');
         }
     }
@@ -59,7 +60,7 @@ class AdminController extends Controller
         $days = (int) $request->get('days', 30);
 
         // Use DB-agnostic expressions: DAYOFWEEK (MySQL) vs strftime (SQLite)
-        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $driver = DB::getDriverName();
 
         if ($driver === 'sqlite') {
             $bookings = Booking::where('start_time', '>=', now()->subDays($days))
@@ -89,8 +90,8 @@ class AdminController extends Controller
         if ($request->has('search')) {
             $search = addcslashes($request->search, '%_\\');
             $query->where(function ($q) use ($search) {
-                $q->where('username', 'like', '%' . $search . '%')
-                  ->orWhere('action', 'like', '%' . $search . '%');
+                $q->where('username', 'like', '%'.$search.'%')
+                    ->orWhere('action', 'like', '%'.$search.'%');
             });
         }
 
@@ -100,6 +101,7 @@ class AdminController extends Controller
     public function announcements(Request $request)
     {
         $this->requireAdmin($request);
+
         return response()->json(Announcement::orderBy('created_at', 'desc')->get());
     }
 
@@ -108,15 +110,16 @@ class AdminController extends Controller
         $this->requireAdmin($request);
 
         $request->validate([
-            'title'      => 'required|string|max:255',
-            'message'    => 'required|string|max:10000',
-            'severity'   => 'nullable|in:info,warning,error,success',
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:10000',
+            'severity' => 'nullable|in:info,warning,error,success',
             'expires_at' => 'nullable|date',
         ]);
         $ann = Announcement::create(array_merge(
             $request->only(['title', 'message', 'severity', 'expires_at']),
             ['created_by' => $request->user()->id, 'active' => true]
         ));
+
         return response()->json($ann, 201);
     }
 
@@ -124,14 +127,15 @@ class AdminController extends Controller
     {
         $this->requireAdmin($request);
         $request->validate([
-            'title'      => 'sometimes|string|max:255',
-            'message'    => 'sometimes|string',
-            'severity'   => 'sometimes|in:info,warning,error,success',
-            'active'     => 'sometimes|boolean',
+            'title' => 'sometimes|string|max:255',
+            'message' => 'sometimes|string',
+            'severity' => 'sometimes|in:info,warning,error,success',
+            'active' => 'sometimes|boolean',
             'expires_at' => 'sometimes|nullable|date',
         ]);
         $ann = Announcement::findOrFail($id);
         $ann->update($request->only(['title', 'message', 'severity', 'active', 'expires_at']));
+
         return response()->json($ann);
     }
 
@@ -139,6 +143,7 @@ class AdminController extends Controller
     {
         $this->requireAdmin($request);
         Announcement::findOrFail($id)->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 
@@ -147,13 +152,13 @@ class AdminController extends Controller
         $this->requireAdmin($request);
 
         $request->validate([
-            'users'              => 'required|array|max:500',
-            'users.*.username'   => 'required|string|min:3|max:50|alpha_dash',
-            'users.*.email'      => 'required|email|max:255',
-            'users.*.name'       => 'nullable|string|max:255',
-            'users.*.role'       => 'nullable|in:user,admin',
+            'users' => 'required|array|max:500',
+            'users.*.username' => 'required|string|min:3|max:50|alpha_dash',
+            'users.*.email' => 'required|email|max:255',
+            'users.*.name' => 'nullable|string|max:255',
+            'users.*.role' => 'nullable|in:user,admin',
             'users.*.department' => 'nullable|string|max:255',
-            'users.*.password'   => 'nullable|string|min:8|max:128',
+            'users.*.password' => 'nullable|string|min:8|max:128',
         ]);
 
         $imported = 0;
@@ -163,13 +168,13 @@ class AdminController extends Controller
                 continue;
             }
             $user = User::create([
-                'username'   => $userData['username'],
-                'email'      => $userData['email'],
-                'password'   => Hash::make($userData['password'] ?? \Illuminate\Support\Str::random(16)),
-                'name'       => $userData['name'] ?? $userData['username'],
-                'is_active'  => true,
+                'username' => $userData['username'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password'] ?? Str::random(16)),
+                'name' => $userData['name'] ?? $userData['username'],
+                'is_active' => true,
                 'department' => $userData['department'] ?? null,
-                'preferences'=> ['language' => 'en', 'theme' => 'system'],
+                'preferences' => ['language' => 'en', 'theme' => 'system'],
             ]);
             $user->role = $userData['role'] ?? 'user';
             $user->save();
@@ -179,7 +184,7 @@ class AdminController extends Controller
         return response()->json(['imported' => $imported]);
     }
 
-public function getSettings(Request $request)
+    public function getSettings(Request $request)
     {
         $this->requireAdmin($request);
 
@@ -197,6 +202,7 @@ public function getSettings(Request $request)
             'primary_color' => '#d97706',
             'secondary_color' => '#475569',
         ];
+
         return response()->json(array_merge($defaults, $settings));
     }
 
@@ -213,22 +219,23 @@ public function getSettings(Request $request)
         ];
 
         $request->validate([
-            'company_name'         => 'sometimes|string|max:255',
-            'use_case'             => 'sometimes|in:corporate,university,residential,other',
-            'self_registration'    => 'sometimes|boolean',
-            'license_plate_mode'   => 'sometimes|in:required,optional,disabled',
-            'display_name_format'  => 'sometimes|in:first_name,full_name,username',
+            'company_name' => 'sometimes|string|max:255',
+            'use_case' => 'sometimes|in:corporate,university,residential,other',
+            'self_registration' => 'sometimes|boolean',
+            'license_plate_mode' => 'sometimes|in:required,optional,disabled',
+            'display_name_format' => 'sometimes|in:first_name,full_name,username',
             'max_bookings_per_day' => 'sometimes|integer|min:1|max:50',
             'allow_guest_bookings' => 'sometimes|boolean',
             'auto_release_minutes' => 'sometimes|integer|min:0|max:480',
-            'require_vehicle'      => 'sometimes|boolean',
-            'primary_color'        => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'secondary_color'      => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
+            'require_vehicle' => 'sometimes|boolean',
+            'primary_color' => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
+            'secondary_color' => 'sometimes|string|regex:/^#[0-9a-fA-F]{6}$/',
         ]);
 
         foreach ($request->only($allowed) as $key => $value) {
             Setting::set($key, is_array($value) ? json_encode($value) : (string) $value);
         }
+
         return response()->json(['message' => 'Settings updated']);
     }
 
@@ -237,6 +244,7 @@ public function getSettings(Request $request)
         $this->requireAdmin($request);
         $perPage = min((int) request('per_page', 20), 100);
         $users = User::paginate($perPage);
+
         return response()->json([
             'success' => true,
             'data' => $users->items(),
@@ -266,7 +274,7 @@ public function getSettings(Request $request)
             $query->where('start_time', '>=', $request->from_date);
         }
         if ($request->has('to_date')) {
-            $query->where('end_time', '<=', $request->to_date . ' 23:59:59');
+            $query->where('end_time', '<=', $request->to_date.' 23:59:59');
         }
 
         return response()->json($query->get());
@@ -277,13 +285,13 @@ public function getSettings(Request $request)
         $this->requireAdmin($request);
 
         $booking = Booking::findOrFail($id);
-        $booking->update(['status' => \App\Models\Booking::STATUS_CANCELLED]);
+        $booking->update(['status' => Booking::STATUS_CANCELLED]);
 
         AuditLog::create([
-            'user_id'  => $request->user()->id,
+            'user_id' => $request->user()->id,
             'username' => $request->user()->username,
-            'action'   => 'admin_booking_cancelled',
-            'details'  => ['booking_id' => $id],
+            'action' => 'admin_booking_cancelled',
+            'details' => ['booking_id' => $id],
         ]);
 
         return response()->json($booking->fresh());
@@ -293,12 +301,12 @@ public function getSettings(Request $request)
     {
         $this->requireAdmin($request);
         $request->validate([
-            'name'       => 'sometimes|string|max:255',
-            'email'      => 'sometimes|email|max:255|unique:users,email,' . $id,
-            'role'       => 'sometimes|in:user,admin,superadmin',
-            'is_active'  => 'sometimes|boolean',
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255|unique:users,email,'.$id,
+            'role' => 'sometimes|in:user,admin,superadmin',
+            'is_active' => 'sometimes|boolean',
             'department' => 'sometimes|nullable|string|max:255',
-            'password'   => 'sometimes|string|min:8',
+            'password' => 'sometimes|string|min:8',
         ]);
         $user = User::findOrFail($id);
         $data = $request->only(['name', 'email', 'is_active', 'department']);
@@ -311,6 +319,7 @@ public function getSettings(Request $request)
             $user->role = $request->role;
             $user->save();
         }
+
         // Return via toArray() to respect $hidden
         return response()->json($user->fresh()->toArray());
     }
@@ -319,10 +328,10 @@ public function getSettings(Request $request)
     {
         $this->requireAdmin($request);
 
-        $bookings = \App\Models\Booking::with('user')->orderBy('start_time', 'desc')->get();
+        $bookings = Booking::with('user')->orderBy('start_time', 'desc')->get();
 
         $headers = ['ID', 'User', 'Lot', 'Slot', 'Vehicle', 'Start', 'End', 'Status', 'Type'];
-        $rows    = $bookings->map(fn ($b) => [
+        $rows = $bookings->map(fn ($b) => [
             $b->id,
             $b->user?->name ?? 'Guest',
             $b->lot_name,
@@ -344,7 +353,7 @@ public function getSettings(Request $request)
         $csv = ob_get_clean();
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="bookings-export.csv"',
         ]);
     }
@@ -352,16 +361,17 @@ public function getSettings(Request $request)
     public function reports(Request $request)
     {
         $this->requireAdmin($request);
-        $days = (int)$request->get('days', 30);
+        $days = (int) $request->get('days', 30);
         $bookings = Booking::where('created_at', '>=', now()->subDays($days))->get();
-        $byDay = $bookings->groupBy(fn($b) => substr($b->start_time, 0, 10));
+        $byDay = $bookings->groupBy(fn ($b) => substr($b->start_time, 0, 10));
+
         return response()->json([
             'period_days' => $days,
             'total_bookings' => $bookings->count(),
             'by_day' => $byDay->map->count()->sortKeys()->all(),
             'by_status' => $bookings->groupBy('status')->map->count()->all(),
             'by_booking_type' => $bookings->groupBy('booking_type')->map->count()->all(),
-            'avg_duration_hours' => $bookings->avg(function($b) {
+            'avg_duration_hours' => $bookings->avg(function ($b) {
                 return (strtotime($b->end_time) - strtotime($b->start_time)) / 3600;
             }),
         ]);
@@ -370,7 +380,7 @@ public function getSettings(Request $request)
     public function dashboardCharts(Request $request)
     {
         $this->requireAdmin($request);
-        $days = (int)$request->get('days', 7);
+        $days = (int) $request->get('days', 7);
         $labels = [];
         $bookingCounts = [];
         for ($i = $days - 1; $i >= 0; $i--) {
@@ -378,6 +388,7 @@ public function getSettings(Request $request)
             $labels[] = $date;
             $bookingCounts[] = Booking::whereDate('start_time', $date)->count();
         }
+
         return response()->json([
             'booking_trend' => ['labels' => $labels, 'data' => $bookingCounts],
             'occupancy_now' => [
@@ -393,6 +404,7 @@ public function getSettings(Request $request)
     public function getBranding(Request $request)
     {
         $this->requireAdmin($request);
+
         return response()->json([
             'company_name' => Setting::get('company_name', 'ParkHub'),
             'primary_color' => Setting::get('brand_primary_color', '#3b82f6'),
@@ -405,10 +417,17 @@ public function getSettings(Request $request)
     {
         $this->requireAdmin($request);
         foreach (['company_name', 'primary_color', 'logo_url', 'use_case'] as $key) {
-            if ($request->has($key)) Setting::set('brand_' . $key, $request->input($key));
+            if ($request->has($key)) {
+                Setting::set('brand_'.$key, $request->input($key));
+            }
         }
-        if ($request->has('company_name')) Setting::set('company_name', $request->input('company_name'));
-        if ($request->has('use_case')) Setting::set('use_case', $request->input('use_case'));
+        if ($request->has('company_name')) {
+            Setting::set('company_name', $request->input('company_name'));
+        }
+        if ($request->has('use_case')) {
+            Setting::set('use_case', $request->input('use_case'));
+        }
+
         return response()->json(['message' => 'Branding updated']);
     }
 
@@ -417,33 +436,37 @@ public function getSettings(Request $request)
         $this->requireAdmin($request);
         $request->validate(['logo' => 'required|image|max:2048']);
         $path = $request->file('logo')->store('branding', 'public');
-        Setting::set('logo_url', '/storage/' . $path);
-        return response()->json(['logo_url' => '/storage/' . $path]);
+        Setting::set('logo_url', '/storage/'.$path);
+
+        return response()->json(['logo_url' => '/storage/'.$path]);
     }
 
     public function serveBrandingLogo(Request $request)
     {
         $logoUrl = Setting::get('logo_url', null);
-        if (!$logoUrl) {
+        if (! $logoUrl) {
             // Return default SVG icon
             $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="#3b82f6"><circle cx="32" cy="32" r="30"/><text x="32" y="42" text-anchor="middle" font-size="32" fill="white" font-family="Arial" font-weight="bold">P</text></svg>';
+
             return response($svg, 200, ['Content-Type' => 'image/svg+xml', 'Cache-Control' => 'public, max-age=86400']);
         }
         if (str_starts_with($logoUrl, '/storage/')) {
-            $filePath = storage_path('app/public' . substr($logoUrl, 8));
+            $filePath = storage_path('app/public'.substr($logoUrl, 8));
             if (file_exists($filePath)) {
                 return response()->file($filePath, ['Cache-Control' => 'public, max-age=86400']);
             }
         }
+
         return redirect($logoUrl);
     }
 
     public function getPrivacy(Request $request)
     {
         $this->requireAdmin($request);
+
         return response()->json([
             'policy_text' => Setting::get('privacy_policy', ''),
-            'data_retention_days' => (int)Setting::get('data_retention_days', 365),
+            'data_retention_days' => (int) Setting::get('data_retention_days', 365),
             'gdpr_enabled' => Setting::get('gdpr_enabled', 'true') === 'true',
         ]);
     }
@@ -452,11 +475,20 @@ public function getSettings(Request $request)
     {
         $this->requireAdmin($request);
         foreach (['policy_text', 'data_retention_days', 'gdpr_enabled'] as $key) {
-            if ($request->has($key)) Setting::set('privacy_' . str_replace('_text', '_policy', $key), (string)$request->input($key));
+            if ($request->has($key)) {
+                Setting::set('privacy_'.str_replace('_text', '_policy', $key), (string) $request->input($key));
+            }
         }
-        if ($request->has('policy_text')) Setting::set('privacy_policy', $request->input('policy_text'));
-        if ($request->has('data_retention_days')) Setting::set('data_retention_days', $request->input('data_retention_days'));
-        if ($request->has('gdpr_enabled')) Setting::set('gdpr_enabled', $request->boolean('gdpr_enabled') ? 'true' : 'false');
+        if ($request->has('policy_text')) {
+            Setting::set('privacy_policy', $request->input('policy_text'));
+        }
+        if ($request->has('data_retention_days')) {
+            Setting::set('data_retention_days', $request->input('data_retention_days'));
+        }
+        if ($request->has('gdpr_enabled')) {
+            Setting::set('gdpr_enabled', $request->boolean('gdpr_enabled') ? 'true' : 'false');
+        }
+
         return response()->json(['message' => 'Privacy settings updated']);
     }
 
@@ -467,45 +499,53 @@ public function getSettings(Request $request)
         // Delete all user data but keep admin account
         $admin = $request->user();
         Booking::query()->delete();
-        \App\Models\Absence::query()->delete();
-        \App\Models\Vehicle::query()->delete();
-        \App\Models\ParkingSlot::query()->update(['status' => 'available']);
+        Absence::query()->delete();
+        Vehicle::query()->delete();
+        ParkingSlot::query()->update(['status' => 'available']);
         User::where('id', '!=', $admin->id)->delete();
         AuditLog::create([
             'user_id' => $admin->id,
             'username' => $admin->username,
             'action' => 'database_reset',
         ]);
+
         return response()->json(['message' => 'Database reset. All user data deleted.']);
     }
 
     public function getAutoReleaseSettings(Request $request)
     {
         $this->requireAdmin($request);
+
         return response()->json([
             'enabled' => Setting::get('auto_release_enabled', 'false') === 'true',
-            'timeout_minutes' => (int)Setting::get('auto_release_timeout', 30),
+            'timeout_minutes' => (int) Setting::get('auto_release_timeout', 30),
         ]);
     }
 
     public function updateAutoReleaseSettings(Request $request)
     {
         $this->requireAdmin($request);
-        if ($request->has('enabled')) Setting::set('auto_release_enabled', $request->boolean('enabled') ? 'true' : 'false');
-        if ($request->has('timeout_minutes')) Setting::set('auto_release_timeout', $request->input('timeout_minutes'));
+        if ($request->has('enabled')) {
+            Setting::set('auto_release_enabled', $request->boolean('enabled') ? 'true' : 'false');
+        }
+        if ($request->has('timeout_minutes')) {
+            Setting::set('auto_release_timeout', $request->input('timeout_minutes'));
+        }
+
         return response()->json(['message' => 'Auto-release settings updated']);
     }
 
     public function getEmailSettings(Request $request)
     {
         $this->requireAdmin($request);
+
         return response()->json([
-            'smtp_host'  => Setting::get('smtp_host', ''),
-            'smtp_port'  => (int)Setting::get('smtp_port', 587),
-            'smtp_user'  => Setting::get('smtp_user', ''),
+            'smtp_host' => Setting::get('smtp_host', ''),
+            'smtp_port' => (int) Setting::get('smtp_port', 587),
+            'smtp_user' => Setting::get('smtp_user', ''),
             'from_email' => Setting::get('from_email', ''),
-            'from_name'  => Setting::get('from_name', 'ParkHub'),
-            'enabled'    => Setting::get('email_enabled', 'false') === 'true',
+            'from_name' => Setting::get('from_name', 'ParkHub'),
+            'enabled' => Setting::get('email_enabled', 'false') === 'true',
         ]);
     }
 
@@ -513,16 +553,22 @@ public function getSettings(Request $request)
     {
         $this->requireAdmin($request);
         foreach (['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'from_email', 'from_name'] as $key) {
-            if ($request->has($key)) Setting::set($key, $request->input($key));
+            if ($request->has($key)) {
+                Setting::set($key, $request->input($key));
+            }
         }
-        if ($request->has('enabled')) Setting::set('email_enabled', $request->boolean('enabled') ? 'true' : 'false');
+        if ($request->has('enabled')) {
+            Setting::set('email_enabled', $request->boolean('enabled') ? 'true' : 'false');
+        }
+
         return response()->json(['message' => 'Email settings updated']);
     }
 
     public function getWebhookSettings(Request $request)
     {
         $this->requireAdmin($request);
-        $hooks = \App\Models\Webhook::all();
+        $hooks = Webhook::all();
+
         return response()->json($hooks);
     }
 
@@ -530,14 +576,14 @@ public function getSettings(Request $request)
     {
         $this->requireAdmin($request);
         if ($request->has('webhooks')) {
-            \App\Models\Webhook::query()->delete();
+            Webhook::query()->delete();
             foreach ($request->input('webhooks') as $hook) {
                 $url = $hook['url'] ?? '';
                 // SSRF protection: reject private/internal IP ranges
-                if (!$this->isExternalUrl($url)) {
+                if (! $this->isExternalUrl($url)) {
                     return response()->json(['error' => 'SSRF_BLOCKED', 'message' => 'Webhook URL must not target internal/private networks'], 422);
                 }
-                \App\Models\Webhook::create([
+                Webhook::create([
                     'url' => $url,
                     'events' => $hook['events'] ?? [],
                     'secret' => $hook['secret'] ?? null,
@@ -545,6 +591,7 @@ public function getSettings(Request $request)
                 ]);
             }
         }
+
         return response()->json(['message' => 'Webhook settings updated']);
     }
 
@@ -554,7 +601,7 @@ public function getSettings(Request $request)
     private function isExternalUrl(string $url): bool
     {
         // Must be http or https
-        if (!preg_match('#^https?://#i', $url)) {
+        if (! preg_match('#^https?://#i', $url)) {
             return false;
         }
 
@@ -586,7 +633,7 @@ public function getSettings(Request $request)
         // RFC1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
         // Link-local: 169.254.0.0/16
         // IPv6 mapped: ::1, ::ffff:127.0.0.1, etc.
-        return !filter_var(
+        return ! filter_var(
             $ip,
             FILTER_VALIDATE_IP,
             FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
@@ -596,8 +643,9 @@ public function getSettings(Request $request)
     public function updateSlot(Request $request, string $id)
     {
         $this->requireAdmin($request);
-        $slot = \App\Models\ParkingSlot::findOrFail($id);
+        $slot = ParkingSlot::findOrFail($id);
         $slot->update($request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']));
+
         return response()->json($slot->fresh());
     }
 
@@ -606,6 +654,7 @@ public function getSettings(Request $request)
         $this->requireAdmin($request);
         $lot = ParkingLot::findOrFail($id);
         $lot->delete();
+
         return response()->json(['message' => 'Lot deleted']);
     }
 
@@ -616,6 +665,7 @@ public function getSettings(Request $request)
             return response()->json(['error' => 'Cannot delete your own account'], 400);
         }
         User::findOrFail($id)->delete();
+
         return response()->json(['message' => 'User deleted']);
     }
 
@@ -624,19 +674,20 @@ public function getSettings(Request $request)
     public function getImpress(Request $request)
     {
         $this->requireAdmin($request);
+
         return response()->json([
-            'provider_name'       => Setting::get('impressum_provider_name', ''),
+            'provider_name' => Setting::get('impressum_provider_name', ''),
             'provider_legal_form' => Setting::get('impressum_legal_form', ''),
-            'street'              => Setting::get('impressum_street', ''),
-            'zip_city'            => Setting::get('impressum_zip_city', ''),
-            'country'             => Setting::get('impressum_country', 'Deutschland'),
-            'email'               => Setting::get('impressum_email', ''),
-            'phone'               => Setting::get('impressum_phone', ''),
-            'register_court'      => Setting::get('impressum_register_court', ''),
-            'register_number'     => Setting::get('impressum_register_number', ''),
-            'vat_id'              => Setting::get('impressum_vat_id', ''),
-            'responsible_person'  => Setting::get('impressum_responsible', ''),
-            'custom_text'         => Setting::get('impressum_custom_text', ''),
+            'street' => Setting::get('impressum_street', ''),
+            'zip_city' => Setting::get('impressum_zip_city', ''),
+            'country' => Setting::get('impressum_country', 'Deutschland'),
+            'email' => Setting::get('impressum_email', ''),
+            'phone' => Setting::get('impressum_phone', ''),
+            'register_court' => Setting::get('impressum_register_court', ''),
+            'register_number' => Setting::get('impressum_register_number', ''),
+            'vat_id' => Setting::get('impressum_vat_id', ''),
+            'responsible_person' => Setting::get('impressum_responsible', ''),
+            'custom_text' => Setting::get('impressum_custom_text', ''),
         ]);
     }
 
@@ -649,30 +700,31 @@ public function getSettings(Request $request)
             'responsible_person', 'custom_text',
         ];
         $keyMap = [
-            'provider_name'       => 'impressum_provider_name',
+            'provider_name' => 'impressum_provider_name',
             'provider_legal_form' => 'impressum_legal_form',
-            'street'              => 'impressum_street',
-            'zip_city'            => 'impressum_zip_city',
-            'country'             => 'impressum_country',
-            'email'               => 'impressum_email',
-            'phone'               => 'impressum_phone',
-            'register_court'      => 'impressum_register_court',
-            'register_number'     => 'impressum_register_number',
-            'vat_id'              => 'impressum_vat_id',
-            'responsible_person'  => 'impressum_responsible',
-            'custom_text'         => 'impressum_custom_text',
+            'street' => 'impressum_street',
+            'zip_city' => 'impressum_zip_city',
+            'country' => 'impressum_country',
+            'email' => 'impressum_email',
+            'phone' => 'impressum_phone',
+            'register_court' => 'impressum_register_court',
+            'register_number' => 'impressum_register_number',
+            'vat_id' => 'impressum_vat_id',
+            'responsible_person' => 'impressum_responsible',
+            'custom_text' => 'impressum_custom_text',
         ];
         foreach ($fields as $field) {
             if ($request->has($field)) {
-                Setting::set($keyMap[$field], (string)$request->input($field));
+                Setting::set($keyMap[$field], (string) $request->input($field));
             }
         }
         AuditLog::create([
-            'user_id'    => $request->user()->id,
-            'username'   => $request->user()->username,
-            'action'     => 'impressum_updated',
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->username,
+            'action' => 'impressum_updated',
             'ip_address' => $request->ip(),
         ]);
+
         return response()->json(['message' => 'Impressum updated']);
     }
 
@@ -694,7 +746,7 @@ public function getSettings(Request $request)
         $users = User::orderBy('name')->get();
 
         $headers = ['ID', 'Username', 'Name', 'Email', 'Role', 'Department', 'Active', 'Created'];
-        $rows = $users->map(fn($u) => [
+        $rows = $users->map(fn ($u) => [
             $u->id,
             $u->username,
             $u->name,
@@ -715,7 +767,7 @@ public function getSettings(Request $request)
         $csv = ob_get_clean();
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="users-export.csv"',
         ]);
     }
@@ -724,18 +776,18 @@ public function getSettings(Request $request)
     public function publicImpress()
     {
         return response()->json([
-            'provider_name'       => Setting::get('impressum_provider_name', ''),
+            'provider_name' => Setting::get('impressum_provider_name', ''),
             'provider_legal_form' => Setting::get('impressum_legal_form', ''),
-            'street'              => Setting::get('impressum_street', ''),
-            'zip_city'            => Setting::get('impressum_zip_city', ''),
-            'country'             => Setting::get('impressum_country', 'Deutschland'),
-            'email'               => Setting::get('impressum_email', ''),
-            'phone'               => Setting::get('impressum_phone', ''),
-            'register_court'      => Setting::get('impressum_register_court', ''),
-            'register_number'     => Setting::get('impressum_register_number', ''),
-            'vat_id'              => Setting::get('impressum_vat_id', ''),
-            'responsible_person'  => Setting::get('impressum_responsible', ''),
-            'custom_text'         => Setting::get('impressum_custom_text', ''),
+            'street' => Setting::get('impressum_street', ''),
+            'zip_city' => Setting::get('impressum_zip_city', ''),
+            'country' => Setting::get('impressum_country', 'Deutschland'),
+            'email' => Setting::get('impressum_email', ''),
+            'phone' => Setting::get('impressum_phone', ''),
+            'register_court' => Setting::get('impressum_register_court', ''),
+            'register_number' => Setting::get('impressum_register_number', ''),
+            'vat_id' => Setting::get('impressum_vat_id', ''),
+            'responsible_person' => Setting::get('impressum_responsible', ''),
+            'custom_text' => Setting::get('impressum_custom_text', ''),
         ]);
     }
 

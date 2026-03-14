@@ -22,6 +22,7 @@ class WelcomeEmail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $company = Setting::get('company_name', 'ParkHub');
+
         return new Envelope(
             subject: "[{$company}] Willkommen – Ihr Konto wurde erstellt",
         );
@@ -37,8 +38,8 @@ class WelcomeEmail extends Mailable implements ShouldQueue
     private function buildHtml(): string
     {
         $company = e(Setting::get('company_name', 'ParkHub'));
-        $name    = e($this->user->name);
-        $email   = e($this->user->email);
+        $name = e($this->user->name);
+        $email = e($this->user->email);
 
         return <<<HTML
 <!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\ParkingLot;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +16,7 @@ class LotTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $token = $admin->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/lots', [
                 'name' => 'Test Parking Lot',
                 'address' => '123 Main St',
@@ -39,7 +39,7 @@ class LotTest extends TestCase
             'status' => 'open',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/lots');
 
         $response->assertStatus(200);
@@ -57,8 +57,8 @@ class LotTest extends TestCase
             'status' => 'open',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/v1/lots/' . $lot->id);
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/lots/'.$lot->id);
 
         $response->assertStatus(200)
             ->assertJsonPath('data.name', 'Lot 1');
@@ -76,8 +76,8 @@ class LotTest extends TestCase
             'status' => 'open',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/v1/lots/' . $lot->id, [
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/lots/'.$lot->id, [
                 'name' => 'New Name',
                 'total_slots' => 15,
             ]);
@@ -98,8 +98,8 @@ class LotTest extends TestCase
             'status' => 'open',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->deleteJson('/api/v1/lots/' . $lot->id);
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->deleteJson('/api/v1/lots/'.$lot->id);
 
         $response->assertStatus(200);
         $this->assertDatabaseMissing('parking_lots', ['id' => $lot->id]);

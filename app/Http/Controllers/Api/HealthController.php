@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 
 class HealthController extends Controller
@@ -27,9 +26,9 @@ class HealthController extends Controller
         $status = $dbStatus === 'ok' ? 200 : 503;
 
         return response()->json([
-            'status'   => $dbStatus === 'ok' ? 'ok' : 'degraded',
+            'status' => $dbStatus === 'ok' ? 'ok' : 'degraded',
             'database' => $dbStatus,
-            'version'  => $version,
+            'version' => $version,
         ], $status);
     }
 }

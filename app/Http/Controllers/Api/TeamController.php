@@ -1,11 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Booking;
 use App\Models\Absence;
+use App\Models\Booking;
 use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class TeamController extends Controller
 {
@@ -29,7 +31,7 @@ class TeamController extends Controller
 
             $displayName = match ($privacyMode) {
                 'firstName' => explode(' ', $user->name)[0] ?? $user->username,
-                'initials' => collect(explode(' ', $user->name))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('.'),
+                'initials' => collect(explode(' ', $user->name))->map(fn ($n) => strtoupper(substr($n, 0, 1)))->join('.'),
                 'occupied' => 'User',
                 default => $user->name,
             };
@@ -46,29 +48,30 @@ class TeamController extends Controller
         return response()->json($team);
     }
 
-    public function today(\Illuminate\Http\Request $request)
+    public function today(Request $request)
     {
         $today = now()->toDateString();
-        $absences = \App\Models\Absence::with('user')
+        $absences = Absence::with('user')
             ->where('start_date', '<=', $today)
             ->where('end_date', '>=', $today)
             ->get();
-        $bookings = \App\Models\Booking::with('user')
+        $bookings = Booking::with('user')
             ->whereDate('start_time', $today)
             ->whereIn('status', ['confirmed', 'active'])
             ->get();
+
         return response()->json([
-            'date'     => $today,
-            'absences' => $absences->map(fn($a) => [
-                'user_id'      => $a->user_id,
-                'user_name'    => $a->user?->name,
+            'date' => $today,
+            'absences' => $absences->map(fn ($a) => [
+                'user_id' => $a->user_id,
+                'user_name' => $a->user?->name,
                 'absence_type' => $a->absence_type,
             ])->values(),
-            'bookings' => $bookings->map(fn($b) => [
-                'user_id'   => $b->user_id,
+            'bookings' => $bookings->map(fn ($b) => [
+                'user_id' => $b->user_id,
                 'user_name' => $b->user?->name,
-                'slot'      => $b->slot_number,
-                'lot'       => $b->lot_name,
+                'slot' => $b->slot_number,
+                'lot' => $b->lot_name,
             ])->values(),
         ]);
     }

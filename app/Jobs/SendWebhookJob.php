@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Models\Webhook;
@@ -15,23 +16,24 @@ class SendWebhookJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 60;
 
     public function __construct(
         private string $webhookId,
         private string $event,
-        private array  $payload,
+        private array $payload,
     ) {}
 
     public function handle(): void
     {
         $webhook = Webhook::find($this->webhookId);
-        if (!$webhook || !$webhook->active) {
+        if (! $webhook || ! $webhook->active) {
             return;
         }
 
         $body = json_encode([
-            'event'   => $this->event,
+            'event' => $this->event,
             'payload' => $this->payload,
             'sent_at' => now()->toIso8601String(),
         ]);
@@ -39,19 +41,19 @@ class SendWebhookJob implements ShouldQueue
         $headers = ['Content-Type' => 'application/json'];
         if ($webhook->secret) {
             $sig = hash_hmac('sha256', $body, $webhook->secret);
-            $headers['X-Parkhub-Signature'] = 'sha256=' . $sig;
+            $headers['X-Parkhub-Signature'] = 'sha256='.$sig;
         }
 
         $response = Http::withHeaders($headers)
             ->timeout(10)
             ->post($webhook->url, json_decode($body, true));
 
-        if (!$response->successful()) {
-            Log::warning("Webhook delivery failed", [
+        if (! $response->successful()) {
+            Log::warning('Webhook delivery failed', [
                 'webhook_id' => $this->webhookId,
-                'event'      => $this->event,
-                'status'     => $response->status(),
-                'attempt'    => $this->attempts(),
+                'event' => $this->event,
+                'status' => $response->status(),
+                'attempt' => $this->attempts(),
             ]);
             // Throw exception to trigger retry (up to $tries attempts).
             // The failed() method handles permanent failure after all retries are exhausted.
@@ -61,10 +63,10 @@ class SendWebhookJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error("Webhook permanently failed", [
+        Log::error('Webhook permanently failed', [
             'webhook_id' => $this->webhookId,
-            'event'      => $this->event,
-            'error'      => $e->getMessage(),
+            'event' => $this->event,
+            'error' => $e->getMessage(),
         ]);
     }
 }

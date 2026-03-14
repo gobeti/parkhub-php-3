@@ -3,15 +3,16 @@
 namespace App\Console\Commands;
 
 use App\Models\Booking;
-use App\Models\Setting;
-use App\Models\ParkingSlot;
-use App\Models\WaitlistEntry;
 use App\Models\Notification;
+use App\Models\ParkingSlot;
+use App\Models\Setting;
+use App\Models\WaitlistEntry;
 use Illuminate\Console\Command;
 
 class AutoReleaseBookings extends Command
 {
-    protected $signature   = 'bookings:auto-release';
+    protected $signature = 'bookings:auto-release';
+
     protected $description = 'Release overdue unchecked-in bookings based on admin settings';
 
     public function handle(): int
@@ -20,6 +21,7 @@ class AutoReleaseBookings extends Command
 
         if ($minutes <= 0) {
             $this->line('Auto-release disabled (auto_release_minutes = 0).');
+
             return 0;
         }
 
@@ -50,15 +52,16 @@ class AutoReleaseBookings extends Command
             if ($waiter) {
                 Notification::create([
                     'user_id' => $waiter->user_id,
-                    'type'    => 'waitlist',
+                    'type' => 'waitlist',
                     'message' => "A spot opened up in {$booking->lot_name}. Book now before it's taken.",
-                    'data'    => json_encode(['lot_id' => $booking->lot_id]),
+                    'data' => json_encode(['lot_id' => $booking->lot_id]),
                 ]);
                 $waiter->update(['notified_at' => now()]);
             }
         }
 
         $this->info("Released {$overdue->count()} overdue booking(s).");
+
         return 0;
     }
 }
