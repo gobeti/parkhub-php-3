@@ -214,6 +214,24 @@ export const de = {
     monthly: 'Monatlich',
   },
 
+  // Waitlist
+  waitlist: {
+    title: 'Warteliste',
+    subtitle: 'Ihre aktiven Wartelisteneinträge',
+    joinButton: 'Auf Warteliste setzen',
+    joining: 'Wird eingetragen…',
+    joined: 'Sie wurden auf die Warteliste gesetzt',
+    joinFailed: 'Eintrag in Warteliste fehlgeschlagen',
+    leaveButton: 'Von Warteliste entfernen',
+    left: 'Von Warteliste entfernt',
+    leaveFailed: 'Entfernen von Warteliste fehlgeschlagen',
+    lotFull: 'Alle Stellplätze belegt',
+    lotFullHint: 'Lassen Sie sich benachrichtigen, sobald ein Platz in diesem Parkplatz frei wird.',
+    noEntries: 'Keine aktiven Wartelisteneinträge',
+    since: 'Eingetragen {{time}}',
+    alreadyOnWaitlist: 'Sie stehen bereits auf der Warteliste für diesen Parkplatz',
+  },
+
   // Confirm dialogs
   confirm: {
     cancelBookingTitle: 'Buchung wirklich stornieren?',
@@ -1122,5 +1140,103 @@ export const de = {
     title: 'Live-Belegung',
     full: 'VOLL',
     autoRefresh: 'Aktualisiert sich alle 30 Sekunden',
+  },
+
+  // Slot status labels (used in AdminSlots and other pages)
+  slots: {
+    status: {
+      available: 'Frei',
+      occupied: 'Belegt',
+      reserved: 'Reserviert',
+      maintenance: 'Wartung',
+    },
+  },
+
+  // Reports page
+  reports: {
+    total: 'Gesamt',
+    noData: 'Keine Daten',
+    bookings: 'Buchungen',
+    less: 'Weniger',
+    more: 'Mehr',
+    days: {
+      sun: 'So',
+      mon: 'Mo',
+      tue: 'Di',
+      wed: 'Mi',
+      thu: 'Do',
+      fri: 'Fr',
+      sat: 'Sa',
+    },
+    statusLabels: {
+      confirmed: 'Bestätigt',
+      active: 'Aktiv',
+      completed: 'Abgeschlossen',
+      cancelled: 'Storniert',
+      no_show: 'Nicht erschienen',
+    },
+    typeLabels: {
+      single: 'Einmalig',
+      multiDay: 'Mehrtägig',
+      permanent: 'Dauerparkplatz',
+    },
+  },
+
+  // Credits management page
+  credits: {
+    title: 'Kontingent-Verwaltung',
+    refillAll: 'Alle auffuellen',
+    userCredits: 'Benutzer-Kontingent',
+    searchPlaceholder: 'Nach Name oder Benutzername suchen...',
+    sortAsc: 'Konting. aufsteigend',
+    sortDesc: 'Konting. absteigend',
+    grantTo: 'Kontingent vergeben an',
+    amount: 'Anzahl',
+    description: 'Beschreibung (optional)',
+    grantBtn: 'Vergeben',
+    granted: 'Kontingent vergeben',
+    noUsers: 'Keine Benutzer gefunden',
+    transactionHistory: 'Transaktionsverlauf',
+    refresh: 'Aktualisieren',
+    noTransactions: 'Keine Transaktionen vorhanden',
+    refilledFor: 'Kontingent fuer',
+    usersRefilled: 'Benutzer aufgefuellt',
+    refillConfirmTitle: 'Kontingent fuer alle Benutzer auffuellen?',
+    refillConfirmMessage: 'Alle aktiven Benutzer erhalten ihr monatliches Kontingent. Bestehende Kontingente werden dabei zurueckgesetzt.',
+    refilling: 'Wird aufgefuellt...',
+    refillBtn: 'Auffuellen',
+    stats: {
+      totalCredits: 'Kontingent im Umlauf',
+      zeroBalance: 'Benutzer ohne Kontingent',
+      totalUsers: 'Benutzer gesamt',
+      lastRefill: 'Letzte Auffuellung',
+    },
+    table: {
+      user: 'Benutzer',
+      credits: 'Konting.',
+      monthlyQuota: 'Monatl. Quota',
+      lastRefill: 'Letzte Auffuellung',
+      role: 'Rolle',
+    },
+    txTypes: {
+      grant: 'Vergabe',
+      deduction: 'Abzug',
+      refund: 'Erstattung',
+      monthlyRefill: 'Monatl. Auff.',
+    },
+    txTable: {
+      time: 'Zeitpunkt',
+      user: 'Benutzer',
+      type: 'Typ',
+      amount: 'Betrag',
+      description: 'Beschreibung',
+    },
+    errors: {
+      loadUsers: 'Benutzerdaten konnten nicht geladen werden',
+      loadTransactions: 'Transaktionen konnten nicht geladen werden',
+      invalidAmount: 'Bitte einen gueltigen Betrag eingeben',
+      grantFailed: 'Fehler beim Vergeben',
+      refillFailed: 'Fehler beim Auffuellen',
+    },
   },
 };

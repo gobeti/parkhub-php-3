@@ -34,3 +34,4 @@ build-shared/
 
 # Dead code backup
 resources/js/src.bak/
+/public/assets/

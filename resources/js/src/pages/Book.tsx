@@ -3,8 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Car, Clock, CheckCircle, SpinnerGap, MapPin, CalendarBlank, Repeat, Heart, Star, Sun, Moon, FloppyDisk,
+  Bell, Warning,
 } from '@phosphor-icons/react';
-import { api, ParkingLot, ParkingLotDetailed, Vehicle, SlotConfig } from '../api/client';
+import { api, ParkingLot, ParkingLotDetailed, Vehicle, SlotConfig, WaitlistEntry } from '../api/client';
 import { ParkingLotGrid } from '../components/ParkingLotGrid';
 import { LicensePlateInput } from '../components/LicensePlateInput';
 import { useTranslation } from 'react-i18next';
@@ -124,6 +125,9 @@ export function BookPage() {
   const [dauerInterval, setDauerInterval] = useState<DauerInterval>('monthly');
   const [dauerDays, setDauerDays] = useState<number[]>([1, 3]);
 
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
+
   const [favoriteSlots, setFavoriteSlots] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('parkhub-favorite-slots') || '[]'); } catch { return []; }
   });
@@ -142,14 +146,16 @@ export function BookPage() {
 
   const loadInitialData = useCallback(async () => {
     try {
-      const [lotsRes, vehiclesRes, privacyRes] = await Promise.all([
+      const [lotsRes, vehiclesRes, waitlistRes, privacyRes] = await Promise.all([
         api.getLots(),
         api.getVehicles(),
+        api.getWaitlist(),
         fetch(`(import.meta.env.VITE_API_URL || "")/api/v1/settings/privacy`).then(r => r.json()).catch(() => null),
       ]);
       if (privacyRes?.data?.license_plate_entry_mode !== undefined) setLicensePlateEntryMode(Number(privacyRes.data.license_plate_entry_mode));
       if (lotsRes.success && lotsRes.data) { setLots(lotsRes.data); if (preselectedLot) setSelectedLot(preselectedLot); }
       if (vehiclesRes.success && vehiclesRes.data) { setVehicles(vehiclesRes.data); const def = vehiclesRes.data.find(v => v.is_default); if (def) setSelectedVehicle(def.id); }
+      if (waitlistRes.success && waitlistRes.data) setWaitlistEntries(waitlistRes.data);
     } finally { setLoading(false); }
   }, [preselectedLot]);
 
@@ -162,6 +168,18 @@ export function BookPage() {
   }
 
   function handleSlotSelect(slot: SlotConfig) { if (slot.status === 'available') setSelectedSlot(slot); }
+
+  async function handleJoinWaitlist(lotId: string) {
+    setJoiningWaitlist(true);
+    const res = await api.joinWaitlist(lotId);
+    if (res.success && res.data) {
+      setWaitlistEntries(prev => [...prev, res.data!]);
+      toast.success(t('waitlist.joined'));
+    } else {
+      toast.error(res.error?.message || t('waitlist.joinFailed'));
+    }
+    setJoiningWaitlist(false);
+  }
 
   async function handleBook() {
     if (!selectedSlot) return;
@@ -273,19 +291,14 @@ export function BookPage() {
                   key={lot.id}
                   role="radio"
                   aria-checked={isSelected}
-                  aria-disabled={isFull}
                   onClick={() => {
-                    if (!isFull) {
-                      setSelectedLot(lot.id);
-                      setSelectedSlot(null);
-                      setDetailedLot(null);
-                    }
+                    setSelectedLot(lot.id);
+                    setSelectedSlot(null);
+                    if (!isFull) setDetailedLot(null);
                   }}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     isSelected
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : isFull
-                      ? 'border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed'
+                      ? isFull ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
@@ -330,6 +343,42 @@ export function BookPage() {
               </div>
             )}
             <ParkingLotGrid layout={detailedLot.layout} selectedSlotId={selectedSlot?.id} onSlotSelect={handleSlotSelect} interactive />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Waitlist CTA — shown when selected lot is full */}
+      <AnimatePresence>
+        {selectedLot && selectedLotData && selectedLotData.available_slots === 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="card p-6 border-l-4 border-l-amber-500">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center">
+                <Warning weight="fill" className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('waitlist.lotFull')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('waitlist.lotFullHint')}</p>
+              </div>
+            </div>
+            {waitlistEntries.some(e => e.lot_id === selectedLot) ? (
+              <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-700 dark:text-amber-300">
+                <CheckCircle weight="fill" className="w-5 h-5" />
+                <span className="text-sm font-medium">{t('waitlist.alreadyOnWaitlist')}</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleJoinWaitlist(selectedLot)}
+                disabled={joiningWaitlist}
+                aria-busy={joiningWaitlist}
+                className="btn bg-amber-600 hover:bg-amber-700 text-white w-full justify-center disabled:opacity-60"
+              >
+                {joiningWaitlist ? (
+                  <><SpinnerGap weight="bold" className="w-5 h-5 animate-spin" />{t('waitlist.joining')}</>
+                ) : (
+                  <><Bell weight="bold" className="w-5 h-5" />{t('waitlist.joinButton')}</>
+                )}
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

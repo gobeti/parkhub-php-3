@@ -4,21 +4,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarBlank, Clock, Car, X, SpinnerGap, CheckCircle, XCircle, ArrowClockwise,
   Warning, MapPin, CalendarPlus, Repeat, PencilSimple, Timer, CalendarCheck,
-  MagnifyingGlass, Funnel, Receipt,
+  MagnifyingGlass, Funnel, Receipt, SignIn, Bell,
 } from '@phosphor-icons/react';
-import { api, Booking, Vehicle } from '../api/client';
+import { api, Booking, Vehicle, WaitlistEntry } from '../api/client';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, formatDistanceToNow, isFuture, type Locale } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
-function BookingCard({ booking, onCancel, cancelling, vehiclePhoto, t, dateFnsLocale, now }: { booking: Booking; onCancel: (id: string) => void; cancelling: string | null; vehiclePhoto?: string; t: ReturnType<typeof useTranslation>["t"]; dateFnsLocale: Locale; now: number }) {
+function BookingCard({ booking, onCancel, onCheckin, onExtend, cancelling, checkingIn, vehiclePhoto, t, dateFnsLocale, now }: { booking: Booking; onCancel: (id: string) => void; onCheckin: (id: string) => void; onExtend: (booking: Booking) => void; cancelling: string | null; checkingIn: string | null; vehiclePhoto?: string; t: ReturnType<typeof useTranslation>["t"]; dateFnsLocale: Locale; now: number }) {
   const isActiveOrConfirmed = booking.status === 'active' || booking.status === 'confirmed';
   const isExpiringSoon = isActiveOrConfirmed && new Date(booking.end_time).getTime() - now < 30 * 60 * 1000 && !isFuture(new Date(booking.start_time));
   const isUpcoming = isActiveOrConfirmed && isFuture(new Date(booking.start_time));
   const isActive = isActiveOrConfirmed && !isUpcoming;
   const isPastBooking = booking.status === 'completed' || booking.status === 'cancelled';
+  const canCheckin = isActiveOrConfirmed && !booking.checked_in_at && (new Date(booking.start_time).getTime() - now < 15 * 60 * 1000);
+  const isCheckedIn = isActiveOrConfirmed && !!booking.checked_in_at;
 
   const statusConfig: Record<string, { label: string; class: string; icon: ComponentType<{ weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone"; className?: string }> }> = {
     active: { label: t('bookings.statusActive'), class: 'badge-success', icon: Clock },
@@ -79,7 +81,18 @@ function BookingCard({ booking, onCancel, cancelling, vehiclePhoto, t, dateFnsLo
           : t('bookings.endsIn', { time: formatDistanceToNow(new Date(booking.end_time), { addSuffix: true, locale: dateFnsLocale }) })}
         </p>
         <div className="flex items-center gap-2">
-          {isActive && <button className="btn btn-sm btn-secondary"><PencilSimple weight="bold" className="w-3.5 h-3.5" />{t('bookings.extend')}</button>}
+          {isCheckedIn && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"><CheckCircle weight="fill" className="w-3.5 h-3.5" />Eingecheckt</span>}
+          {canCheckin && (
+            <button
+              onClick={() => onCheckin(booking.id)}
+              disabled={checkingIn === booking.id}
+              className="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+            >
+              {checkingIn === booking.id ? <SpinnerGap weight="bold" className="w-3.5 h-3.5 animate-spin" /> : <SignIn weight="bold" className="w-3.5 h-3.5" />}
+              Einchecken
+            </button>
+          )}
+          {isActive && <button onClick={() => onExtend(booking)} className="btn btn-sm btn-secondary"><PencilSimple weight="bold" className="w-3.5 h-3.5" />{t('bookings.extend')}</button>}
           {isActiveOrConfirmed && (
             <button
               onClick={() => onCancel(booking.id)}
@@ -153,6 +166,12 @@ export function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
+  const [extendBooking, setExtendBooking] = useState<Booking | null>(null);
+  const [extendHours, setExtendHours] = useState<number>(1);
+  const [extending, setExtending] = useState(false);
+  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
+  const [cancellingWaitlist, setCancellingWaitlist] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
@@ -163,13 +182,26 @@ export function BookingsPage() {
 
   async function loadData() {
     try {
-      const [bRes, vRes] = await Promise.all([api.getBookings(), api.getVehicles()]);
+      const [bRes, vRes, wRes] = await Promise.all([api.getBookings(), api.getVehicles(), api.getWaitlist()]);
       if (bRes.success && bRes.data) setBookings(bRes.data);
       if (vRes.success && vRes.data) setVehicles(vRes.data);
+      if (wRes.success && wRes.data) setWaitlistEntries(wRes.data);
     } finally { setLoading(false); }
   }
 
   function getVehiclePhoto(plate?: string) { if (!plate) return undefined; return vehicles.find(v => v.plate === plate)?.photo_url; }
+
+  async function handleCancelWaitlist(id: string) {
+    setCancellingWaitlist(id);
+    const res = await api.leaveWaitlist(id);
+    if (res.success) {
+      setWaitlistEntries(waitlistEntries.filter(e => e.id !== id));
+      toast.success(t('waitlist.left'));
+    } else {
+      toast.error(t('waitlist.leaveFailed'));
+    }
+    setCancellingWaitlist(null);
+  }
 
   async function handleCancel(id: string) {
     setCancelling(id);
@@ -179,6 +211,32 @@ export function BookingsPage() {
     setCancelling(null);
   }
 
+  async function handleCheckin(id: string) {
+    setCheckingIn(id);
+    const res = await api.checkinBooking(id);
+    if (res.success && res.data) {
+      setBookings(bookings.map(b => b.id === id ? { ...b, ...res.data!, checked_in_at: res.data!.checked_in_at ?? new Date().toISOString(), status: 'active' as const } : b));
+      toast.success('Erfolgreich eingecheckt');
+    } else {
+      toast.error(res.error?.message || 'Check-in fehlgeschlagen');
+    }
+    setCheckingIn(null);
+  }
+
+  async function handleExtend() {
+    if (!extendBooking) return;
+    setExtending(true);
+    const newEnd = new Date(new Date(extendBooking.end_time).getTime() + extendHours * 60 * 60 * 1000).toISOString();
+    const res = await api.extendBooking(extendBooking.id, newEnd);
+    if (res.success && res.data) {
+      setBookings(bookings.map(b => b.id === extendBooking.id ? { ...b, end_time: res.data!.end_time } : b));
+      toast.success(t('bookings.extended', 'Buchung verlängert'));
+      setExtendBooking(null);
+    } else {
+      toast.error(res.error?.message || t('bookings.extendFailed', 'Verlängerung fehlgeschlagen'));
+    }
+    setExtending(false);
+  }
 
   // Apply filters
   const filteredBookings = bookings.filter(b => {
@@ -237,26 +295,106 @@ export function BookingsPage() {
       <section aria-labelledby="active-section-heading">
         <SectionHeader icon={Clock} title={t('bookings.active')} count={activeBookings.length} color="text-emerald-600" headingId="active-section-heading" />
         {activeBookings.length === 0 ? <EmptySection icon={CalendarBlank} text={t('bookings.noActive')} showAction t={t} /> : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><AnimatePresence>{activeBookings.map(bk => <BookingCard key={bk.id} booking={bk} now={Date.now()} onCancel={(id) => setConfirmCancelId(id)} cancelling={cancelling} vehiclePhoto={getVehiclePhoto(bk.vehicle_plate)} t={t} dateFnsLocale={dateFnsLocale} />)}</AnimatePresence></div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><AnimatePresence>{activeBookings.map(bk => <BookingCard key={bk.id} booking={bk} now={Date.now()} onCancel={(id) => setConfirmCancelId(id)} onCheckin={handleCheckin} onExtend={setExtendBooking} cancelling={cancelling} checkingIn={checkingIn} vehiclePhoto={getVehiclePhoto(bk.vehicle_plate)} t={t} dateFnsLocale={dateFnsLocale} />)}</AnimatePresence></div>
         )}
       </section>
 
       <section aria-labelledby="upcoming-section-heading">
         <SectionHeader icon={CalendarPlus} title={t('bookings.upcoming')} count={upcomingBookings.length} color="text-primary-600" headingId="upcoming-section-heading" />
         {upcomingBookings.length === 0 ? <EmptySection icon={CalendarCheck} text={t('bookings.noUpcoming')} t={t} /> : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><AnimatePresence>{upcomingBookings.map(bk => <BookingCard key={bk.id} booking={bk} now={Date.now()} onCancel={(id) => setConfirmCancelId(id)} cancelling={cancelling} vehiclePhoto={getVehiclePhoto(bk.vehicle_plate)} t={t} dateFnsLocale={dateFnsLocale} />)}</AnimatePresence></div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><AnimatePresence>{upcomingBookings.map(bk => <BookingCard key={bk.id} booking={bk} now={Date.now()} onCancel={(id) => setConfirmCancelId(id)} onCheckin={handleCheckin} onExtend={setExtendBooking} cancelling={cancelling} checkingIn={checkingIn} vehiclePhoto={getVehiclePhoto(bk.vehicle_plate)} t={t} dateFnsLocale={dateFnsLocale} />)}</AnimatePresence></div>
+        )}
+      </section>
+
+      {/* Waitlist */}
+      <section aria-labelledby="waitlist-section-heading">
+        <SectionHeader icon={Bell} title={t('waitlist.title')} count={waitlistEntries.length} color="text-amber-500" headingId="waitlist-section-heading" />
+        {waitlistEntries.length === 0 ? (
+          <EmptySection icon={Bell} text={t('waitlist.noEntries')} t={t} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <AnimatePresence>
+              {waitlistEntries.map(entry => (
+                <motion.div key={entry.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -100 }}
+                  className="card p-6 shadow-md dark:shadow-gray-900/50 border-l-4 border-l-amber-500">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                        <Bell weight="fill" className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">{entry.lot?.name || t('waitlist.title')}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {t('waitlist.since', { time: formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: dateFnsLocale }) })}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="badge bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                      <Clock weight="fill" className="w-3 h-3" />{t('waitlist.title')}
+                    </span>
+                  </div>
+                  <div className="flex justify-end pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <button
+                      onClick={() => handleCancelWaitlist(entry.id)}
+                      disabled={cancellingWaitlist === entry.id}
+                      aria-busy={cancellingWaitlist === entry.id}
+                      className="btn btn-sm btn-ghost text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      {cancellingWaitlist === entry.id ? (
+                        <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <><X weight="bold" className="w-4 h-4" />{t('waitlist.leaveButton')}</>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
         )}
       </section>
 
       <section aria-labelledby="past-section-heading">
         <SectionHeader icon={CalendarBlank} title={t('bookings.past')} count={pastBookings.length} color="text-gray-400" headingId="past-section-heading" />
         {pastBookings.length === 0 ? <EmptySection icon={CheckCircle} text={t('bookings.noPast')} t={t} /> : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{pastBookings.map(bk => <BookingCard key={bk.id} booking={bk} now={Date.now()} onCancel={(id) => setConfirmCancelId(id)} cancelling={cancelling} vehiclePhoto={getVehiclePhoto(bk.vehicle_plate)} t={t} dateFnsLocale={dateFnsLocale} />)}</div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{pastBookings.map(bk => <BookingCard key={bk.id} booking={bk} now={Date.now()} onCancel={(id) => setConfirmCancelId(id)} onCheckin={handleCheckin} onExtend={setExtendBooking} cancelling={cancelling} checkingIn={checkingIn} vehiclePhoto={getVehiclePhoto(bk.vehicle_plate)} t={t} dateFnsLocale={dateFnsLocale} />)}</div>
         )}
       </section>
 
       <ConfirmDialog open={!!confirmCancelId} title={t('confirm.cancelBookingTitle')} message={t('confirm.cancelBookingMessage')} confirmLabel={t('confirm.cancelBookingConfirm')} variant="danger"
         onConfirm={() => { if (confirmCancelId) handleCancel(confirmCancelId); setConfirmCancelId(null); }} onCancel={() => setConfirmCancelId(null)} />
+
+      {/* Extend Booking Modal */}
+      <AnimatePresence>
+        {extendBooking && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setExtendBooking(null)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="card p-6 w-full max-w-md mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{t('bookings.extend', 'Verlängern')}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                {extendBooking.lot_name} — {t('dashboard.slot')} {extendBooking.slot_number}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                {t('bookings.currentEnd', 'Aktuelles Ende')}: <span className="font-mono font-medium">{format(new Date(extendBooking.end_time), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale })}</span>
+              </p>
+              <div className="flex gap-2 mb-4">
+                {[1, 2, 3, 4].map(h => (
+                  <button key={h} onClick={() => setExtendHours(h)} className={`flex-1 btn btn-sm ${extendHours === h ? 'btn-primary' : 'btn-secondary'}`}>+{h}h</button>
+                ))}
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                {t('bookings.newEnd', 'Neues Ende')}: <span className="font-mono font-medium">{format(new Date(new Date(extendBooking.end_time).getTime() + extendHours * 60 * 60 * 1000), 'dd.MM.yyyy HH:mm', { locale: dateFnsLocale })}</span>
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button onClick={() => setExtendBooking(null)} className="btn btn-secondary">{t('common.cancel', 'Abbrechen')}</button>
+                <button onClick={handleExtend} disabled={extending} className="btn btn-primary">
+                  {extending ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : <PencilSimple weight="bold" className="w-4 h-4" />}
+                  {t('bookings.extend', 'Verlängern')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
