@@ -287,7 +287,7 @@ class AdminController extends Controller
         $booking = Booking::findOrFail($id);
         $booking->update(['status' => Booking::STATUS_CANCELLED]);
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $request->user()->id,
             'username' => $request->user()->username,
             'action' => 'admin_booking_cancelled',
@@ -503,7 +503,7 @@ class AdminController extends Controller
         Vehicle::query()->delete();
         ParkingSlot::query()->update(['status' => 'available']);
         User::where('id', '!=', $admin->id)->delete();
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $admin->id,
             'username' => $admin->username,
             'action' => 'database_reset',
@@ -718,7 +718,7 @@ class AdminController extends Controller
                 Setting::set($keyMap[$field], (string) $request->input($field));
             }
         }
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $request->user()->id,
             'username' => $request->user()->username,
             'action' => 'impressum_updated',
@@ -811,7 +811,7 @@ class AdminController extends Controller
             'granted_by' => $request->user()->id,
         ]);
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $request->user()->id,
             'username' => $request->user()->username,
             'action' => 'credits_granted',

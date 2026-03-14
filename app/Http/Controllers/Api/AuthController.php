@@ -28,7 +28,7 @@ class AuthController extends Controller
             ->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            AuditLog::create([
+            AuditLog::log([
                 'action' => 'login_failed',
                 'details' => ['username' => $request->username],
                 'ip_address' => $request->ip(),
@@ -44,7 +44,7 @@ class AuthController extends Controller
         $user->update(['last_login' => now()]);
         $token = $user->createToken('auth-token');
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,
             'action' => 'login',
@@ -87,7 +87,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token');
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,
             'action' => 'register',
@@ -159,7 +159,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'INVALID_PASSWORD', 'message' => 'Password confirmation failed'], 403);
         }
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,
             'action' => 'account_deleted',
@@ -197,7 +197,7 @@ class AuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        AuditLog::create([
+        AuditLog::log([
             'action' => 'forgot_password',
             'details' => ['email_hash' => md5($request->email)],
             'ip_address' => $request->ip(),
@@ -262,7 +262,7 @@ class AuthController extends Controller
 
         DB::table('password_reset_tokens')->where('email', $record->email)->delete();
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,
             'action' => 'password_reset',
@@ -285,7 +285,7 @@ class AuthController extends Controller
         $user->update(['password' => Hash::make($request->new_password)]);
         $user->tokens()->delete();
         $token = $user->createToken('auth-token');
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,
             'action' => 'password_changed',

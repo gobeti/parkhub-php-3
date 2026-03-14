@@ -158,7 +158,7 @@ class BookingController extends Controller
             throw $e;
         }
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $request->user()->id,
             'username' => $request->user()->username,
             'action' => 'booking_created',
@@ -223,7 +223,7 @@ class BookingController extends Controller
             ]);
         }
 
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $request->user()->id,
             'username' => $request->user()->username,
             'action' => 'booking_cancelled',
@@ -482,7 +482,7 @@ class BookingController extends Controller
     {
         $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
         $booking->update(['checked_in_at' => now(), 'status' => Booking::STATUS_ACTIVE]);
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $request->user()->id,
             'username' => $request->user()->username,
             'action' => 'booking_checkin',

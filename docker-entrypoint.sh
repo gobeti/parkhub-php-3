@@ -26,23 +26,22 @@ fi
 mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
-# Run migrations (log errors instead of silencing them)
-echo "Running migrations..."
-php artisan migrate --force 2>&1 || { echo "WARNING: Migrations failed"; }
-
-# Prune expired Sanctum tokens (7 day expiry = 168 hours)
-php artisan sanctum:prune-expired --hours=168 2>&1 || true
-
-# Demo mode: seed with realistic data on every fresh start
-# The seeder creates admin users with known credentials (admin@parkhub.test / ParkHub2026!)
+# Demo mode: fresh DB + seed with realistic data on every container start
+# Non-demo: incremental migrations only
 if [ "${DEMO_MODE}" = "true" ]; then
-    echo "DEMO_MODE=true — running ProductionSimulationSeeder..."
+    echo "DEMO_MODE=true — running migrate:fresh + ProductionSimulationSeeder..."
+    php artisan migrate:fresh --force 2>&1 || { echo "WARNING: Migrations failed"; }
     php artisan db:seed --class=ProductionSimulationSeeder --force 2>&1 || { echo "WARNING: Demo seeding failed"; }
     echo "Demo data seeded."
 else
-    # Non-demo: create default admin if none exists (works without tinker in --no-dev)
+    echo "Running migrations..."
+    php artisan migrate --force 2>&1 || { echo "WARNING: Migrations failed"; }
+    # Create default admin if none exists (works without tinker in --no-dev)
     php artisan parkhub:create-admin 2>&1 || true
 fi
+
+# Prune expired Sanctum tokens (7 day expiry = 168 hours)
+php artisan sanctum:prune-expired --hours=168 2>&1 || true
 
 # Cache config for production
 php artisan config:cache 2>&1 || true
