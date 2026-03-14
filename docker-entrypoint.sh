@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# Configure Apache port from PORT env var (default: 10000 for Render, override for self-hosting)
+if [ -n "$PORT" ]; then
+    sed -i "s/Listen 80/Listen $PORT/" /etc/apache2/ports.conf 2>/dev/null || true
+    sed -i "s/:80/:$PORT/" /etc/apache2/sites-available/*.conf 2>/dev/null || true
+fi
+
 # Generate app key if not provided via environment and not already in .env
 if [ -z "$APP_KEY" ]; then
     if [ ! -f .env ]; then
