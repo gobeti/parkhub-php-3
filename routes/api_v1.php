@@ -9,17 +9,27 @@ use App\Http\Controllers\Api\AbsenceController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\BookingInvoiceController;
 use App\Http\Controllers\Api\DemoController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\SlotController;
+use App\Http\Controllers\Api\SystemController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
+use App\Http\Controllers\Api\WaitlistController;
 use App\Http\Controllers\Api\ZoneController;
+use App\Models\Absence;
+use App\Models\Announcement;
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
 // Auth — rate limited: 10 attempts per minute per IP to prevent brute force
@@ -296,17 +306,6 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 });
 
 // ── Feature parity batch 2: system, auth, bookings, absences ──────────────
-
-use App\Http\Controllers\Api\BookingInvoiceController;
-use App\Http\Controllers\Api\HealthController;
-use App\Http\Controllers\Api\SystemController;
-use App\Http\Controllers\Api\WaitlistController;
-use App\Models\Absence;
-use App\Models\Announcement;
-use App\Models\Setting;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 // System (public)
 Route::get('/system/version', [SystemController::class, 'version']);
