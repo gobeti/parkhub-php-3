@@ -4,17 +4,17 @@ Deploy ParkHub PHP on any shared hosting provider — no terminal required.
 
 ## Supported Providers
 
-ParkHub PHP requires **PHP 8.3**. Verify that your host supports PHP 8.3 before deploying.
+ParkHub PHP requires **PHP 8.4**. Verify that your host supports PHP 8.4 before deploying.
 
-| Provider | Free Tier | PHP 8.3 | MySQL | Notes |
+| Provider | Free Tier | PHP 8.4 | MySQL | Notes |
 |----------|-----------|---------|-------|-------|
 | InfinityFree | Yes | Check panel | Yes | Recommended free option — verify PHP version in control panel |
 | Byet / iFastNet | Yes | Check panel | Yes | Same backend as InfinityFree |
 | AeonFree | Yes | Check panel | Yes | Smaller community |
-| Strato | Paid | Yes (8.3+) | Yes | German provider, reliable, GDPR-friendly |
-| IONOS | Paid | Yes (8.3+) | Yes | Good EU hosting, supports PHP 8.3 |
-| All-Inkl | Paid | Yes (8.3+) | Yes | Popular in DACH region |
-| Hostinger | Paid | Yes (8.3+) | Yes | Budget-friendly |
+| Strato | Paid | Yes (8.4+) | Yes | German provider, reliable, GDPR-friendly |
+| IONOS | Paid | Yes (8.4+) | Yes | Good EU hosting, supports PHP 8.4 |
+| All-Inkl | Paid | Yes (8.4+) | Yes | Popular in DACH region |
+| Hostinger | Paid | Yes (8.4+) | Yes | Budget-friendly |
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ Follow the detailed steps below.
 
 ### 1. Build the Package
 
-On your local machine (requires PHP 8.3, Composer, Node.js):
+On your local machine (requires PHP 8.4, Composer, Node.js):
 
 ```bash
 git clone https://github.com/nash87/parkhub-php.git
@@ -192,7 +192,7 @@ These providers offer SSH access and better PHP support:
 ### Blank white page
 - Enable error display temporarily: add `APP_DEBUG=true` to `.env`
 - Check PHP error logs in your hosting panel
-- Ensure PHP 8.2+ is selected in your hosting PHP version settings
+- Ensure PHP 8.4+ is selected in your hosting PHP version settings
 
 ### File upload size issues
 - Create/edit `public/.user.ini`:

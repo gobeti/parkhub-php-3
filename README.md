@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
-  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.3-777BB4.svg?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.3"></a>
+  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.4"></a>
   <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-12-FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 12"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB.svg?style=for-the-badge&logo=react&logoColor=black" alt="React 19"></a>
   <a href="https://www.mysql.com/"><img src="https://img.shields.io/badge/MySQL-8.0-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL 8"></a>
@@ -141,14 +141,14 @@
 
 | Feature | Status |
 |---|---|
-| Docker single-container (PHP 8.3 + Apache, zero-config) | Done |
+| Docker single-container (PHP 8.4 + Apache, zero-config) | Done |
 | Docker Compose with MySQL 8 | Done |
 | Shared hosting (cPanel, FTP + browser installer wizard) | Done |
 | VPS / LAMP / LEMP (Ubuntu 24.04) | Done |
 | PaaS (Railway, Render, Fly.io) | Done |
 | Kubernetes deployment manifests | Planned |
 | Dark mode / light mode / system preference | Done |
-| Mobile-responsive React 19 frontend | Done |
+| Mobile-responsive Astro 6 + React 19 frontend | Done |
 
 ---
 
@@ -166,12 +166,12 @@ docker compose up -d
 
 Open **http://localhost:8080** in your browser.
 
-Default credentials (Docker): `admin@parkhub.test` / `admin` — **change immediately after login**.
+Default credentials (Docker): `admin@parkhub.test` / `ParkHub2026!` — **change immediately after login**.
 
 The container entrypoint automatically:
 1. Generates the Laravel `APP_KEY` if not set
 2. Runs database migrations
-3. Creates a default admin account (`admin@parkhub.test` / `admin`)
+3. Creates a default admin account (`admin@parkhub.test` / `ParkHub2026!`)
 
 To use custom credentials from the start:
 ```bash
@@ -195,7 +195,7 @@ To start with pre-seeded German demo data (10 lots, 200 users, ~3,500 bookings):
 DEMO_MODE=true docker compose up -d
 ```
 
-Login: `admin@parkhub.test` / `admin`
+Login: `admin@parkhub.test` / `ParkHub2026!`
 
 Screenshots are available in the `docs/screenshots/` directory.
 
@@ -204,12 +204,12 @@ Screenshots are available in the `docs/screenshots/` directory.
 ## Architecture
 
 ```
-Browser (React 19 SPA — TypeScript + Tailwind CSS)
-  |  Served from /public/build/
+Browser (Astro 6 + React 19 — TypeScript + Tailwind CSS)
+  |  Served from /public/
   |  Bearer token (Laravel Sanctum, 7-day expiry)
   |  JSON REST API
   v
-Laravel 12  (PHP 8.3, Apache)
+Laravel 12  (PHP 8.4, Apache)
   |
   +-- /api/v1/*    REST API (auth required, role-enforced)
   +-- /api/*       Legacy routes (backwards-compatible)
@@ -223,7 +223,7 @@ Laravel 12  (PHP 8.3, Apache)
   +-- Storage disk  (vehicle photos, branding logo)
 ```
 
-No external service is called at runtime. SMTP is optional — notifications fall back to the log driver if unconfigured. The entire stack runs on any PHP 8.3 host, including shared hosting.
+No external service is called at runtime. SMTP is optional — notifications fall back to the log driver if unconfigured. The entire stack runs on any PHP 8.4 host, including shared hosting.
 
 ---
 
@@ -340,7 +340,7 @@ Key environment variables (full list in [docs/CONFIGURATION.md](docs/CONFIGURATI
 | `QUEUE_CONNECTION` | `database` | `database`, `sync`, or `redis` |
 | `BCRYPT_ROUNDS` | `12` | Password hashing cost (higher = slower = safer) |
 | `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.test` | Initial admin email (Docker / `install.php`) |
-| `PARKHUB_ADMIN_PASSWORD` | `admin` | Initial admin password — **change immediately** |
+| `PARKHUB_ADMIN_PASSWORD` | `ParkHub2026!` | Initial admin password — **change immediately** |
 | `DEMO_MODE` | `false` | Set `true` to seed German demo data on container start |
 
 ---
@@ -352,7 +352,7 @@ Quick example — list parking lots:
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin"}' | jq -r '.tokens.access_token')
+  -d '{"username":"admin","password":"ParkHub2026!"}' | jq -r '.tokens.access_token')
 
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/lots
 ```

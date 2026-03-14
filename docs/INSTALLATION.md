@@ -26,10 +26,10 @@
 
 | Requirement | Minimum | Notes |
 |-------------|---------|-------|
-| PHP | 8.3 | Required extensions: `pdo`, `pdo_mysql`, `pdo_sqlite`, `mbstring`, `xml`, `curl`, `zip`, `gd`, `bcmath` |
+| PHP | 8.4 | Required extensions: `pdo`, `pdo_mysql`, `pdo_sqlite`, `mbstring`, `xml`, `curl`, `zip`, `gd`, `bcmath` |
 | Composer | 2.x | [getcomposer.org](https://getcomposer.org/) |
 | MySQL | 8.0+ | Or use SQLite (no server required) |
-| Node.js | 20 LTS | Only needed if rebuilding the frontend from source |
+| Node.js | 22 LTS | Only needed if rebuilding the frontend from source |
 | Web server | Apache 2.4 or Nginx | Apache: `mod_rewrite` must be enabled |
 
 SQLite requires no separate server — the database is a single file at `database/database.sqlite`.
@@ -48,16 +48,18 @@ cd parkhub-php
 docker compose up -d
 ```
 
-This starts two containers:
-- `app` — PHP 8.3 + Apache on port 8080
+This starts four containers:
+- `app` — PHP 8.4 + Apache on port 8080
 - `db` — MySQL 8.0 with a named volume for persistence
+- `worker` — Queue worker for background jobs
+- `scheduler` — Cron scheduler for recurring tasks
 
 ### Step 2 — Open the setup wizard
 
 Visit **http://localhost:8080**. The container entrypoint automatically:
 
 1. Runs all pending database migrations
-2. Creates a default admin account: username `admin`, password `admin`
+2. Creates a default admin account: username `admin`, password `ParkHub2026!`
 3. Caches the Laravel configuration and routes
 
 The setup wizard guides you through:
@@ -102,7 +104,7 @@ For evaluation or low-traffic deployments with no MySQL:
 ```bash
 docker build -t parkhub-php .
 docker run -d \
-  -p 8080:80 \
+  -p 8080:10000 \
   -e APP_URL=http://localhost:8080 \
   -e DB_CONNECTION=sqlite \
   -v parkhub-storage:/var/www/html/storage \
@@ -125,9 +127,9 @@ Tested on Ubuntu 24.04 LTS. Adapt package names for Debian or Rocky Linux.
 
 ```bash
 sudo apt update && sudo apt install -y \
-  php8.3 php8.3-cli php8.3-fpm php8.3-mysql php8.3-sqlite3 \
-  php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath \
-  libapache2-mod-php8.3 apache2 \
+  php8.4 php8.4-cli php8.4-fpm php8.4-mysql php8.4-sqlite3 \
+  php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-gd php8.4-bcmath \
+  libapache2-mod-php8.4 apache2 \
   composer \
   git unzip
 
@@ -660,7 +662,7 @@ curl https://parking.yourdomain.com/api/v1/health/ready
 After installation:
 
 - [ ] Login at `APP_URL` succeeds with admin credentials
-- [ ] Admin password changed from the default `admin` to a strong unique password
+- [ ] Admin password changed from the default `ParkHub2026!` to a strong unique password
 - [ ] `APP_DEBUG=false` and `APP_ENV=production` in `.env`
 - [ ] HTTPS active (certificate installed via certbot or reverse proxy)
 - [ ] `php artisan config:cache` run (speeds up startup, required for production)
