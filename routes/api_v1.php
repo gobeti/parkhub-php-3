@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AbsenceController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\PublicController;
