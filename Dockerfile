@@ -13,8 +13,9 @@ FROM php:8.4-apache-bookworm
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev \
     libzip-dev unzip sqlite3 libsqlite3-dev \
+    libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql pdo_sqlite gd zip bcmath \
+    && docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql pgsql gd zip bcmath \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
