@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "nash87/parkhub-php",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Self-hosted parking management — Laravel 12 + React 19, GDPR-ready.",
+    "keywords": ["parking", "management", "laravel", "self-hosted", "gdpr"],
     "license": "MIT",
     "require": {
         "php": "^8.2",
