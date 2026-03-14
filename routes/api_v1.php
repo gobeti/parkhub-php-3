@@ -115,10 +115,17 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Auth (protected)
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 
-    // Users
+    // Users — /me aliases for frontend compatibility (Rust edition uses /me)
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::put('/me', [AuthController::class, 'updateMe']);
     Route::get('/users/me', [AuthController::class, 'me']);
     Route::put('/users/me', [AuthController::class, 'updateMe']);
     Route::get('/users/me/export', [UserController::class, 'exportData']);
+
+    // Feature flags — stub for frontend compatibility
+    Route::get('/features', function () {
+        return response()->json(['success' => true, 'data' => ['enabled' => ['micro_animations', 'credits']], 'error' => null, 'meta' => null]);
+    });
     Route::delete('/users/me/delete', [AuthController::class, 'deleteAccount']);
 
     // Lots
@@ -214,6 +221,18 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::post('/users/{id}/credits', [AdminController::class, 'grantCredits']);
         Route::get('/credits/transactions', [AdminController::class, 'creditTransactions']);
         Route::post('/credits/refill-all', [AdminController::class, 'refillAllCredits']);
+
+        // Feature flags — stub for frontend compatibility
+        Route::get('/features', function () {
+            $available = [
+                ['id' => 'micro_animations', 'name' => 'Micro Animations', 'description' => 'Subtle hover/tap animations'],
+                ['id' => 'credits', 'name' => 'Credits System', 'description' => 'Credit-based booking'],
+            ];
+            return response()->json(['success' => true, 'data' => ['enabled' => ['micro_animations', 'credits'], 'available' => $available], 'error' => null, 'meta' => null]);
+        });
+        Route::put('/features', function (\Illuminate\Http\Request $request) {
+            return response()->json(['success' => true, 'data' => ['enabled' => $request->input('enabled', [])], 'error' => null, 'meta' => null]);
+        });
     });
 
     // Notifications
