@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarBlank, Clock, Car, X, SpinnerGap, CheckCircle, XCircle, ArrowClockwise,
   Warning, MapPin, CalendarPlus, Repeat, PencilSimple, Timer, CalendarCheck,
-  MagnifyingGlass, Funnel, Receipt, SignIn, Bell,
+  MagnifyingGlass, Funnel, Receipt, SignIn, Bell, ArrowsLeftRight, Check,
 } from '@phosphor-icons/react';
-import { api, Booking, Vehicle, WaitlistEntry } from '../api/client';
+import { api, Booking, Vehicle, WaitlistEntry, SwapRequest } from '../api/client';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, formatDistanceToNow, isFuture, type Locale } from 'date-fns';
@@ -172,6 +172,8 @@ export function BookingsPage() {
   const [extending, setExtending] = useState(false);
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
   const [cancellingWaitlist, setCancellingWaitlist] = useState<string | null>(null);
+  const [swapRequests, setSwapRequests] = useState<{ incoming: SwapRequest[]; outgoing: SwapRequest[] }>({ incoming: [], outgoing: [] });
+  const [respondingSwap, setRespondingSwap] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
@@ -182,10 +184,11 @@ export function BookingsPage() {
 
   async function loadData() {
     try {
-      const [bRes, vRes, wRes] = await Promise.all([api.getBookings(), api.getVehicles(), api.getWaitlist()]);
+      const [bRes, vRes, wRes, sRes] = await Promise.all([api.getBookings(), api.getVehicles(), api.getWaitlist(), api.getSwapRequests()]);
       if (bRes.success && bRes.data) setBookings(bRes.data);
       if (vRes.success && vRes.data) setVehicles(vRes.data);
       if (wRes.success && wRes.data) setWaitlistEntries(wRes.data);
+      if (sRes.success && sRes.data) setSwapRequests(sRes.data);
     } finally { setLoading(false); }
   }
 
@@ -353,6 +356,46 @@ export function BookingsPage() {
           </div>
         )}
       </section>
+
+      {/* Swap Requests */}
+      {(swapRequests.incoming.length > 0 || swapRequests.outgoing.length > 0) && (
+        <section aria-labelledby="swap-section-heading">
+          <SectionHeader icon={ArrowsLeftRight} title={t('swap.title', 'Tausch-Anfragen')} count={swapRequests.incoming.filter(s => s.status === 'pending').length + swapRequests.outgoing.length} color="text-indigo-500" headingId="swap-section-heading" />
+          <div className="space-y-3">
+            {swapRequests.incoming.filter(s => s.status === 'pending').map(swap => (
+              <motion.div key={swap.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card p-4 border-l-4 border-indigo-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {swap.requester?.name} {t('swap.wantsToSwap', 'möchte tauschen')}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {swap.requester_booking?.slot_number} ↔ {swap.target_booking?.slot_number}
+                      {swap.message && <span className="ml-2 italic">— "{swap.message}"</span>}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={async () => { setRespondingSwap(swap.id); await api.respondSwapRequest(swap.id, true); toast.success(t('swap.accepted', 'Tausch angenommen')); setRespondingSwap(null); load(); }} disabled={respondingSwap === swap.id} className="btn btn-sm btn-primary">
+                      <Check weight="bold" className="w-4 h-4" />
+                    </button>
+                    <button onClick={async () => { setRespondingSwap(swap.id); await api.respondSwapRequest(swap.id, false); toast.success(t('swap.declined', 'Tausch abgelehnt')); setRespondingSwap(null); load(); }} disabled={respondingSwap === swap.id} className="btn btn-sm btn-secondary">
+                      <X weight="bold" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+            {swapRequests.outgoing.filter(s => s.status === 'pending').map(swap => (
+              <motion.div key={swap.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card p-4 opacity-70">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <ArrowsLeftRight weight="bold" className="w-4 h-4 inline mr-1" />
+                  {t('swap.pending', 'Ausstehend')}: {swap.requester_booking?.slot_number} ↔ {swap.target_booking?.slot_number} ({swap.target?.name})
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="past-section-heading">
         <SectionHeader icon={CalendarBlank} title={t('bookings.past')} count={pastBookings.length} color="text-gray-400" headingId="past-section-heading" />

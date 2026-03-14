@@ -83,6 +83,11 @@ Route::middleware('throttle:5,1')->group(function () {
 Route::get('/public/occupancy', [PublicController::class, 'occupancy']);
 Route::get('/public/display', [PublicController::class, 'display']);
 
+// VAPID public key for push subscriptions
+Route::get('/push/vapid-key', function () {
+    return response()->json(['publicKey' => \App\Models\Setting::get('vapid_public_key', '')]);
+});
+
 // Branding
 Route::get('/branding', function () {
     $s = Setting::pluck('value', 'key')->toArray();
@@ -336,6 +341,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::patch('/bookings/{id}', [BookingController::class, 'update']);
     Route::post('/bookings/{id}/checkin', [BookingController::class, 'checkin']);
     Route::get('/calendar/events', [BookingController::class, 'calendarEvents']);
+    Route::get('/swap-requests', [BookingController::class, 'swapRequests']);
     Route::post('/bookings/{id}/swap-request', [BookingController::class, 'createSwapRequest']);
     Route::put('/swap-requests/{id}', [BookingController::class, 'respondSwapRequest']);
 

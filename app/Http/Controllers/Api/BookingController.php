@@ -14,6 +14,7 @@ use App\Models\Notification;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\Setting;
+use App\Models\SwapRequest;
 use App\Models\WaitlistEntry;
 use App\Models\Webhook;
 use Carbon\Carbon;
@@ -573,23 +574,122 @@ class BookingController extends Controller
 
     public function createSwapRequest(Request $request, string $id)
     {
-        $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
-        $target = Booking::findOrFail($request->target_booking_id);
+        $request->validate([
+            'target_booking_id' => 'required|uuid',
+            'message' => 'nullable|string|max:500',
+        ]);
 
-        return response()->json([
-            'id' => Str::uuid(),
-            'booking_id' => $booking->id,
+        $booking = Booking::where('user_id', $request->user()->id)
+            ->where('status', 'active')
+            ->findOrFail($id);
+
+        $target = Booking::where('status', 'active')->findOrFail($request->target_booking_id);
+
+        if ($target->user_id === $request->user()->id) {
+            return response()->json(['error' => 'SELF_SWAP', 'message' => 'Cannot swap with your own booking'], 422);
+        }
+
+        // Check for existing pending swap request
+        $existing = SwapRequest::where('requester_booking_id', $booking->id)
+            ->where('target_booking_id', $target->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existing) {
+            return response()->json(['error' => 'DUPLICATE', 'message' => 'Swap request already pending'], 409);
+        }
+
+        $swap = SwapRequest::create([
+            'requester_booking_id' => $booking->id,
             'target_booking_id' => $target->id,
+            'requester_id' => $request->user()->id,
+            'target_id' => $target->user_id,
             'status' => 'pending',
-            'created_at' => now()->toISOString(),
-        ], 201);
+            'message' => $request->message,
+        ]);
+
+        // Notify the target user
+        Notification::create([
+            'user_id' => $target->user_id,
+            'type' => 'swap_request',
+            'title' => 'Tausch-Anfrage',
+            'message' => $request->user()->name.' möchte Stellplatz '.$booking->slot_number.' gegen '.$target->slot_number.' tauschen.',
+            'data' => ['swap_request_id' => $swap->id],
+        ]);
+
+        return response()->json($swap->load(['requesterBooking', 'targetBooking', 'requester']), 201);
     }
 
     public function respondSwapRequest(Request $request, string $id)
     {
-        // Simplified swap implementation
-        $accept = $request->input('accept', false);
+        $request->validate([
+            'accept' => 'required|boolean',
+        ]);
 
-        return response()->json(['id' => $id, 'status' => $accept ? 'accepted' : 'declined']);
+        $swap = SwapRequest::where('target_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->findOrFail($id);
+
+        if ($request->accept) {
+            // Perform the actual slot swap
+            $requesterBooking = Booking::findOrFail($swap->requester_booking_id);
+            $targetBooking = Booking::findOrFail($swap->target_booking_id);
+
+            DB::transaction(function () use ($requesterBooking, $targetBooking) {
+                $tempSlot = $requesterBooking->slot_id;
+                $tempSlotNumber = $requesterBooking->slot_number;
+
+                $requesterBooking->update([
+                    'slot_id' => $targetBooking->slot_id,
+                    'slot_number' => $targetBooking->slot_number,
+                ]);
+
+                $targetBooking->update([
+                    'slot_id' => $tempSlot,
+                    'slot_number' => $tempSlotNumber,
+                ]);
+            });
+
+            $swap->update(['status' => 'accepted']);
+
+            // Notify requester
+            Notification::create([
+                'user_id' => $swap->requester_id,
+                'type' => 'swap_accepted',
+                'title' => 'Tausch angenommen',
+                'message' => $request->user()->name.' hat Ihren Tausch angenommen. Neuer Stellplatz: '.$requesterBooking->fresh()->slot_number,
+            ]);
+        } else {
+            $swap->update(['status' => 'declined']);
+
+            Notification::create([
+                'user_id' => $swap->requester_id,
+                'type' => 'swap_declined',
+                'title' => 'Tausch abgelehnt',
+                'message' => $request->user()->name.' hat Ihren Tausch abgelehnt.',
+            ]);
+        }
+
+        return response()->json($swap->fresh()->load(['requesterBooking', 'targetBooking']));
+    }
+
+    public function swapRequests(Request $request)
+    {
+        $userId = $request->user()->id;
+
+        $incoming = SwapRequest::where('target_id', $userId)
+            ->with(['requesterBooking', 'targetBooking', 'requester'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $outgoing = SwapRequest::where('requester_id', $userId)
+            ->with(['requesterBooking', 'targetBooking', 'target'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'incoming' => $incoming,
+            'outgoing' => $outgoing,
+        ]);
     }
 }
