@@ -210,5 +210,5 @@ These providers offer SSH access and better PHP support:
 
 ### Mixed content / HTTPS issues
 - Set `APP_URL=https://yourdomain.com` in `.env`
-- Add `FORCE_HTTPS=true` if available
+- Laravel auto-detects HTTPS via the `TrustProxies` middleware
 - Check if your host provides free SSL (most do)
