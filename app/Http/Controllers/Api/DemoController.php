@@ -116,12 +116,14 @@ class DemoController extends Controller
         Cache::forget(self::CACHE_PREFIX.'votes');
         Cache::forget(self::CACHE_PREFIX.'started_at');
 
-        // Re-seed demo data
+        // Re-seed demo data: drop all tables, re-run migrations, then seed
+        // Use migrate:fresh (not refresh) to avoid partial rollback failures
         try {
-            Artisan::call('migrate:refresh', ['--seed' => true, '--force' => true]);
+            Artisan::call('migrate:fresh', ['--force' => true]);
+            Artisan::call('db:seed', ['--class' => 'ProductionSimulationSeeder', '--force' => true]);
         } catch (\Exception $e) {
             // Log but don't fail - timer still resets
-            \Log::warning('Demo reset seed failed: '.$e->getMessage());
+            \Log::warning('Demo reset failed: '.$e->getMessage());
         }
 
         return response()->json([

@@ -238,9 +238,10 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
                 ['id' => 'micro_animations', 'name' => 'Micro Animations', 'description' => 'Subtle hover/tap animations'],
                 ['id' => 'credits', 'name' => 'Credits System', 'description' => 'Credit-based booking'],
             ];
+
             return response()->json(['success' => true, 'data' => ['enabled' => ['micro_animations', 'credits'], 'available' => $available], 'error' => null, 'meta' => null]);
         });
-        Route::put('/features', function (\Illuminate\Http\Request $request) {
+        Route::put('/features', function (Request $request) {
             return response()->json(['success' => true, 'data' => ['enabled' => $request->input('enabled', [])], 'error' => null, 'meta' => null]);
         });
     });
