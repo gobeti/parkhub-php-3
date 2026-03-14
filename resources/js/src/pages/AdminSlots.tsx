@@ -44,18 +44,18 @@ interface SlotStats {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<SlotStatus, { color: string; bg: string; border: string; icon: typeof Car; label: string }> = {
-  available: { color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', icon: CheckCircle, label: 'Frei' },
-  occupied:  { color: 'text-red-600 dark:text-red-400',     bg: 'bg-red-50 dark:bg-red-900/20',     border: 'border-red-200 dark:border-red-800',     icon: Car,         label: 'Belegt' },
-  reserved:  { color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', icon: Lock,        label: 'Reserviert' },
-  disabled:  { color: 'text-gray-500 dark:text-gray-400',   bg: 'bg-gray-100 dark:bg-gray-800',     border: 'border-gray-200 dark:border-gray-700',   icon: Wrench,      label: 'Wartung' },
+const STATUS_CONFIG: Record<SlotStatus, { color: string; bg: string; border: string; icon: typeof Car; labelKey: string; labelFallback: string }> = {
+  available: { color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', icon: CheckCircle, labelKey: 'slots.status.available', labelFallback: 'Frei' },
+  occupied:  { color: 'text-red-600 dark:text-red-400',     bg: 'bg-red-50 dark:bg-red-900/20',     border: 'border-red-200 dark:border-red-800',     icon: Car,         labelKey: 'slots.status.occupied', labelFallback: 'Belegt' },
+  reserved:  { color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', icon: Lock,        labelKey: 'slots.status.reserved', labelFallback: 'Reserviert' },
+  disabled:  { color: 'text-gray-500 dark:text-gray-400',   bg: 'bg-gray-100 dark:bg-gray-800',     border: 'border-gray-200 dark:border-gray-700',   icon: Wrench,      labelKey: 'slots.status.maintenance', labelFallback: 'Wartung' },
 };
 
 function getStatusConfig(status: SlotStatus, t: (key: string, fallback: string) => string) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.available;
   return {
     ...cfg,
-    label: t(`admin.slots.status.${status}`, cfg.label),
+    label: t(cfg.labelKey, cfg.labelFallback),
   };
 }
 

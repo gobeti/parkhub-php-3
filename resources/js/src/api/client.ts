@@ -212,6 +212,19 @@ class ApiClient {
     });
   }
 
+  async checkinBooking(id: string): Promise<ApiResponse<Booking>> {
+    return this.request<Booking>(`/api/v1/bookings/${id}/checkin`, {
+      method: 'POST',
+    });
+  }
+
+  async extendBooking(id: string, endTime: string): Promise<ApiResponse<Booking>> {
+    return this.request<Booking>(`/api/v1/bookings/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ end_time: endTime }),
+    });
+  }
+
   // Vehicles
   async getVehicles(): Promise<ApiResponse<Vehicle[]>> {
     return this.request<Vehicle[]>('/api/v1/vehicles');
@@ -528,6 +541,24 @@ class ApiClient {
     const resp = await fetch(`${API_BASE}/api/v1/lots/${lotId}/qr`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
     return resp.text();
   }
+
+  // Waitlist
+  async getWaitlist(): Promise<ApiResponse<WaitlistEntry[]>> {
+    return this.request<WaitlistEntry[]>('/api/v1/waitlist');
+  }
+
+  async joinWaitlist(lotId: string): Promise<ApiResponse<WaitlistEntry>> {
+    return this.request<WaitlistEntry>('/api/v1/waitlist', {
+      method: 'POST',
+      body: JSON.stringify({ lot_id: lotId }),
+    });
+  }
+
+  async leaveWaitlist(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/api/v1/waitlist/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 
@@ -647,6 +678,7 @@ export interface Booking {
   status: 'active' | 'completed' | 'cancelled' | 'confirmed';
   booking_type?: 'einmalig' | 'mehrtaegig' | 'dauer';
   dauer_interval?: 'weekly' | 'monthly';
+  checked_in_at?: string | null;
   created_at: string;
 }
 
@@ -946,4 +978,15 @@ export interface GuestBookingData {
   start_time: string;
   end_time: string;
   license_plate?: string;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  user_id: string;
+  lot_id: string;
+  slot_id?: string | null;
+  notified_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  lot?: ParkingLot;
 }

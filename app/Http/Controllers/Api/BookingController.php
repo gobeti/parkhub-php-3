@@ -495,9 +495,55 @@ class BookingController extends Controller
     public function update(Request $request, string $id)
     {
         $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
-        // Only allow notes and vehicle_plate updates via this endpoint.
-        // Status changes must go through specific endpoints (cancel, checkin, etc.)
+
         $data = $request->only(['notes', 'vehicle_plate']);
+
+        // Allow extending end_time for active/confirmed bookings
+        if ($request->has('end_time')) {
+            if (! in_array($booking->status, [Booking::STATUS_ACTIVE, Booking::STATUS_CONFIRMED])) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'INVALID_STATUS', 'message' => 'Only active or confirmed bookings can be extended.'],
+                ], 422);
+            }
+
+            $newEndTime = Carbon::parse($request->end_time);
+            if ($newEndTime->lte(Carbon::parse($booking->end_time))) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'INVALID_TIME', 'message' => 'New end time must be after the current end time.'],
+                ], 422);
+            }
+
+            // Check for conflicts with the extended time range
+            $conflict = Booking::where('slot_id', $booking->slot_id)
+                ->where('id', '!=', $booking->id)
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
+                ->where('start_time', '<', $newEndTime)
+                ->where('end_time', '>', $booking->start_time)
+                ->exists();
+
+            if ($conflict) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'SLOT_CONFLICT', 'message' => 'Extending would conflict with another booking.'],
+                ], 409);
+            }
+
+            $data['end_time'] = $newEndTime->toDateTimeString();
+
+            AuditLog::log([
+                'user_id' => $request->user()->id,
+                'username' => $request->user()->username,
+                'action' => 'booking_extended',
+                'details' => [
+                    'booking_id' => $id,
+                    'old_end_time' => $booking->end_time,
+                    'new_end_time' => $data['end_time'],
+                ],
+            ]);
+        }
+
         $booking->update($data);
 
         return response()->json($booking->fresh());

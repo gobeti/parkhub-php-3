@@ -9,8 +9,6 @@ import { useTranslation } from 'react-i18next';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const DAY_LABELS_DE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-
 const STATUS_COLORS: Record<string, string> = {
   confirmed: '#3B82F6',
   active: '#10B981',
@@ -19,12 +17,12 @@ const STATUS_COLORS: Record<string, string> = {
   no_show: '#F59E0B',
 };
 
-const STATUS_LABELS_DE: Record<string, string> = {
-  confirmed: 'Bestätigt',
-  active: 'Aktiv',
-  completed: 'Abgeschlossen',
-  cancelled: 'Storniert',
-  no_show: 'Nicht erschienen',
+const STATUS_LABEL_KEYS: Record<string, { key: string; fallback: string }> = {
+  confirmed: { key: 'reports.statusLabels.confirmed', fallback: 'Bestätigt' },
+  active: { key: 'reports.statusLabels.active', fallback: 'Aktiv' },
+  completed: { key: 'reports.statusLabels.completed', fallback: 'Abgeschlossen' },
+  cancelled: { key: 'reports.statusLabels.cancelled', fallback: 'Storniert' },
+  no_show: { key: 'reports.statusLabels.no_show', fallback: 'Nicht erschienen' },
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -33,10 +31,10 @@ const TYPE_COLORS: Record<string, string> = {
   dauer: '#10B981',
 };
 
-const TYPE_LABELS_DE: Record<string, string> = {
-  einmalig: 'Einmalig',
-  mehrtaegig: 'Mehrtägig',
-  dauer: 'Dauerparkplatz',
+const TYPE_LABEL_KEYS: Record<string, { key: string; fallback: string }> = {
+  einmalig: { key: 'reports.typeLabels.single', fallback: 'Einmalig' },
+  mehrtaegig: { key: 'reports.typeLabels.multiDay', fallback: 'Mehrtägig' },
+  dauer: { key: 'reports.typeLabels.permanent', fallback: 'Dauerparkplatz' },
 };
 
 function heatColor(value: number, max: number): string {
@@ -130,11 +128,12 @@ function BookingTrendChart({ labels, data }: { labels: string[]; data: number[] 
 // ── Occupancy Bars ───────────────────────────────────────────────────────────
 
 function OccupancyBars({ total, occupied }: { total: number; occupied: number }) {
+  const { t } = useTranslation();
   const pct = total > 0 ? Math.round((occupied / total) * 100) : 0;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-600 dark:text-gray-300 font-medium">Gesamt</span>
+        <span className="text-gray-600 dark:text-gray-300 font-medium">{t('reports.total', 'Gesamt')}</span>
         <span className="text-gray-900 dark:text-white font-bold">{occupied} / {total} ({pct}%)</span>
       </div>
       <div className="w-full h-6 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
@@ -152,9 +151,15 @@ function OccupancyBars({ total, occupied }: { total: number; occupied: number })
 // ── Status Breakdown ─────────────────────────────────────────────────────────
 
 function StatusBreakdown({ data }: { data: Record<string, number> }) {
+  const { t } = useTranslation();
   const total = Object.values(data).reduce((a, b) => a + b, 0);
-  if (total === 0) return <p className="text-sm text-gray-400">Keine Daten</p>;
+  if (total === 0) return <p className="text-sm text-gray-400">{t('reports.noData', 'Keine Daten')}</p>;
   const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+  const getStatusLabel = (status: string) => {
+    const cfg = STATUS_LABEL_KEYS[status];
+    return cfg ? t(cfg.key, cfg.fallback) : status;
+  };
 
   return (
     <div className="space-y-3">
@@ -167,7 +172,7 @@ function StatusBreakdown({ data }: { data: Record<string, number> }) {
             animate={{ width: `${(count / total) * 100}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             style={{ backgroundColor: STATUS_COLORS[status] || '#9CA3AF' }}
-            title={`${STATUS_LABELS_DE[status] || status}: ${count}`}
+            title={`${getStatusLabel(status)}: ${count}`}
           />
         ))}
       </div>
@@ -176,7 +181,7 @@ function StatusBreakdown({ data }: { data: Record<string, number> }) {
         {entries.map(([status, count]) => (
           <div key={status} className="flex items-center gap-2 text-sm">
             <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: STATUS_COLORS[status] || '#9CA3AF' }} />
-            <span className="text-gray-600 dark:text-gray-300">{STATUS_LABELS_DE[status] || status}</span>
+            <span className="text-gray-600 dark:text-gray-300">{getStatusLabel(status)}</span>
             <span className="font-semibold text-gray-900 dark:text-white">{count}</span>
             <span className="text-gray-400 text-xs">({Math.round((count / total) * 100)}%)</span>
           </div>
@@ -189,9 +194,15 @@ function StatusBreakdown({ data }: { data: Record<string, number> }) {
 // ── Type Breakdown ───────────────────────────────────────────────────────────
 
 function TypeBreakdown({ data }: { data: Record<string, number> }) {
+  const { t } = useTranslation();
   const total = Object.values(data).reduce((a, b) => a + b, 0);
-  if (total === 0) return <p className="text-sm text-gray-400">Keine Daten</p>;
+  if (total === 0) return <p className="text-sm text-gray-400">{t('reports.noData', 'Keine Daten')}</p>;
   const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+  const getTypeLabel = (type: string) => {
+    const cfg = TYPE_LABEL_KEYS[type];
+    return cfg ? t(cfg.key, cfg.fallback) : type;
+  };
 
   return (
     <div className="space-y-3">
@@ -200,7 +211,7 @@ function TypeBreakdown({ data }: { data: Record<string, number> }) {
         return (
           <div key={type} className="space-y-1">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-300">{TYPE_LABELS_DE[type] || type}</span>
+              <span className="text-gray-600 dark:text-gray-300">{getTypeLabel(type)}</span>
               <span className="font-semibold text-gray-900 dark:text-white">{count} <span className="text-gray-400 font-normal">({pct}%)</span></span>
             </div>
             <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -222,6 +233,17 @@ function TypeBreakdown({ data }: { data: Record<string, number> }) {
 // ── Heatmap Grid ─────────────────────────────────────────────────────────────
 
 function HeatmapGrid({ entries }: { entries: HeatmapEntry[] }) {
+  const { t } = useTranslation();
+  const dayLabels = [
+    t('reports.days.sun', 'So'),
+    t('reports.days.mon', 'Mo'),
+    t('reports.days.tue', 'Di'),
+    t('reports.days.wed', 'Mi'),
+    t('reports.days.thu', 'Do'),
+    t('reports.days.fri', 'Fr'),
+    t('reports.days.sat', 'Sa'),
+  ];
+
   const grid = useMemo(() => {
     const g: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
     let max = 0;
@@ -249,7 +271,7 @@ function HeatmapGrid({ entries }: { entries: HeatmapEntry[] }) {
         {grid.data.map((row, dayIdx) => (
           <div key={dayIdx} className="flex items-center gap-1 mb-0.5">
             <span className="w-8 text-right text-xs text-gray-500 dark:text-gray-400 font-medium shrink-0">
-              {DAY_LABELS_DE[dayIdx]}
+              {dayLabels[dayIdx]}
             </span>
             <div className="flex flex-1 gap-[2px]">
               {row.map((count, hourIdx) => (
@@ -257,7 +279,7 @@ function HeatmapGrid({ entries }: { entries: HeatmapEntry[] }) {
                   key={hourIdx}
                   className="flex-1 aspect-square rounded-sm transition-colors cursor-default"
                   style={{ backgroundColor: heatColor(count, grid.max) }}
-                  title={`${DAY_LABELS_DE[dayIdx]} ${String(hourIdx).padStart(2, '0')}:00 — ${count} Buchungen`}
+                  title={`${dayLabels[dayIdx]} ${String(hourIdx).padStart(2, '0')}:00 — ${count} ${t('reports.bookings', 'Buchungen')}`}
                 />
               ))}
             </div>
@@ -265,11 +287,11 @@ function HeatmapGrid({ entries }: { entries: HeatmapEntry[] }) {
         ))}
         {/* legend */}
         <div className="flex items-center justify-end gap-1.5 mt-3 mr-1">
-          <span className="text-[10px] text-gray-400">Weniger</span>
+          <span className="text-[10px] text-gray-400">{t('reports.less', 'Weniger')}</span>
           {[0.05, 0.15, 0.35, 0.6, 0.9].map((o, i) => (
             <div key={i} className="w-3 h-3 rounded-sm" style={{ backgroundColor: `rgba(59,130,246,${o})` }} />
           ))}
-          <span className="text-[10px] text-gray-400">Mehr</span>
+          <span className="text-[10px] text-gray-400">{t('reports.more', 'Mehr')}</span>
         </div>
       </div>
     </div>
