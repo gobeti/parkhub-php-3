@@ -24,7 +24,7 @@ class CreateAdminUser extends Command
             return self::SUCCESS;
         }
 
-        $email = $this->option('email') ?: env('PARKHUB_ADMIN_EMAIL', 'admin@parkhub.local');
+        $email = $this->option('email') ?: env('PARKHUB_ADMIN_EMAIL', 'admin@parkhub.test');
         $password = $this->option('password') ?: env('PARKHUB_ADMIN_PASSWORD', 'admin');
         $username = $this->option('username');
 

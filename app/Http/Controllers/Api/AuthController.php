@@ -248,13 +248,13 @@ class AuthController extends Controller
         if (! $record || ! Hash::check($request->token, $record->token)) {
             return response()->json([
                 'error' => 'INVALID_TOKEN',
-                'message' => 'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.',
+                'message' => 'The reset link is invalid or has expired.',
             ], 422);
         }
 
         $user = User::where('email', $record->email)->first();
         if (! $user) {
-            return response()->json(['error' => 'USER_NOT_FOUND', 'message' => 'Benutzer nicht gefunden.'], 404);
+            return response()->json(['error' => 'USER_NOT_FOUND', 'message' => 'User not found.'], 404);
         }
 
         $user->update(['password' => Hash::make($request->password)]);

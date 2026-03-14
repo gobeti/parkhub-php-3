@@ -166,12 +166,12 @@ docker compose up -d
 
 Open **http://localhost:8080** in your browser.
 
-Default credentials (Docker): `admin@parkhub.local` / `admin` — **change immediately after login**.
+Default credentials (Docker): `admin@parkhub.test` / `admin` — **change immediately after login**.
 
 The container entrypoint automatically:
 1. Generates the Laravel `APP_KEY` if not set
 2. Runs database migrations
-3. Creates a default admin account (`admin@parkhub.local` / `admin`)
+3. Creates a default admin account (`admin@parkhub.test` / `admin`)
 
 To use custom credentials from the start:
 ```bash
@@ -195,7 +195,7 @@ To start with pre-seeded German demo data (10 lots, 200 users, ~3,500 bookings):
 DEMO_MODE=true docker compose up -d
 ```
 
-Login: `admin@parkhub.local` / `admin`
+Login: `admin@parkhub.test` / `admin`
 
 Screenshots are available in the `docs/screenshots/` directory.
 
@@ -339,7 +339,7 @@ Key environment variables (full list in [docs/CONFIGURATION.md](docs/CONFIGURATI
 | `MAIL_PORT` | `587` | SMTP port |
 | `QUEUE_CONNECTION` | `database` | `database`, `sync`, or `redis` |
 | `BCRYPT_ROUNDS` | `12` | Password hashing cost (higher = slower = safer) |
-| `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.local` | Initial admin email (Docker / `install.php`) |
+| `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.test` | Initial admin email (Docker / `install.php`) |
 | `PARKHUB_ADMIN_PASSWORD` | `admin` | Initial admin password — **change immediately** |
 | `DEMO_MODE` | `false` | Set `true` to seed German demo data on container start |
 

@@ -31,3 +31,6 @@ build-shared/
 # Database files
 *.sqlite
 *.db
+
+# Dead code backup
+resources/js/src.bak/
