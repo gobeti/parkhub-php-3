@@ -8,6 +8,7 @@ use App\Models\Announcement;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\CreditTransaction;
+use App\Models\GuestBooking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\Setting;
@@ -295,6 +296,84 @@ class AdminController extends Controller
         ]);
 
         return response()->json($booking->fresh());
+    }
+
+    // ── Guest Bookings ────────────────────────────────────────────────────────
+
+    public function guestBookings(Request $request)
+    {
+        $this->requireAdmin($request);
+
+        $query = GuestBooking::orderBy('start_time', 'desc');
+
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        if ($request->has('from_date')) {
+            $query->where('start_time', '>=', $request->from_date);
+        }
+        if ($request->has('to_date')) {
+            $query->where('end_time', '<=', $request->to_date.' 23:59:59');
+        }
+
+        $guests = $query->get()->map(function ($g) {
+            $lot = ParkingLot::find($g->lot_id);
+            $slot = ParkingSlot::find($g->slot_id);
+            $creator = User::find($g->created_by);
+
+            return [
+                'id' => $g->id,
+                'guest_name' => $g->guest_name,
+                'guest_code' => $g->guest_code,
+                'lot_id' => $g->lot_id,
+                'lot_name' => $lot?->name ?? '-',
+                'slot_id' => $g->slot_id,
+                'slot_number' => $slot?->number ?? '-',
+                'start_time' => $g->start_time,
+                'end_time' => $g->end_time,
+                'vehicle_plate' => $g->vehicle_plate,
+                'status' => $g->status,
+                'created_by' => $g->created_by,
+                'created_by_name' => $creator?->name ?? '-',
+                'created_at' => $g->created_at,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $guests,
+            'error' => null,
+            'meta' => null,
+        ]);
+    }
+
+    public function cancelGuestBooking(Request $request, string $id)
+    {
+        $this->requireAdmin($request);
+
+        $guest = GuestBooking::findOrFail($id);
+        $guest->update(['status' => 'cancelled']);
+
+        // Also cancel the associated regular booking
+        Booking::where('lot_id', $guest->lot_id)
+            ->where('slot_id', $guest->slot_id)
+            ->where('start_time', $guest->start_time)
+            ->where('end_time', $guest->end_time)
+            ->whereIn('status', ['confirmed', 'active'])
+            ->update(['status' => Booking::STATUS_CANCELLED]);
+
+        AuditLog::log([
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->username,
+            'action' => 'admin_guest_booking_cancelled',
+            'details' => ['guest_booking_id' => $id, 'guest_name' => $guest->guest_name],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $guest->fresh(),
+            'error' => null,
+        ]);
     }
 
     public function updateUser(Request $request, string $id)

@@ -92,6 +92,12 @@ class ProductionSimulationSeeder extends Seeder
         $lotData = $this->seedLots();
         $userIds = $this->seedUsers();
         $this->seedBookings($lotData, $userIds);
+        $this->seedAbsences($userIds);
+        $this->seedAnnouncements($adminIds);
+        $this->seedNotifications($userIds);
+        $this->seedFavorites($userIds, $lotData);
+        $this->seedGuestBookings($adminIds, $lotData);
+        $this->seedAuditLog($userIds, $adminIds);
 
         DB::statement('PRAGMA foreign_keys = ON');
 
@@ -99,11 +105,17 @@ class ProductionSimulationSeeder extends Seeder
         $this->command->table(
             ['Entity', 'Count'],
             [
-                ['Parking Lots',  DB::table('parking_lots')->count()],
-                ['Parking Slots', DB::table('parking_slots')->count()],
-                ['Users',         DB::table('users')->count()],
-                ['Vehicles',      DB::table('vehicles')->count()],
-                ['Bookings',      DB::table('bookings')->count()],
+                ['Parking Lots',    DB::table('parking_lots')->count()],
+                ['Parking Slots',   DB::table('parking_slots')->count()],
+                ['Users',           DB::table('users')->count()],
+                ['Vehicles',        DB::table('vehicles')->count()],
+                ['Bookings',        DB::table('bookings')->count()],
+                ['Absences',        DB::table('absences')->count()],
+                ['Announcements',   DB::table('announcements')->count()],
+                ['Notifications',   DB::table('notifications_custom')->count()],
+                ['Favorites',       DB::table('favorites')->count()],
+                ['Guest Bookings',  DB::table('guest_bookings')->count()],
+                ['Audit Log',       DB::table('audit_log')->count()],
             ]
         );
     }
@@ -115,19 +127,50 @@ class ProductionSimulationSeeder extends Seeder
     private function seedSettings(): void
     {
         $settings = [
+            // Company info
             ['key' => 'company_name',        'value' => 'ParkHub Demo GmbH'],
             ['key' => 'company_address',     'value' => 'Musterstraße 1, 80333 München'],
             ['key' => 'company_email',       'value' => 'info@parkhub.test'],
             ['key' => 'company_phone',       'value' => '+49 89 123456'],
             ['key' => 'company_vat',         'value' => 'DE123456789'],
-            ['key' => 'impressum_provider',  'value' => 'ParkHub Demo GmbH'],
-            ['key' => 'impressum_address',   'value' => 'Musterstraße 1, 80333 München'],
-            ['key' => 'impressum_email',     'value' => 'impressum@parkhub.test'],
-            ['key' => 'impressum_phone',     'value' => '+49 89 123456'],
+            ['key' => 'use_case',            'value' => 'corporate'],
+            // Impressum
+            ['key' => 'impressum_provider',       'value' => 'ParkHub Demo GmbH'],
+            ['key' => 'impressum_provider_name',  'value' => 'ParkHub Demo GmbH'],
+            ['key' => 'impressum_legal_form',     'value' => 'GmbH'],
+            ['key' => 'impressum_street',         'value' => 'Musterstraße 1'],
+            ['key' => 'impressum_zip_city',       'value' => '80333 München'],
+            ['key' => 'impressum_country',        'value' => 'Deutschland'],
+            ['key' => 'impressum_address',        'value' => 'Musterstraße 1, 80333 München'],
+            ['key' => 'impressum_email',          'value' => 'impressum@parkhub.test'],
+            ['key' => 'impressum_phone',          'value' => '+49 89 123456'],
+            ['key' => 'impressum_register_court', 'value' => 'Amtsgericht München'],
+            ['key' => 'impressum_register_number','value' => 'HRB 123456'],
+            ['key' => 'impressum_vat_id',         'value' => 'DE123456789'],
+            ['key' => 'impressum_responsible',    'value' => 'Max Mustermann'],
+            // Booking rules
             ['key' => 'max_booking_days',    'value' => '30'],
+            ['key' => 'max_bookings_per_day','value' => '3'],
             ['key' => 'license_plate_mode',  'value' => 'visible'],
-            ['key' => 'credits_enabled',     'value' => 'true'],
+            ['key' => 'allow_guest_bookings','value' => 'true'],
+            ['key' => 'require_vehicle',     'value' => 'false'],
+            ['key' => 'self_registration',   'value' => 'true'],
+            ['key' => 'booking_visibility',  'value' => 'full'],
+            // Auto-release
+            ['key' => 'auto_release_enabled','value' => 'true'],
+            ['key' => 'auto_release_minutes','value' => '30'],
+            // Credits — disabled by default (optional feature)
+            ['key' => 'credits_enabled',     'value' => 'false'],
             ['key' => 'credits_per_booking', 'value' => '1'],
+            // Branding
+            ['key' => 'brand_primary_color', 'value' => '#d97706'],
+            ['key' => 'brand_secondary_color','value' => '#475569'],
+            // GDPR
+            ['key' => 'gdpr_enabled',        'value' => 'true'],
+            ['key' => 'data_retention_days', 'value' => '365'],
+            // System
+            ['key' => 'setup_completed',     'value' => 'true'],
+            ['key' => 'maintenance_mode',    'value' => 'false'],
         ];
 
         foreach ($settings as $s) {
@@ -389,8 +432,361 @@ class ProductionSimulationSeeder extends Seeder
     }
 
     // -------------------------------------------------------------------------
+    // Absences — homeoffice, vacation, sick, training
+    // -------------------------------------------------------------------------
+
+    private function seedAbsences(array $userIds): void
+    {
+        $absences = [];
+        $types = ['homeoffice', 'vacation', 'sick', 'training', 'other'];
+        $weights = [50, 25, 10, 10, 5]; // homeoffice is most common in corporate
+        $notes = [
+            'homeoffice' => ['Konzentration auf Projektarbeit', 'Handwerker im Haus', 'Kind krank', null, null, null],
+            'vacation' => ['Sommerurlaub', 'Skiurlaub', 'Familienbesuch', 'Brückentag', null],
+            'sick' => ['Erkältung', 'Arzttermin', null, null],
+            'training' => ['Schulung SAP', 'Sicherheitsunterweisung', 'Erste-Hilfe-Kurs', 'Weiterbildung Projektmanagement'],
+            'other' => ['Dienstreise', 'Messe', 'Betriebsausflug', null],
+        ];
+
+        $now = Carbon::now();
+
+        foreach ($userIds as $userData) {
+            // Each user gets 5-15 absence entries over the last 60 days + next 14 days
+            $count = rand(5, 15);
+            for ($i = 0; $i < $count; $i++) {
+                $type = $this->weightedRandom($types, $weights);
+                $startDate = $now->copy()->subDays(rand(-14, 60));
+
+                // Duration depends on type
+                $duration = match ($type) {
+                    'homeoffice' => 0, // single day
+                    'vacation' => rand(1, 10),
+                    'sick' => rand(0, 4),
+                    'training' => rand(0, 2),
+                    default => 0,
+                };
+
+                $endDate = $startDate->copy()->addDays($duration);
+                $noteOptions = $notes[$type];
+
+                $absences[] = [
+                    'id' => Str::uuid()->toString(),
+                    'user_id' => $userData['id'],
+                    'absence_type' => $type,
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'note' => $noteOptions[array_rand($noteOptions)],
+                    'source' => rand(1, 100) <= 80 ? 'manual' : 'import',
+                    'created_at' => $startDate->copy()->subDays(rand(0, 7))->toDateTimeString(),
+                    'updated_at' => $startDate->copy()->subDays(rand(0, 3))->toDateTimeString(),
+                ];
+
+                if (count($absences) >= 200) {
+                    DB::table('absences')->insert($absences);
+                    $absences = [];
+                }
+            }
+        }
+
+        if (! empty($absences)) {
+            DB::table('absences')->insert($absences);
+        }
+
+        $this->command->line('  → '.DB::table('absences')->count().' absences inserted');
+    }
+
+    // -------------------------------------------------------------------------
+    // Announcements
+    // -------------------------------------------------------------------------
+
+    private function seedAnnouncements(array $adminIds): void
+    {
+        $announcements = [
+            [
+                'title' => 'Wartungsarbeiten Tiefgarage Marktplatz',
+                'message' => 'Am kommenden Wochenende (15.–16. März) finden Wartungsarbeiten an der Belüftungsanlage statt. Die Tiefgarage bleibt geöffnet, es kann jedoch zu kurzfristigen Sperrungen einzelner Ebenen kommen.',
+                'severity' => 'warning',
+                'active' => true,
+                'expires_at' => now()->addDays(5)->toDateTimeString(),
+            ],
+            [
+                'title' => 'Neue Parkplätze im Technologiepark',
+                'message' => 'Ab sofort stehen 15 zusätzliche Stellplätze in der 2. Etage des Parkhaus Technologiepark zur Verfügung. Diese sind ab sofort buchbar.',
+                'severity' => 'info',
+                'active' => true,
+                'expires_at' => now()->addDays(14)->toDateTimeString(),
+            ],
+            [
+                'title' => 'E-Ladesäulen jetzt verfügbar',
+                'message' => 'Im P+R Hauptbahnhof wurden 8 neue E-Ladesäulen installiert (Ebene A, Plätze 041–048). Laden ist während der Parkzeit kostenlos.',
+                'severity' => 'success',
+                'active' => true,
+                'expires_at' => null,
+            ],
+            [
+                'title' => 'Systemupdate erfolgreich abgeschlossen',
+                'message' => 'Das ParkHub-System wurde auf Version 1.2.6 aktualisiert. Neue Features: Verbesserte Kalenderansicht, erweiterte Abwesenheitsverwaltung und optimierte Performance.',
+                'severity' => 'info',
+                'active' => true,
+                'expires_at' => now()->addDays(7)->toDateTimeString(),
+            ],
+            [
+                'title' => 'Winterreifenpflicht beachten',
+                'message' => 'Bitte beachten Sie die gesetzliche Winterreifenpflicht. Fahrzeuge ohne Winterreifen können bei Kontrollen beanstandet werden.',
+                'severity' => 'warning',
+                'active' => false,
+                'expires_at' => now()->subDays(30)->toDateTimeString(),
+            ],
+            [
+                'title' => 'Parkgebühren-Anpassung zum 01.04.',
+                'message' => 'Zum 1. April werden die monatlichen Kontingente angepasst. Details erhalten Sie per E-Mail von Ihrer Abteilungsleitung.',
+                'severity' => 'info',
+                'active' => true,
+                'expires_at' => now()->addDays(20)->toDateTimeString(),
+            ],
+        ];
+
+        $adminId = $adminIds[0] ?? null;
+
+        foreach ($announcements as $a) {
+            DB::table('announcements')->insert(array_merge($a, [
+                'id' => Str::uuid()->toString(),
+                'created_by' => $adminId,
+                'created_at' => now()->subDays(rand(1, 30))->toDateTimeString(),
+                'updated_at' => now()->subDays(rand(0, 5))->toDateTimeString(),
+            ]));
+        }
+
+        $this->command->line('  → '.count($announcements).' announcements seeded');
+    }
+
+    // -------------------------------------------------------------------------
+    // Notifications
+    // -------------------------------------------------------------------------
+
+    private function seedNotifications(array $userIds): void
+    {
+        $templates = [
+            ['type' => 'booking_confirmed', 'title' => 'Buchung bestätigt', 'message' => 'Ihre Buchung für Stellplatz %s wurde bestätigt.'],
+            ['type' => 'booking_cancelled', 'title' => 'Buchung storniert', 'message' => 'Ihre Buchung für Stellplatz %s wurde storniert.'],
+            ['type' => 'booking_reminder', 'title' => 'Erinnerung', 'message' => 'Ihre Buchung für morgen: Stellplatz %s im %s.'],
+            ['type' => 'system', 'title' => 'Systemhinweis', 'message' => 'Wartungsfenster am Wochenende geplant. Bitte planen Sie entsprechend.'],
+            ['type' => 'absence_approved', 'title' => 'Abwesenheit eingetragen', 'message' => 'Ihre Homeoffice-Meldung für %s wurde erfolgreich gespeichert.'],
+            ['type' => 'announcement', 'title' => 'Neue Mitteilung', 'message' => 'Es gibt eine neue Ankündigung: %s'],
+            ['type' => 'welcome', 'title' => 'Willkommen bei ParkHub', 'message' => 'Herzlich willkommen! Buchen Sie Ihren ersten Parkplatz über das Dashboard.'],
+        ];
+
+        $notifications = [];
+        $slotNumbers = ['A-012', 'B-005', 'C-033', '001', '042', '078'];
+        $lotNames = array_column(self::LOTS, 'name');
+
+        // Give ~30% of users some notifications (3-8 each)
+        $selectedUsers = array_slice($userIds, 0, (int) (count($userIds) * 0.3));
+
+        foreach ($selectedUsers as $userData) {
+            $count = rand(3, 8);
+            for ($i = 0; $i < $count; $i++) {
+                $template = $templates[array_rand($templates)];
+                $slot = $slotNumbers[array_rand($slotNumbers)];
+                $lot = $lotNames[array_rand($lotNames)];
+                $date = now()->subDays(rand(0, 14))->format('d.m.Y');
+
+                $message = sprintf($template['message'], $slot, $lot, $date);
+
+                $notifications[] = [
+                    'id' => Str::uuid()->toString(),
+                    'user_id' => $userData['id'],
+                    'type' => $template['type'],
+                    'title' => $template['title'],
+                    'message' => $message,
+                    'data' => null,
+                    'read' => rand(1, 100) <= 60,
+                    'created_at' => now()->subDays(rand(0, 30))->subHours(rand(0, 23))->toDateTimeString(),
+                    'updated_at' => now()->subDays(rand(0, 10))->toDateTimeString(),
+                ];
+
+                if (count($notifications) >= 200) {
+                    DB::table('notifications_custom')->insert($notifications);
+                    $notifications = [];
+                }
+            }
+        }
+
+        if (! empty($notifications)) {
+            DB::table('notifications_custom')->insert($notifications);
+        }
+
+        $this->command->line('  → '.DB::table('notifications_custom')->count().' notifications inserted');
+    }
+
+    // -------------------------------------------------------------------------
+    // Favorites
+    // -------------------------------------------------------------------------
+
+    private function seedFavorites(array $userIds, array $lotData): void
+    {
+        $favorites = [];
+        // ~25% of users have 1-3 favorite slots
+        $selectedUsers = array_slice($userIds, 0, (int) (count($userIds) * 0.25));
+
+        foreach ($selectedUsers as $userData) {
+            $count = rand(1, 3);
+            $usedSlots = [];
+            for ($i = 0; $i < $count; $i++) {
+                $lot = $lotData[array_rand($lotData)];
+                $slotId = $lot['slot_ids'][array_rand($lot['slot_ids'])];
+
+                if (in_array($slotId, $usedSlots)) {
+                    continue;
+                }
+                $usedSlots[] = $slotId;
+
+                $favorites[] = [
+                    'id' => Str::uuid()->toString(),
+                    'user_id' => $userData['id'],
+                    'slot_id' => $slotId,
+                    'created_at' => now()->subDays(rand(0, 30))->toDateTimeString(),
+                    'updated_at' => now()->subDays(rand(0, 10))->toDateTimeString(),
+                ];
+            }
+        }
+
+        if (! empty($favorites)) {
+            DB::table('favorites')->insert($favorites);
+        }
+
+        $this->command->line('  → '.count($favorites).' favorites seeded');
+    }
+
+    // -------------------------------------------------------------------------
+    // Guest bookings
+    // -------------------------------------------------------------------------
+
+    private function seedGuestBookings(array $adminIds, array $lotData): void
+    {
+        $guestNames = [
+            'Dr. Werner Schulze', 'Frau Ingrid Lehmann', 'Herr Michael Krause',
+            'Prof. Dr. Anna Bergmann', 'Lieferant Fischer GmbH', 'Handwerker Meier',
+            'Kundenbesuch Siemens', 'Bewerberin Sarah Klein', 'Auditor TÜV Süd',
+            'Berater McKinsey', 'Steuerberater Hoffmann', 'Rechtsanwalt Dr. König',
+        ];
+
+        $adminId = $adminIds[0] ?? $adminIds[1] ?? null;
+        $guestBookings = [];
+
+        for ($i = 0; $i < 25; $i++) {
+            $lot = $lotData[array_rand($lotData)];
+            $slotId = $lot['slot_ids'][array_rand($lot['slot_ids'])];
+            $startTime = now()->subDays(rand(-7, 20))->setHour(rand(8, 14))->setMinute(0)->setSecond(0);
+            $endTime = $startTime->copy()->addHours(rand(2, 6));
+
+            $status = 'confirmed';
+            if ($endTime->isPast()) {
+                $status = rand(1, 100) <= 90 ? 'completed' : 'cancelled';
+            }
+
+            $guestBookings[] = [
+                'id' => Str::uuid()->toString(),
+                'created_by' => $adminId,
+                'lot_id' => $lot['id'],
+                'slot_id' => $slotId,
+                'guest_name' => $guestNames[array_rand($guestNames)],
+                'guest_code' => strtoupper(Str::random(8)),
+                'start_time' => $startTime->toDateTimeString(),
+                'end_time' => $endTime->toDateTimeString(),
+                'vehicle_plate' => rand(1, 100) <= 60 ? $this->generatePlate([]) : null,
+                'status' => $status,
+                'created_at' => $startTime->copy()->subDays(rand(1, 5))->toDateTimeString(),
+                'updated_at' => $startTime->copy()->subHours(rand(0, 12))->toDateTimeString(),
+            ];
+        }
+
+        DB::table('guest_bookings')->insert($guestBookings);
+        $this->command->line('  → '.count($guestBookings).' guest bookings seeded');
+    }
+
+    // -------------------------------------------------------------------------
+    // Audit log — realistic admin/user actions
+    // -------------------------------------------------------------------------
+
+    private function seedAuditLog(array $userIds, array $adminIds): void
+    {
+        $actions = [
+            ['action' => 'login', 'details' => null],
+            ['action' => 'login', 'details' => null],
+            ['action' => 'login', 'details' => null],
+            ['action' => 'booking_created', 'details' => ['booking_type' => 'einmalig']],
+            ['action' => 'booking_created', 'details' => ['booking_type' => 'einmalig']],
+            ['action' => 'booking_cancelled', 'details' => ['reason' => 'Terminänderung']],
+            ['action' => 'absence_created', 'details' => ['type' => 'homeoffice']],
+            ['action' => 'absence_created', 'details' => ['type' => 'vacation']],
+            ['action' => 'profile_updated', 'details' => ['fields' => ['phone', 'department']]],
+            ['action' => 'password_changed', 'details' => null],
+            ['action' => 'settings_updated', 'details' => ['key' => 'max_booking_days']],
+            ['action' => 'user_deactivated', 'details' => ['reason' => 'Austritt']],
+            ['action' => 'announcement_created', 'details' => ['title' => 'Wartungsarbeiten']],
+            ['action' => 'lot_updated', 'details' => ['lot' => 'P+R Hauptbahnhof']],
+        ];
+
+        $ips = ['192.168.1.10', '192.168.1.22', '10.0.0.45', '172.16.0.100', '192.168.178.50'];
+
+        $logs = [];
+        // 200 audit log entries over the last 30 days
+        for ($i = 0; $i < 200; $i++) {
+            $isAdmin = rand(1, 100) <= 20;
+            $userId = $isAdmin
+                ? ($adminIds[array_rand($adminIds)] ?? null)
+                : $userIds[array_rand($userIds)]['id'];
+
+            $template = $actions[array_rand($actions)];
+            // Admin-only actions
+            if (! $isAdmin && in_array($template['action'], ['settings_updated', 'user_deactivated', 'announcement_created', 'lot_updated'])) {
+                $template = $actions[0]; // fallback to login
+            }
+
+            $logs[] = [
+                'id' => Str::uuid()->toString(),
+                'user_id' => $userId,
+                'username' => $isAdmin ? 'admin' : 'user',
+                'action' => $template['action'],
+                'details' => $template['details'] ? json_encode($template['details']) : null,
+                'ip_address' => $ips[array_rand($ips)],
+                'created_at' => now()->subDays(rand(0, 30))->subHours(rand(0, 23))->toDateTimeString(),
+                'updated_at' => now()->subDays(rand(0, 10))->toDateTimeString(),
+            ];
+
+            if (count($logs) >= 100) {
+                DB::table('audit_log')->insert($logs);
+                $logs = [];
+            }
+        }
+
+        if (! empty($logs)) {
+            DB::table('audit_log')->insert($logs);
+        }
+
+        $this->command->line('  → '.DB::table('audit_log')->count().' audit log entries inserted');
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    private function weightedRandom(array $items, array $weights): mixed
+    {
+        $totalWeight = array_sum($weights);
+        $rand = rand(1, $totalWeight);
+        $cumulative = 0;
+
+        foreach ($items as $i => $item) {
+            $cumulative += $weights[$i];
+            if ($rand <= $cumulative) {
+                return $item;
+            }
+        }
+
+        return $items[0];
+    }
 
     private function bookingWindow(Carbon $date, bool $isWeekend): array
     {

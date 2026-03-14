@@ -371,6 +371,21 @@ class ApiClient {
     });
   }
 
+  async getAdminGuestBookings(params?: { status?: string; from_date?: string; to_date?: string }): Promise<ApiResponse<AdminGuestBooking[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.from_date) searchParams.set('from_date', params.from_date);
+    if (params?.to_date) searchParams.set('to_date', params.to_date);
+    const q = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return this.request<AdminGuestBooking[]>(`/api/v1/admin/guest-bookings${q}`);
+  }
+
+  async cancelAdminGuestBooking(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/api/v1/admin/guest-bookings/${id}/cancel`, {
+      method: 'PATCH',
+    });
+  }
+
   // Favorites
   async addFavoriteSlot(slotId: string): Promise<ApiResponse<void>> {
     return this.request<void>('/api/v1/user/favorites', { method: 'POST', body: JSON.stringify({ slot_id: slotId }) });
@@ -461,8 +476,16 @@ class ApiClient {
     return this.request<Announcement[]>('/api/v1/announcements/active');
   }
 
-  async createAnnouncement(data: { title: string; message: string; severity: string; expires_at?: string }): Promise<ApiResponse<Announcement>> {
+  async getAdminAnnouncements(): Promise<ApiResponse<Announcement[]>> {
+    return this.request<Announcement[]>('/api/v1/admin/announcements');
+  }
+
+  async createAnnouncement(data: { title: string; message: string; severity: string; active?: boolean; expires_at?: string }): Promise<ApiResponse<Announcement>> {
     return this.request<Announcement>('/api/v1/admin/announcements', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateAnnouncement(id: string, data: { title: string; message: string; severity: string; active?: boolean; expires_at?: string }): Promise<ApiResponse<Announcement>> {
+    return this.request<Announcement>(`/api/v1/admin/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) });
   }
 
   async deleteAnnouncement(id: string): Promise<ApiResponse<void>> {
@@ -873,6 +896,23 @@ export interface UserCredits {
   monthly_quota: number;
   last_refilled?: string;
   transactions: CreditTransaction[];
+}
+
+export interface AdminGuestBooking {
+  id: string;
+  guest_name: string;
+  guest_code: string;
+  lot_id: string;
+  lot_name: string;
+  slot_id: string;
+  slot_number: string;
+  start_time: string;
+  end_time: string;
+  vehicle_plate: string | null;
+  status: 'confirmed' | 'active' | 'completed' | 'cancelled';
+  created_by: string;
+  created_by_name: string;
+  created_at: string;
 }
 
 export interface GuestBookingData {

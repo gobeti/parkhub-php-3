@@ -41,6 +41,7 @@ const ForgotPasswordPage = lazy(() => import("./pages/ForgotPassword").then(m =>
 const ResetPasswordPage = lazy(() => import("./pages/ResetPassword").then(m => ({ default: m.ResetPasswordPage })));
 const ImpressumPage = lazy(() => import('./pages/Impressum').then(m => ({ default: m.ImpressumPage })));
 const TransparencyPage = lazy(() => import('./pages/Transparency').then(m => ({ default: m.TransparencyPage })));
+const NotificationsPage = lazy(() => import('./pages/Notifications').then(m => ({ default: m.NotificationsPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,6 +155,7 @@ function AppRoutes() {
 
       <Route path="/team" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><TeamPage /></Suspense></ProtectedRoute>} />
       <Route path="/calendar" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><CalendarPage /></Suspense></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><NotificationsPage /></Suspense></ProtectedRoute>} />
       {/* Admin */}
       <Route path="/admin/*" element={<AdminRoute><Suspense fallback={<LoadingScreen />}><AdminPage /></Suspense></AdminRoute>} />
 

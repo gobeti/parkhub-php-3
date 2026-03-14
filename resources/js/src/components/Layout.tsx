@@ -269,6 +269,15 @@ export function Layout({ children }: LayoutProps) {
                           <p className="text-sm text-gray-400">{t('notifications.empty')}</p>
                         </div>
                       )}
+                      {notifications.length > 0 && (
+                        <Link
+                          to="/notifications"
+                          onClick={() => setNotifOpen(false)}
+                          className="block px-4 py-2.5 text-center text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-t border-gray-100 dark:border-gray-800"
+                        >
+                          {t('notifications.viewAll', 'Alle anzeigen')}
+                        </Link>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
