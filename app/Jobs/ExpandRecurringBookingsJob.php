@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Jobs;
 
-use App\Models\RecurringBooking;
 use App\Models\Booking;
 use App\Models\ParkingSlot;
+use App\Models\RecurringBooking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -40,13 +41,13 @@ class ExpandRecurringBookingsJob implements ShouldQueue
                 $date = now()->addDays($i);
                 $dayOfWeek = (int) $date->format('N'); // 1=Mon…7=Sun
 
-                if (!in_array($dayOfWeek, $daysOfWeek)) {
+                if (! in_array($dayOfWeek, $daysOfWeek)) {
                     continue;
                 }
 
                 $dateStr = $date->toDateString();
-                $startTime = $dateStr . ' ' . $recurring->start_time;
-                $endTime   = $dateStr . ' ' . $recurring->end_time;
+                $startTime = $dateStr.' '.$recurring->start_time;
+                $endTime = $dateStr.' '.$recurring->end_time;
 
                 // Idempotency: skip if booking already exists for this user+slot+day
                 $exists = Booking::where('user_id', $recurring->user_id)
@@ -68,22 +69,23 @@ class ExpandRecurringBookingsJob implements ShouldQueue
 
                 if ($conflict) {
                     Log::info("ExpandRecurring: slot {$recurring->slot_id} conflict on {$dateStr}, skipping");
+
                     continue;
                 }
 
                 $slot = ParkingSlot::find($recurring->slot_id);
                 Booking::create([
-                    'id'           => Str::uuid(),
-                    'user_id'      => $recurring->user_id,
-                    'lot_id'       => $slot?->lot_id,
-                    'slot_id'      => $recurring->slot_id,
-                    'slot_number'  => $slot?->slot_number ?? '?',
-                    'lot_name'     => optional($slot?->lot)->name ?? 'Unknown',
-                    'start_time'   => $startTime,
-                    'end_time'     => $endTime,
-                    'status'       => 'confirmed',
+                    'id' => Str::uuid(),
+                    'user_id' => $recurring->user_id,
+                    'lot_id' => $slot?->lot_id,
+                    'slot_id' => $recurring->slot_id,
+                    'slot_number' => $slot?->slot_number ?? '?',
+                    'lot_name' => optional($slot?->lot)->name ?? 'Unknown',
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'status' => 'confirmed',
                     'booking_type' => 'recurring',
-                    'vehicle_plate'=> $recurring->vehicle_plate ?? null,
+                    'vehicle_plate' => $recurring->vehicle_plate ?? null,
                 ]);
                 $created++;
             }

@@ -1,11 +1,11 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Mail\WaitlistSlotAvailableMail;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\Setting;
-use App\Models\User;
 use App\Models\WaitlistEntry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

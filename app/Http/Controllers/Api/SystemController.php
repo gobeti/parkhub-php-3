@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -18,6 +19,7 @@ class SystemController extends Controller
     public function maintenance(Request $request)
     {
         $active = Setting::get('maintenance_mode', 'false') === 'true';
+
         return response()->json([
             'active' => $active,
             'message' => Setting::get('maintenance_message', ''),

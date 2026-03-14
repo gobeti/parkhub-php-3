@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -9,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuids;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     protected $fillable = [
         'username', 'email', 'password', 'name', 'picture', 'phone',
@@ -32,13 +33,40 @@ class User extends Authenticatable
         ];
     }
 
-    public function bookings() { return $this->hasMany(Booking::class); }
-    public function vehicles() { return $this->hasMany(Vehicle::class); }
-    public function absences() { return $this->hasMany(Absence::class); }
-    public function notifications_list() { return $this->hasMany(Notification::class); }
-    public function favorites() { return $this->hasMany(Favorite::class); }
-    public function recurringBookings() { return $this->hasMany(RecurringBooking::class); }
-    public function creditTransactions() { return $this->hasMany(CreditTransaction::class); }
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class);
+    }
+
+    public function absences()
+    {
+        return $this->hasMany(Absence::class);
+    }
+
+    public function notifications_list()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    public function recurringBookings()
+    {
+        return $this->hasMany(RecurringBooking::class);
+    }
+
+    public function creditTransactions()
+    {
+        return $this->hasMany(CreditTransaction::class);
+    }
 
     public function isAdmin(): bool
     {

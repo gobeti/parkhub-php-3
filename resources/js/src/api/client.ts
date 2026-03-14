@@ -530,7 +530,7 @@ export interface Announcement {
   id: string;
   title: string;
   message: string;
-  severity: 'info' | 'warning' | 'error' | 'success';
+  severity: 'info' | 'warning' | 'error' | 'success' | 'critical';
   active: boolean;
   created_at: string;
   expires_at?: string;

@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -20,6 +20,7 @@ class CreateAdminUser extends Command
     {
         if (User::where('role', 'admin')->orWhere('role', 'superadmin')->count() > 0) {
             $this->info('Admin already exists');
+
             return self::SUCCESS;
         }
 
@@ -45,6 +46,7 @@ class CreateAdminUser extends Command
         Setting::set('needs_password_change', 'true');
 
         $this->info("Default admin created: {$email}");
+
         return self::SUCCESS;
     }
 }

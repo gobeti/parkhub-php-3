@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -9,7 +10,7 @@ class SlotController extends Controller
 {
     private function requireAdmin(Request $request): void
     {
-        if (!$request->user() || !$request->user()->isAdmin()) {
+        if (! $request->user() || ! $request->user()->isAdmin()) {
             abort(403, 'Admin access required');
         }
     }
@@ -22,6 +23,7 @@ class SlotController extends Controller
             $request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']),
             ['lot_id' => $lotId]
         ));
+
         return response()->json($slot, 201);
     }
 
@@ -30,6 +32,7 @@ class SlotController extends Controller
         $this->requireAdmin($request);
         $slot = ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);
         $slot->update($request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']));
+
         return response()->json($slot);
     }
 
@@ -37,6 +40,7 @@ class SlotController extends Controller
     {
         $this->requireAdmin($request);
         ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId)->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 }

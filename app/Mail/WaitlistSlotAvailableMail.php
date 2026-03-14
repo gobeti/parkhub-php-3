@@ -24,6 +24,7 @@ class WaitlistSlotAvailableMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $company = Setting::get('company_name', 'ParkHub');
+
         return new Envelope(
             subject: "[{$company}] Stellplatz verfügbar – {$this->lot->name}",
         );
@@ -38,8 +39,8 @@ class WaitlistSlotAvailableMail extends Mailable implements ShouldQueue
 
     private function buildHtml(): string
     {
-        $company  = e(Setting::get('company_name', 'ParkHub'));
-        $name     = e($this->recipient->name);
+        $company = e(Setting::get('company_name', 'ParkHub'));
+        $name = e($this->recipient->name);
         $lot_name = e($this->lot->name);
 
         return <<<HTML

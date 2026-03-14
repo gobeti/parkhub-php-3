@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
-use App\Models\Booking;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,15 +27,16 @@ class BookingTest extends TestCase
             'slot_number' => 'A1',
             'status' => 'available',
         ]);
+
         return [$user, $lot, $slot];
     }
 
     public function test_user_can_create_booking(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/bookings', [
                 'lot_id' => $lot->id,
                 'slot_id' => $slot->id,
@@ -50,7 +51,7 @@ class BookingTest extends TestCase
 
     public function test_user_can_list_bookings(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
 
         Booking::create([
@@ -62,7 +63,7 @@ class BookingTest extends TestCase
             'booking_type' => 'single',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/bookings');
 
         $response->assertStatus(200);
@@ -70,7 +71,7 @@ class BookingTest extends TestCase
 
     public function test_user_can_delete_booking(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
 
         $booking = Booking::create([
@@ -82,8 +83,8 @@ class BookingTest extends TestCase
             'booking_type' => 'single',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->deleteJson('/api/v1/bookings/' . $booking->id);
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->deleteJson('/api/v1/bookings/'.$booking->id);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'status' => 'cancelled']);
@@ -91,10 +92,10 @@ class BookingTest extends TestCase
 
     public function test_quick_booking_works(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/bookings/quick', [
                 'lot_id' => $lot->id,
                 'date' => now()->addDay()->format('Y-m-d'),
@@ -106,10 +107,10 @@ class BookingTest extends TestCase
 
     public function test_guest_booking_works(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/bookings/guest', [
                 'lot_id' => $lot->id,
                 'slot_id' => $slot->id,
@@ -124,7 +125,7 @@ class BookingTest extends TestCase
 
     public function test_user_can_update_booking_notes(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
 
         $booking = Booking::create([
@@ -136,8 +137,8 @@ class BookingTest extends TestCase
             'booking_type' => 'single',
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->putJson('/api/v1/bookings/' . $booking->id . '/notes', [
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/bookings/'.$booking->id.'/notes', [
                 'notes' => 'Test note',
             ]);
 
@@ -150,32 +151,32 @@ class BookingTest extends TestCase
      */
     public function test_double_booking_same_slot_is_rejected(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $user2 = User::factory()->create(['role' => 'user']);
 
         $start = now()->addHour()->toISOString();
-        $end   = now()->addHours(3)->toISOString();
+        $end = now()->addHours(3)->toISOString();
 
         // First booking succeeds
         $token1 = $user->createToken('test')->plainTextToken;
-        $this->withHeader('Authorization', 'Bearer ' . $token1)
+        $this->withHeader('Authorization', 'Bearer '.$token1)
             ->postJson('/api/v1/bookings', [
-                'lot_id'       => $lot->id,
-                'slot_id'      => $slot->id,
-                'start_time'   => $start,
-                'end_time'     => $end,
+                'lot_id' => $lot->id,
+                'slot_id' => $slot->id,
+                'start_time' => $start,
+                'end_time' => $end,
                 'booking_type' => 'single',
             ])
             ->assertStatus(201);
 
         // Second booking for the exact same slot and time window must be rejected with 409
         $token2 = $user2->createToken('test')->plainTextToken;
-        $this->withHeader('Authorization', 'Bearer ' . $token2)
+        $this->withHeader('Authorization', 'Bearer '.$token2)
             ->postJson('/api/v1/bookings', [
-                'lot_id'       => $lot->id,
-                'slot_id'      => $slot->id,
-                'start_time'   => $start,
-                'end_time'     => $end,
+                'lot_id' => $lot->id,
+                'slot_id' => $slot->id,
+                'start_time' => $start,
+                'end_time' => $end,
                 'booking_type' => 'single',
             ])
             ->assertStatus(409);
@@ -189,29 +190,29 @@ class BookingTest extends TestCase
      */
     public function test_partial_overlap_booking_is_rejected(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $user2 = User::factory()->create(['role' => 'user']);
 
         // First booking: 10:00–14:00
         $token1 = $user->createToken('test')->plainTextToken;
-        $this->withHeader('Authorization', 'Bearer ' . $token1)
+        $this->withHeader('Authorization', 'Bearer '.$token1)
             ->postJson('/api/v1/bookings', [
-                'lot_id'       => $lot->id,
-                'slot_id'      => $slot->id,
-                'start_time'   => now()->setHour(10)->setMinute(0)->toISOString(),
-                'end_time'     => now()->setHour(14)->setMinute(0)->toISOString(),
+                'lot_id' => $lot->id,
+                'slot_id' => $slot->id,
+                'start_time' => now()->setHour(10)->setMinute(0)->toISOString(),
+                'end_time' => now()->setHour(14)->setMinute(0)->toISOString(),
                 'booking_type' => 'single',
             ])
             ->assertStatus(201);
 
         // Second booking: 12:00–16:00 overlaps the first — must fail
         $token2 = $user2->createToken('test')->plainTextToken;
-        $this->withHeader('Authorization', 'Bearer ' . $token2)
+        $this->withHeader('Authorization', 'Bearer '.$token2)
             ->postJson('/api/v1/bookings', [
-                'lot_id'       => $lot->id,
-                'slot_id'      => $slot->id,
-                'start_time'   => now()->setHour(12)->setMinute(0)->toISOString(),
-                'end_time'     => now()->setHour(16)->setMinute(0)->toISOString(),
+                'lot_id' => $lot->id,
+                'slot_id' => $slot->id,
+                'start_time' => now()->setHour(12)->setMinute(0)->toISOString(),
+                'end_time' => now()->setHour(16)->setMinute(0)->toISOString(),
                 'booking_type' => 'single',
             ])
             ->assertStatus(409);
@@ -222,7 +223,7 @@ class BookingTest extends TestCase
      */
     public function test_non_overlapping_bookings_same_slot_are_allowed(): void
     {
-        list($user, $lot, $slot) = $this->createUserAndLot();
+        [$user, $lot, $slot] = $this->createUserAndLot();
         $user2 = User::factory()->create(['role' => 'user']);
 
         // Use tomorrow to avoid "start time must be in the future" validation
@@ -230,24 +231,24 @@ class BookingTest extends TestCase
 
         // First booking: 08:00–12:00
         $token1 = $user->createToken('test')->plainTextToken;
-        $this->withHeader('Authorization', 'Bearer ' . $token1)
+        $this->withHeader('Authorization', 'Bearer '.$token1)
             ->postJson('/api/v1/bookings', [
-                'lot_id'       => $lot->id,
-                'slot_id'      => $slot->id,
-                'start_time'   => $tomorrow->copy()->setHour(8)->setMinute(0)->toISOString(),
-                'end_time'     => $tomorrow->copy()->setHour(12)->setMinute(0)->toISOString(),
+                'lot_id' => $lot->id,
+                'slot_id' => $slot->id,
+                'start_time' => $tomorrow->copy()->setHour(8)->setMinute(0)->toISOString(),
+                'end_time' => $tomorrow->copy()->setHour(12)->setMinute(0)->toISOString(),
                 'booking_type' => 'single',
             ])
             ->assertStatus(201);
 
         // Second booking: 13:00–17:00 — no overlap, must succeed
         $token2 = $user2->createToken('test')->plainTextToken;
-        $this->withHeader('Authorization', 'Bearer ' . $token2)
+        $this->withHeader('Authorization', 'Bearer '.$token2)
             ->postJson('/api/v1/bookings', [
-                'lot_id'       => $lot->id,
-                'slot_id'      => $slot->id,
-                'start_time'   => $tomorrow->copy()->setHour(13)->setMinute(0)->toISOString(),
-                'end_time'     => $tomorrow->copy()->setHour(17)->setMinute(0)->toISOString(),
+                'lot_id' => $lot->id,
+                'slot_id' => $slot->id,
+                'start_time' => $tomorrow->copy()->setHour(13)->setMinute(0)->toISOString(),
+                'end_time' => $tomorrow->copy()->setHour(17)->setMinute(0)->toISOString(),
                 'booking_type' => 'single',
             ])
             ->assertStatus(201);
@@ -260,21 +261,21 @@ class BookingTest extends TestCase
      */
     public function test_user_cannot_update_notes_on_another_users_booking(): void
     {
-        list($owner, $lot, $slot) = $this->createUserAndLot();
+        [$owner, $lot, $slot] = $this->createUserAndLot();
         $attacker = User::factory()->create(['role' => 'user']);
 
         $booking = Booking::create([
-            'user_id'      => $owner->id,
-            'lot_id'       => $lot->id,
-            'slot_id'      => $slot->id,
-            'start_time'   => now()->addHour(),
-            'end_time'     => now()->addHours(3),
+            'user_id' => $owner->id,
+            'lot_id' => $lot->id,
+            'slot_id' => $slot->id,
+            'start_time' => now()->addHour(),
+            'end_time' => now()->addHours(3),
             'booking_type' => 'single',
         ]);
 
         $attackerToken = $attacker->createToken('test')->plainTextToken;
-        $this->withHeader('Authorization', 'Bearer ' . $attackerToken)
-            ->putJson('/api/v1/bookings/' . $booking->id . '/notes', ['notes' => 'Hacked'])
+        $this->withHeader('Authorization', 'Bearer '.$attackerToken)
+            ->putJson('/api/v1/bookings/'.$booking->id.'/notes', ['notes' => 'Hacked'])
             ->assertStatus(404); // findOrFail scoped to user_id should return 404
     }
 }

@@ -1,10 +1,12 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
-use Illuminate\Http\Request;
+use App\Models\Setting;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class AbsenceController extends Controller
 {
@@ -13,7 +15,7 @@ class AbsenceController extends Controller
         $absences = Absence::where('user_id', $request->user()->id)
             ->orderBy('start_date', 'desc')
             ->get()
-            ->map(fn($a) => array_merge($a->toArray(), ['type' => $a->absence_type]));
+            ->map(fn ($a) => array_merge($a->toArray(), ['type' => $a->absence_type]));
 
         return response()->json($absences);
     }
@@ -27,8 +29,8 @@ class AbsenceController extends Controller
 
         $request->validate([
             'absence_type' => 'required|in:homeoffice,vacation,sick,training,other',
-            'start_date'   => 'required|date',
-            'end_date'     => 'required|date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
         ]);
 
         $absence = Absence::create(array_merge(
@@ -58,34 +60,38 @@ class AbsenceController extends Controller
     public function destroy(Request $request, string $id)
     {
         Absence::where('user_id', $request->user()->id)->findOrFail($id)->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 
     public function teamAbsences(Request $request)
     {
         $from = $request->from ?? now()->startOfMonth()->toDateString();
-        $to   = $request->to   ?? now()->endOfMonth()->toDateString();
-        $absences = \App\Models\Absence::with('user')
+        $to = $request->to ?? now()->endOfMonth()->toDateString();
+        $absences = Absence::with('user')
             ->where('start_date', '<=', $to)
             ->where('end_date', '>=', $from)
             ->get();
-        return response()->json($absences->map(function($a) {
+
+        return response()->json($absences->map(function ($a) {
             return array_merge($a->toArray(), [
                 'user_name' => $a->user?->name,
-                'username'  => $a->user?->username,
+                'username' => $a->user?->username,
             ]);
         })->values());
     }
 
     public function getPattern(Request $request)
     {
-        $pattern = \App\Models\Setting::get('homeoffice_pattern_' . $request->user()->id, null);
+        $pattern = Setting::get('homeoffice_pattern_'.$request->user()->id, null);
+
         return response()->json(['pattern' => $pattern ? json_decode($pattern, true) : []]);
     }
 
     public function setPattern(Request $request)
     {
-        \App\Models\Setting::set('homeoffice_pattern_' . $request->user()->id, json_encode($request->input('pattern', [])));
+        Setting::set('homeoffice_pattern_'.$request->user()->id, json_encode($request->input('pattern', [])));
+
         return response()->json(['message' => 'Pattern saved', 'pattern' => $request->input('pattern', [])]);
     }
 
@@ -108,22 +114,25 @@ class AbsenceController extends Controller
             preg_match('/DTSTART[^:]*:(\S+)/', $event, $start);
             preg_match('/DTEND[^:]*:(\S+)/', $event, $end);
             preg_match('/SUMMARY:(.+)/m', $event, $summary);
-            if (empty($start[1])) continue;
+            if (empty($start[1])) {
+                continue;
+            }
             $startDate = substr($start[1], 0, 8);
-            $endDate   = $end[1] ? substr($end[1], 0, 8) : $startDate;
-            $title     = trim($summary[1] ?? '');
+            $endDate = $end[1] ? substr($end[1], 0, 8) : $startDate;
+            $title = trim($summary[1] ?? '');
             $type = str_contains(strtolower($title), 'vacation') || str_contains(strtolower($title), 'urlaub')
                 ? 'vacation' : 'other';
-            \App\Models\Absence::create([
-                'user_id'      => $user->id,
+            Absence::create([
+                'user_id' => $user->id,
                 'absence_type' => $request->input('type', $type),
-                'start_date'   => \Carbon\Carbon::createFromFormat('Ymd', $startDate)->toDateString(),
-                'end_date'     => \Carbon\Carbon::createFromFormat('Ymd', $endDate)->toDateString(),
-                'note'         => $title,
-                'source'       => 'import',
+                'start_date' => Carbon::createFromFormat('Ymd', $startDate)->toDateString(),
+                'end_date' => Carbon::createFromFormat('Ymd', $endDate)->toDateString(),
+                'note' => $title,
+                'source' => 'import',
             ]);
             $created++;
         }
+
         return response()->json(['created' => $created, 'message' => "$created absence(s) imported"]);
     }
 }

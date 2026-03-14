@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -16,6 +17,7 @@ class ZoneController extends Controller
     {
         $request->validate(['name' => 'required|string']);
         $zone = Zone::create(array_merge($request->only(['name', 'color', 'description']), ['lot_id' => $lotId]));
+
         return response()->json($zone, 201);
     }
 
@@ -23,12 +25,14 @@ class ZoneController extends Controller
     {
         $zone = Zone::where('lot_id', $lotId)->findOrFail($id);
         $zone->update($request->only(['name', 'color', 'description']));
+
         return response()->json($zone);
     }
 
     public function destroy(string $lotId, string $id)
     {
         Zone::where('lot_id', $lotId)->findOrFail($id)->delete();
+
         return response()->json(['message' => 'Deleted']);
     }
 }

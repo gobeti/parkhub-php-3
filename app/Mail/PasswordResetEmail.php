@@ -23,6 +23,7 @@ class PasswordResetEmail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $company = Setting::get('company_name', 'ParkHub');
+
         return new Envelope(
             subject: "[{$company}] Passwort zurücksetzen",
         );
@@ -37,9 +38,9 @@ class PasswordResetEmail extends Mailable implements ShouldQueue
 
     private function buildHtml(): string
     {
-        $company   = e(Setting::get('company_name', 'ParkHub'));
-        $name      = e($this->recipientName);
-        $resetUrl  = e(rtrim($this->appUrl, '/') . '/reset-password?token=' . urlencode($this->resetToken));
+        $company = e(Setting::get('company_name', 'ParkHub'));
+        $name = e($this->recipientName);
+        $resetUrl = e(rtrim($this->appUrl, '/').'/reset-password?token='.urlencode($this->resetToken));
         $expiresIn = '60 Minuten';
 
         return <<<HTML

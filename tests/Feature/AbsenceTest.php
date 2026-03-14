@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\Absence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +15,7 @@ class AbsenceTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/absences', [
                 'absence_type' => 'vacation',
                 'start_date' => now()->addDay()->format('Y-m-d'),
@@ -36,7 +35,7 @@ class AbsenceTest extends TestCase
         $types = ['homeoffice', 'vacation', 'sick', 'training', 'other'];
 
         foreach ($types as $type) {
-            $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            $response = $this->withHeader('Authorization', 'Bearer '.$token)
                 ->postJson('/api/v1/absences', [
                     'absence_type' => $type,
                     'start_date' => now()->addDay()->format('Y-m-d'),

@@ -1,28 +1,29 @@
 <?php
+
 /**
  * API v1 routes — compatible with the Rust backend's endpoint structure.
  * All routes are prefixed with /api/v1 (set in bootstrap/app.php).
  */
 
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\SetupController;
-use App\Http\Controllers\Api\LotController;
-use App\Http\Controllers\Api\SlotController;
-use App\Http\Controllers\Api\BookingController;
-use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\AbsenceController;
 use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\LotController;
+use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\RecurringBookingController;
+use App\Http\Controllers\Api\SetupController;
+use App\Http\Controllers\Api\SlotController;
 use App\Http\Controllers\Api\TeamController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\ZoneController;
-use App\Http\Controllers\Api\MiscController;
 use Illuminate\Support\Facades\Route;
 
 // Auth — rate limited: 10 attempts per minute per IP to prevent brute force
 Route::middleware('throttle:10,1')->group(function () {
-    Route::post('/auth/login',    [AuthController::class, 'login']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/register', [AuthController::class, 'register']);
 });
 
@@ -30,33 +31,39 @@ Route::middleware('throttle:10,1')->group(function () {
 Route::get('/setup/status', [SetupController::class, 'status']);
 Route::post('/setup', [SetupController::class, 'init']);
 Route::middleware('throttle:5,1')->group(function () {
-    Route::post('/setup/change-password', function(\Illuminate\Http\Request $request) {
+    Route::post('/setup/change-password', function (Request $request) {
         // Guard: reject if setup is already completed
-        if (\App\Models\Setting::get('setup_completed') === 'true') {
+        if (Setting::get('setup_completed') === 'true') {
             return response()->json(['success' => false, 'error' => ['code' => 'SETUP_COMPLETED', 'message' => 'Setup has already been completed']], 403);
         }
         $request->validate(['current_password' => 'required', 'new_password' => 'required|min:8']);
-        $admin = \App\Models\User::where('role', 'admin')->first();
-        if (!$admin || !\Illuminate\Support\Facades\Hash::check($request->current_password, $admin->password)) {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin || ! Hash::check($request->current_password, $admin->password)) {
             return response()->json(['success' => false, 'error' => ['code' => 'INVALID_PASSWORD', 'message' => 'Current password is incorrect']], 401);
         }
         $admin->password = bcrypt($request->new_password);
         $admin->save();
-        \App\Models\Setting::set('needs_password_change', 'false');
+        Setting::set('needs_password_change', 'false');
         $token = $admin->createToken('auth-token');
+
         return response()->json(['success' => true, 'data' => [
             'user' => $admin,
             'tokens' => ['access_token' => $token->plainTextToken, 'token_type' => 'Bearer', 'expires_at' => now()->addDays(7)->toISOString()],
         ]]);
     });
-    Route::post('/setup/complete', function(\Illuminate\Http\Request $request) {
+    Route::post('/setup/complete', function (Request $request) {
         // Guard: reject if setup is already completed
-        if (\App\Models\Setting::get('setup_completed') === 'true') {
+        if (Setting::get('setup_completed') === 'true') {
             return response()->json(['success' => false, 'error' => ['code' => 'SETUP_COMPLETED', 'message' => 'Setup has already been completed']], 403);
         }
-        \App\Models\Setting::set('setup_completed', 'true');
-        if ($request->company_name) \App\Models\Setting::set('company_name', $request->company_name);
-        if ($request->use_case) \App\Models\Setting::set('use_case', $request->use_case);
+        Setting::set('setup_completed', 'true');
+        if ($request->company_name) {
+            Setting::set('company_name', $request->company_name);
+        }
+        if ($request->use_case) {
+            Setting::set('use_case', $request->use_case);
+        }
+
         return response()->json(['success' => true, 'data' => ['message' => 'Setup completed']]);
     });
 });
@@ -65,25 +72,27 @@ Route::middleware('throttle:5,1')->group(function () {
 Route::get('/public/occupancy', [PublicController::class, 'occupancy']);
 Route::get('/public/display', [PublicController::class, 'display']);
 
-    // Branding
-    Route::get('/branding', function() {
-        $s = \App\Models\Setting::pluck('value', 'key')->toArray();
-        return response()->json([
-            'company_name' => $s['company_name'] ?? 'ParkHub',
-            'primary_color' => $s['primary_color'] ?? '#d97706',
-            'secondary_color' => $s['secondary_color'] ?? '#475569',
-            'logo_url' => $s['logo_url'] ?? null,
-            'favicon_url' => null,
-            'login_background_color' => '#0f172a',
-            'custom_css' => null,
-        ]);
-    });
+// Branding
+Route::get('/branding', function () {
+    $s = Setting::pluck('value', 'key')->toArray();
+
+    return response()->json([
+        'company_name' => $s['company_name'] ?? 'ParkHub',
+        'primary_color' => $s['primary_color'] ?? '#d97706',
+        'secondary_color' => $s['secondary_color'] ?? '#475569',
+        'logo_url' => $s['logo_url'] ?? null,
+        'favicon_url' => null,
+        'login_background_color' => '#0f172a',
+        'custom_css' => null,
+    ]);
+});
 
 // Announcements (public)
-Route::get('/announcements/active', function() {
-    $announcements = \App\Models\Announcement::where('active', true)
+Route::get('/announcements/active', function () {
+    $announcements = Announcement::where('active', true)
         ->orderBy('created_at', 'desc')
         ->get();
+
     return response()->json([
         'success' => true,
         'data' => $announcements,
@@ -94,16 +103,16 @@ Route::get('/announcements/active', function() {
 
 // Demo mode (public, no auth required)
 Route::prefix('demo')->group(function () {
-    Route::get('/status', [\App\Http\Controllers\Api\DemoController::class, 'status']);
-    Route::post('/vote', [\App\Http\Controllers\Api\DemoController::class, 'vote']);
-    Route::post('/reset', [\App\Http\Controllers\Api\DemoController::class, 'reset']);
-    Route::get('/config', [\App\Http\Controllers\Api\DemoController::class, 'config']);
+    Route::get('/status', [DemoController::class, 'status']);
+    Route::post('/vote', [DemoController::class, 'vote']);
+    Route::post('/reset', [DemoController::class, 'reset']);
+    Route::get('/config', [DemoController::class, 'config']);
 });
 
 // Protected
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Auth (protected)
-    Route::post('/auth/refresh',  [AuthController::class, 'refresh']);
+    Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 
     // Users
     Route::get('/users/me', [AuthController::class, 'me']);
@@ -147,15 +156,16 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::delete('/recurring-bookings/{id}', [RecurringBookingController::class, 'destroy']);
 
     // Absences (maps homeoffice + vacation to unified absences)
-    Route::get('/homeoffice', function(\Illuminate\Http\Request $request) {
+    Route::get('/homeoffice', function (Request $request) {
         $user = $request->user();
+
         // Return HomeofficeSettings format expected by Rust frontend
         return response()->json([
             'pattern' => ['weekdays' => []],
-            'single_days' => \App\Models\Absence::where('user_id', $user->id)
+            'single_days' => Absence::where('user_id', $user->id)
                 ->where('absence_type', 'homeoffice')
                 ->get()
-                ->map(fn($a) => ['id' => $a->id, 'date' => $a->start_date, 'reason' => $a->note]),
+                ->map(fn ($a) => ['id' => $a->id, 'date' => $a->start_date, 'reason' => $a->note]),
             'parkingSlot' => null,
         ]);
     });
@@ -195,15 +205,15 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::post('/announcements', [AdminController::class, 'createAnnouncement']);
         Route::put('/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
         Route::delete('/announcements/{id}', [AdminController::class, 'deleteAnnouncement']);
-        Route::get('/updates/check', function() { return response()->json(['update_available' => false, 'current_version' => '1.0.0-php']); });
+        Route::get('/updates/check', function () {
+            return response()->json(['update_available' => false, 'current_version' => '1.0.0-php']);
+        });
 
         // Credits management
         Route::post('/users/{id}/credits', [AdminController::class, 'grantCredits']);
         Route::get('/credits/transactions', [AdminController::class, 'creditTransactions']);
         Route::post('/credits/refill-all', [AdminController::class, 'refillAllCredits']);
     });
-
-
 
     // Notifications
     Route::get('/notifications', [UserController::class, 'notifications']);
@@ -225,82 +235,94 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/push/subscribe', [MiscController::class, 'pushSubscribe']);
     Route::get('/webhooks', [MiscController::class, 'webhooks']);
     Route::post('/webhooks', [MiscController::class, 'createWebhook']);
-    Route::get('/update/check', function() { return response()->json(['update_available' => false, 'current_version' => '1.0.0']); });
+    Route::get('/update/check', function () {
+        return response()->json(['update_available' => false, 'current_version' => '1.0.0']);
+    });
 });
 
 // ── New feature-parity routes ──────────────────────────────────────────────
 
 // Health (no auth)
-Route::get('/health/live', [\App\Http\Controllers\Api\HealthController::class, 'live']);
-Route::get('/health/ready', [\App\Http\Controllers\Api\HealthController::class, 'ready']);
+Route::get('/health/live', [HealthController::class, 'live']);
+Route::get('/health/ready', [HealthController::class, 'ready']);
 
 // Impressum — public (DDG § 5 requires it to be freely accessible)
-Route::get('/legal/impressum', [\App\Http\Controllers\Api\AdminController::class, 'publicImpress']);
+Route::get('/legal/impressum', [AdminController::class, 'publicImpress']);
 
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // iCal export
-    Route::get('/user/calendar.ics', [\App\Http\Controllers\Api\UserController::class, 'calendarExport']);
+    Route::get('/user/calendar.ics', [UserController::class, 'calendarExport']);
 
     // Invoice (HTML, printer-friendly — use browser "Print → Save as PDF")
-    Route::get('/bookings/{id}/invoice', [\App\Http\Controllers\Api\BookingInvoiceController::class, 'show']);
+    Route::get('/bookings/{id}/invoice', [BookingInvoiceController::class, 'show']);
 
     // GDPR data export
-    Route::get('/user/export', [\App\Http\Controllers\Api\UserController::class, 'exportData']);
+    Route::get('/user/export', [UserController::class, 'exportData']);
 
     // Vehicle photos
-    Route::post('/vehicles/{id}/photo', [\App\Http\Controllers\Api\VehicleController::class, 'uploadPhoto']);
-    Route::get('/vehicles/{id}/photo',  [\App\Http\Controllers\Api\VehicleController::class, 'servePhoto']);
+    Route::post('/vehicles/{id}/photo', [VehicleController::class, 'uploadPhoto']);
+    Route::get('/vehicles/{id}/photo', [VehicleController::class, 'servePhoto']);
 
     // City codes (no photo auth needed but put behind auth to avoid abuse)
-    Route::get('/vehicles/city-codes', [\App\Http\Controllers\Api\VehicleController::class, 'cityCodes']);
+    Route::get('/vehicles/city-codes', [VehicleController::class, 'cityCodes']);
 
     // Waitlist
-    Route::get('/waitlist',        [\App\Http\Controllers\Api\WaitlistController::class, 'index']);
-    Route::post('/waitlist',       [\App\Http\Controllers\Api\WaitlistController::class, 'store']);
-    Route::delete('/waitlist/{id}',[\App\Http\Controllers\Api\WaitlistController::class, 'destroy']);
+    Route::get('/waitlist', [WaitlistController::class, 'index']);
+    Route::post('/waitlist', [WaitlistController::class, 'store']);
+    Route::delete('/waitlist/{id}', [WaitlistController::class, 'destroy']);
 
     // Admin CSV export
-    Route::middleware('admin')->get('/admin/bookings/export', [\App\Http\Controllers\Api\AdminController::class, 'exportBookingsCsv']);
+    Route::middleware('admin')->get('/admin/bookings/export', [AdminController::class, 'exportBookingsCsv']);
 });
 
 // ── Feature parity batch 2: system, auth, bookings, absences ──────────────
 
+use App\Http\Controllers\Api\BookingInvoiceController;
+use App\Http\Controllers\Api\DemoController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\SystemController;
+use App\Http\Controllers\Api\WaitlistController;
+use App\Models\Absence;
+use App\Models\Announcement;
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 // System (public)
-Route::get('/system/version',     [SystemController::class, 'version']);
+Route::get('/system/version', [SystemController::class, 'version']);
 Route::get('/system/maintenance', [SystemController::class, 'maintenance']);
 
 // Auth (public) — rate limited: 5 password resets per 15 min per IP
 Route::middleware('throttle:5,15')->group(function () {
-    Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\AuthController::class, 'forgotPassword']);
-    Route::post('/auth/reset-password',  [\App\Http\Controllers\Api\AuthController::class, 'resetPassword']);
+    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 });
 
 // Branding logo (public)
-Route::get('/branding/logo', [\App\Http\Controllers\Api\AdminController::class, 'serveBrandingLogo']);
+Route::get('/branding/logo', [AdminController::class, 'serveBrandingLogo']);
 
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Auth (protected)
-    Route::patch('/users/me/password', [\App\Http\Controllers\Api\AuthController::class, 'changePassword']);
+    Route::patch('/users/me/password', [AuthController::class, 'changePassword']);
 
     // Bookings
-    Route::patch('/bookings/{id}',              [BookingController::class, 'update']);
-    Route::post('/bookings/{id}/checkin',       [BookingController::class, 'checkin']);
-    Route::get('/calendar/events',              [BookingController::class, 'calendarEvents']);
-    Route::post('/bookings/{id}/swap-request',  [BookingController::class, 'createSwapRequest']);
-    Route::put('/swap-requests/{id}',           [BookingController::class, 'respondSwapRequest']);
+    Route::patch('/bookings/{id}', [BookingController::class, 'update']);
+    Route::post('/bookings/{id}/checkin', [BookingController::class, 'checkin']);
+    Route::get('/calendar/events', [BookingController::class, 'calendarEvents']);
+    Route::post('/bookings/{id}/swap-request', [BookingController::class, 'createSwapRequest']);
+    Route::put('/swap-requests/{id}', [BookingController::class, 'respondSwapRequest']);
 
     // iCal import (absences + vacation)
-    Route::post('/absences/import',  [AbsenceController::class, 'importIcal']);
-    Route::post('/vacation/import',  [AbsenceController::class, 'importIcal']);
+    Route::post('/absences/import', [AbsenceController::class, 'importIcal']);
+    Route::post('/vacation/import', [AbsenceController::class, 'importIcal']);
 
     // Absence pattern + team
-    Route::get('/absences/pattern',  [AbsenceController::class, 'getPattern']);
+    Route::get('/absences/pattern', [AbsenceController::class, 'getPattern']);
     Route::post('/absences/pattern', [AbsenceController::class, 'setPattern']);
-    Route::get('/absences/team',     [AbsenceController::class, 'teamAbsences']);
-    Route::get('/vacation/team',     [AbsenceController::class, 'teamAbsences']);
+    Route::get('/absences/team', [AbsenceController::class, 'teamAbsences']);
+    Route::get('/vacation/team', [AbsenceController::class, 'teamAbsences']);
 
     // Team today
     Route::get('/team/today', [TeamController::class, 'today']);
@@ -315,31 +337,31 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/users/me/anonymize', [UserController::class, 'anonymizeAccount']);
 
     // QR codes
-    Route::get('/lots/{id}/qr',                   [LotController::class, 'qrCode']);
-    Route::get('/lots/{lotId}/slots/{slotId}/qr',  [LotController::class, 'slotQrCode']);
+    Route::get('/lots/{id}/qr', [LotController::class, 'qrCode']);
+    Route::get('/lots/{lotId}/slots/{slotId}/qr', [LotController::class, 'slotQrCode']);
 
     // Admin: branding, privacy, reports, charts, settings, reset
     Route::middleware('admin')->prefix('admin')->group(function () {
-        Route::get('/branding',          [AdminController::class, 'getBranding']);
-        Route::put('/branding',          [AdminController::class, 'updateBranding']);
-        Route::post('/branding/logo',    [AdminController::class, 'uploadBrandingLogo']);
-        Route::get('/privacy',           [AdminController::class, 'getPrivacy']);
-        Route::put('/privacy',           [AdminController::class, 'updatePrivacy']);
+        Route::get('/branding', [AdminController::class, 'getBranding']);
+        Route::put('/branding', [AdminController::class, 'updateBranding']);
+        Route::post('/branding/logo', [AdminController::class, 'uploadBrandingLogo']);
+        Route::get('/privacy', [AdminController::class, 'getPrivacy']);
+        Route::put('/privacy', [AdminController::class, 'updatePrivacy']);
 
         // Impressum admin editor (DDG § 5 fields)
-        Route::get('/impressum',         [AdminController::class, 'getImpress']);
-        Route::put('/impressum',         [AdminController::class, 'updateImpress']);
-        Route::get('/reports',           [AdminController::class, 'reports']);
-        Route::get('/dashboard/charts',  [AdminController::class, 'dashboardCharts']);
-        Route::post('/reset',            [AdminController::class, 'resetDatabase']);
-        Route::get('/settings/auto-release',  [AdminController::class, 'getAutoReleaseSettings']);
-        Route::put('/settings/auto-release',  [AdminController::class, 'updateAutoReleaseSettings']);
-        Route::get('/settings/email',    [AdminController::class, 'getEmailSettings']);
-        Route::put('/settings/email',    [AdminController::class, 'updateEmailSettings']);
+        Route::get('/impressum', [AdminController::class, 'getImpress']);
+        Route::put('/impressum', [AdminController::class, 'updateImpress']);
+        Route::get('/reports', [AdminController::class, 'reports']);
+        Route::get('/dashboard/charts', [AdminController::class, 'dashboardCharts']);
+        Route::post('/reset', [AdminController::class, 'resetDatabase']);
+        Route::get('/settings/auto-release', [AdminController::class, 'getAutoReleaseSettings']);
+        Route::put('/settings/auto-release', [AdminController::class, 'updateAutoReleaseSettings']);
+        Route::get('/settings/email', [AdminController::class, 'getEmailSettings']);
+        Route::put('/settings/email', [AdminController::class, 'updateEmailSettings']);
         Route::get('/settings/webhooks', [AdminController::class, 'getWebhookSettings']);
         Route::put('/settings/webhooks', [AdminController::class, 'updateWebhookSettings']);
-        Route::patch('/slots/{id}',      [AdminController::class, 'updateSlot']);
-        Route::delete('/lots/{id}',      [AdminController::class, 'deleteLot']);
-        Route::delete('/users/{id}',     [AdminController::class, 'deleteUser']);
+        Route::patch('/slots/{id}', [AdminController::class, 'updateSlot']);
+        Route::delete('/lots/{id}', [AdminController::class, 'deleteLot']);
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
     });
 });

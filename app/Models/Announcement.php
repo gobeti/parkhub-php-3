@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -13,7 +14,7 @@ class Announcement extends Model
     protected function casts(): array
     {
         return [
-            'active'     => 'boolean',
+            'active' => 'boolean',
             'expires_at' => 'datetime',
         ];
     }

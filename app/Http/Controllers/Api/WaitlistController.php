@@ -26,7 +26,7 @@ class WaitlistController extends Controller
 
         $entry = WaitlistEntry::firstOrCreate([
             'user_id' => $request->user()->id,
-            'lot_id'  => $request->lot_id,
+            'lot_id' => $request->lot_id,
         ]);
 
         return response()->json(['success' => true, 'data' => $entry], 201);

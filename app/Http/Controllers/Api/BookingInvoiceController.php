@@ -16,30 +16,30 @@ class BookingInvoiceController extends Controller
 {
     public function show(Request $request, string $id)
     {
-        $user    = $request->user();
+        $user = $request->user();
         $booking = Booking::where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        $company     = Setting::get('company_name', 'ParkHub');
-        $vatId       = Setting::get('impressum_vat_id', '');
-        $street      = Setting::get('impressum_street', '');
-        $zipCity     = Setting::get('impressum_zip_city', '');
-        $email       = Setting::get('impressum_email', '');
+        $company = Setting::get('company_name', 'ParkHub');
+        $vatId = Setting::get('impressum_vat_id', '');
+        $street = Setting::get('impressum_street', '');
+        $zipCity = Setting::get('impressum_zip_city', '');
+        $email = Setting::get('impressum_email', '');
 
         // Calculate duration
         $start = $booking->start_time ? strtotime($booking->start_time) : 0;
-        $end   = $booking->end_time   ? strtotime($booking->end_time)   : $start + 3600;
+        $end = $booking->end_time ? strtotime($booking->end_time) : $start + 3600;
         $hours = max(1, round(($end - $start) / 3600, 2));
 
         // Format dates
         $startFmt = $start ? date('d.m.Y H:i', $start) : '—';
-        $endFmt   = $end   ? date('d.m.Y H:i', $end)   : '—';
-        $dateNow  = date('d.m.Y');
+        $endFmt = $end ? date('d.m.Y H:i', $end) : '—';
+        $dateNow = date('d.m.Y');
 
         // Invoice number: INV-YYYYMM-{short_id}
         $shortId = strtoupper(substr(str_replace('-', '', $booking->id), 0, 8));
-        $invoiceNo = 'INV-' . date('Ym') . '-' . $shortId;
+        $invoiceNo = 'INV-'.date('Ym').'-'.$shortId;
 
         $html = $this->renderHtml(compact(
             'company', 'vatId', 'street', 'zipCity', 'email',
@@ -48,18 +48,18 @@ class BookingInvoiceController extends Controller
         ));
 
         return response($html, 200, [
-            'Content-Type'        => 'text/html; charset=utf-8',
-            'Content-Disposition' => 'inline; filename="rechnung-' . $shortId . '.html"',
-            'X-Frame-Options'     => 'SAMEORIGIN',
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Content-Disposition' => 'inline; filename="rechnung-'.$shortId.'.html"',
+            'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }
 
     private function renderHtml(array $d): string
     {
-        $e = fn(string $s) => htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $e = fn (string $s) => htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         $vatRow = $d['vatId']
-            ? '<tr><td>Umsatzsteuer-ID</td><td>' . $e($d['vatId']) . '</td></tr>'
+            ? '<tr><td>Umsatzsteuer-ID</td><td>'.$e($d['vatId']).'</td></tr>'
             : '';
 
         $address = array_filter([$d['street'], $d['zipCity']]);

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -15,7 +16,18 @@ class ParkingLot extends Model
         return ['layout' => 'array', 'total_slots' => 'integer', 'available_slots' => 'integer'];
     }
 
-    public function slots() { return $this->hasMany(ParkingSlot::class, 'lot_id'); }
-    public function zones() { return $this->hasMany(Zone::class, 'lot_id'); }
-    public function bookings() { return $this->hasMany(Booking::class, 'lot_id'); }
+    public function slots()
+    {
+        return $this->hasMany(ParkingSlot::class, 'lot_id');
+    }
+
+    public function zones()
+    {
+        return $this->hasMany(Zone::class, 'lot_id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'lot_id');
+    }
 }
