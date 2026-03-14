@@ -9,7 +9,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8080:10000"
     # Load sensitive values (APP_KEY, DB_PASSWORD, admin credentials) from .env file
     # so they are never hardcoded in this tracked file.
     env_file:
@@ -20,6 +20,7 @@ services:
       - APP_ENV=production
       - APP_DEBUG=false
       - APP_URL=http://localhost:8080
+      - PORT=10000
       - DB_CONNECTION=mysql
       - DB_HOST=db
       - DB_PORT=3306
@@ -38,7 +39,7 @@ services:
     networks:
       - parkhub-internal
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/api/v1/health/live"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:10000/api/v1/health/live"]
       interval: 30s
       timeout: 5s
       retries: 5
