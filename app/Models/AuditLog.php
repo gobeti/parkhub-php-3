@@ -17,4 +17,17 @@ class AuditLog extends Model
     {
         return ['details' => 'array'];
     }
+
+    /**
+     * Log an audit entry without ever crashing the caller.
+     * If the audit_log table doesn't exist (e.g. demo reset in progress), the entry is silently dropped.
+     */
+    public static function log(array $attributes): ?self
+    {
+        try {
+            return static::create($attributes);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
 }

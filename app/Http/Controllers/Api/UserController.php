@@ -305,7 +305,7 @@ class UserController extends Controller
         ]);
 
         // Audit log before anonymizing (records the action for compliance)
-        AuditLog::create([
+        AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,
             'action' => 'gdpr_erasure',
