@@ -279,7 +279,6 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 // ── Feature parity batch 2: system, auth, bookings, absences ──────────────
 
 use App\Http\Controllers\Api\BookingInvoiceController;
-use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\SystemController;
 use App\Http\Controllers\Api\WaitlistController;
