@@ -40,6 +40,9 @@ else
     php artisan parkhub:create-admin 2>&1 || true
 fi
 
+# Generate VAPID keys for push notifications (once)
+php artisan vapid:generate 2>&1 || true
+
 # Prune expired Sanctum tokens (7 day expiry = 168 hours)
 php artisan sanctum:prune-expired --hours=168 2>&1 || true
 

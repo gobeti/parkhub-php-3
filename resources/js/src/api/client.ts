@@ -406,6 +406,25 @@ class ApiClient {
     });
   }
 
+  // Swap requests
+  async getSwapRequests(): Promise<ApiResponse<{ incoming: SwapRequest[]; outgoing: SwapRequest[] }>> {
+    return this.request<{ incoming: SwapRequest[]; outgoing: SwapRequest[] }>('/api/v1/swap-requests');
+  }
+
+  async createSwapRequest(bookingId: string, targetBookingId: string, message?: string): Promise<ApiResponse<SwapRequest>> {
+    return this.request<SwapRequest>(`/api/v1/bookings/${bookingId}/swap-request`, {
+      method: 'POST',
+      body: JSON.stringify({ target_booking_id: targetBookingId, message }),
+    });
+  }
+
+  async respondSwapRequest(id: string, accept: boolean): Promise<ApiResponse<SwapRequest>> {
+    return this.request<SwapRequest>(`/api/v1/swap-requests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ accept }),
+    });
+  }
+
   // Webhooks (admin)
   async getWebhooks(): Promise<ApiResponse<Webhook[]>> {
     return this.request<Webhook[]>('/api/v1/admin/settings/webhooks');
@@ -995,6 +1014,21 @@ export interface GuestBookingData {
   start_time: string;
   end_time: string;
   license_plate?: string;
+}
+
+export interface SwapRequest {
+  id: string;
+  requester_booking_id: string;
+  target_booking_id: string;
+  requester_id: string;
+  target_id: string;
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  message?: string;
+  created_at: string;
+  requester_booking?: Booking;
+  target_booking?: Booking;
+  requester?: { id: string; name: string };
+  target?: { id: string; name: string };
 }
 
 export interface Webhook {
