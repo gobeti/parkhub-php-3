@@ -217,6 +217,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::get('/users', [AdminController::class, 'users']);
         Route::put('/users/{id}', [AdminController::class, 'updateUser']);
         Route::post('/users/import', [AdminController::class, 'importUsers']);
+        Route::get('/users/export-csv', [AdminController::class, 'exportUsersCsv']);
         Route::get('/bookings', [AdminController::class, 'bookings']);
         Route::patch('/bookings/{id}/cancel', [AdminController::class, 'cancelBooking']);
         Route::get('/guest-bookings', [AdminController::class, 'guestBookings']);
@@ -276,6 +277,9 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 // ── New feature-parity routes ──────────────────────────────────────────────
 
 // Health (no auth)
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'version' => '1.2.7']);
+});
 Route::get('/health/live', [HealthController::class, 'live']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
 

@@ -5,7 +5,7 @@ import {
   ChartBar, Buildings, Users, ListChecks, Plus, CheckCircle, TrendUp, CaretRight,
   SpinnerGap, MagnifyingGlass, XCircle, Trash, PencilSimple,
   Lightning, Pulse, ShieldCheck, Clock, House, Prohibit, Palette, GearSix, ArrowsClockwise, ClockCounterClockwise, Article,
-  DownloadSimple, FloppyDisk, X, SlidersHorizontal, Megaphone, GridFour, UserPlus,
+  DownloadSimple, UploadSimple, FloppyDisk, X, SlidersHorizontal, Megaphone, GridFour, UserPlus, Coins,
 } from '@phosphor-icons/react';
 import { api, ParkingLot, ParkingLotDetailed, User, Booking, AdminStats } from '../api/client';
 import { LotLayoutEditor } from '../components/LotLayoutEditor';
@@ -17,6 +17,8 @@ import { AdminAnnouncementsPage } from './AdminAnnouncements';
 import { AuditLogPage } from './AuditLog';
 import { AdminSlotsPage } from './AdminSlots';
 import { AdminGuestBookingsPage } from './AdminGuestBookings';
+import { AdminReportsPage } from './AdminReports';
+import { AdminCreditsPage } from './AdminCredits';
 import { useTranslation } from 'react-i18next';
 
 declare global {
@@ -35,12 +37,14 @@ function AdminNav() {
     { name: t('admin.tabs.guests', 'Gäste'), path: '/admin/guests', icon: UserPlus },
     { name: t('admin.tabs.users'), path: '/admin/users', icon: Users },
     { name: t('admin.tabs.bookings'), path: '/admin/bookings', icon: ListChecks },
+    { name: t('admin.tabs.reports', 'Berichte'), path: '/admin/reports', icon: TrendUp },
     { name: t('admin.tabs.settings', 'Einstellungen'), path: '/admin/settings', icon: SlidersHorizontal },
     { name: t('admin.tabs.branding', 'Branding'), path: '/admin/branding', icon: Palette },
     { name: t('admin.tabs.privacy', 'Privacy'), path: '/admin/privacy', icon: ShieldCheck },
     { name: t('admin.tabs.impressum', 'Impressum'), path: '/admin/impressum', icon: Article },
     { name: t('admin.tabs.system', 'System'), path: '/admin/system', icon: GearSix },
     { name: t('admin.tabs.announcements', 'Announcements'), path: '/admin/announcements', icon: Megaphone },
+    { name: t('admin.tabs.credits', 'Kontingent'), path: '/admin/credits', icon: Coins },
     { name: t('admin.tabs.auditLog', 'Audit Log'), path: '/admin/audit-log', icon: ClockCounterClockwise },
   ];
   return (
@@ -300,6 +304,13 @@ function AdminUsers() {
   const [editForm, setEditForm] = useState<{ role: string; is_active: boolean; name: string }>({ role: 'user', is_active: true, name: '' });
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [importPreview, setImportPreview] = useState<Array<{ name?: string; email: string; username: string; role?: string; department?: string; password?: string }>>([]);
+  const [importError, setImportError] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; total: number } | null>(null);
 
   async function loadUsers() {
     try {
@@ -347,6 +358,80 @@ function AdminUsers() {
     } finally { setDeletingId(null); }
   }
 
+  async function handleExportCsv() {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('parkhub_token');
+      const res = await fetch('/api/v1/admin/users/export-csv', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } finally { setExporting(false); }
+  }
+
+  function parseImportJson(text: string) {
+    setImportJson(text);
+    setImportError('');
+    setImportPreview([]);
+    setImportResult(null);
+    if (!text.trim()) return;
+    try {
+      const parsed = JSON.parse(text);
+      const arr = Array.isArray(parsed) ? parsed : parsed.users;
+      if (!Array.isArray(arr)) { setImportError(t('admin.users.importInvalidFormat', 'JSON muss ein Array oder { users: [...] } sein.')); return; }
+      if (arr.length === 0) { setImportError(t('admin.users.importEmpty', 'Keine Benutzer im JSON gefunden.')); return; }
+      if (arr.length > 500) { setImportError(t('admin.users.importTooMany', 'Maximal 500 Benutzer pro Import.')); return; }
+      const missing = arr.filter((u: Record<string, unknown>) => !u.email || !u.username);
+      if (missing.length > 0) { setImportError(t('admin.users.importMissingFields', 'Alle Einträge benötigen email und username.')); return; }
+      setImportPreview(arr);
+    } catch { setImportError(t('admin.users.importParseError', 'Ungültiges JSON-Format.')); }
+  }
+
+  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { parseImportJson(ev.target?.result as string); };
+    reader.readAsText(file);
+  }
+
+  async function handleImport() {
+    if (importPreview.length === 0) return;
+    setImporting(true);
+    setImportError('');
+    try {
+      const token = localStorage.getItem('parkhub_token');
+      const res = await fetch('/api/v1/admin/users/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ users: importPreview }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportResult({ imported: data.imported, total: importPreview.length });
+        void loadUsers();
+      } else {
+        setImportError(data.message || data.error || 'Import fehlgeschlagen.');
+      }
+    } finally { setImporting(false); }
+  }
+
+  function closeImportModal() {
+    setShowImportModal(false);
+    setImportJson('');
+    setImportPreview([]);
+    setImportError('');
+    setImportResult(null);
+  }
+
   const filtered = users.filter(u => {
     if (search && !u.name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
     if (roleFilter !== 'all' && u.role !== roleFilter) return false;
@@ -359,6 +444,16 @@ function AdminUsers() {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('admin.users.title')}</h2>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowImportModal(true)} className="btn btn-secondary">
+            <UploadSimple weight="bold" className="w-4 h-4" />
+            {t('admin.users.import', 'Import')}
+          </button>
+          <button onClick={handleExportCsv} disabled={exporting} className="btn btn-secondary">
+            {exporting ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : <DownloadSimple weight="bold" className="w-4 h-4" />}
+            {t('admin.users.exportCsv', 'CSV Export')}
+          </button>
+        </div>
       </div>
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1"><MagnifyingGlass weight="regular" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.users.searchPlaceholder')} className="input pl-11" /></div>
@@ -422,6 +517,81 @@ function AdminUsers() {
       </tbody></table></div>
       {filtered.length === 0 && <div className="p-12 text-center"><Users weight="light" className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" /><p className="text-gray-500 dark:text-gray-400">{t('admin.users.noUsers')}</p></div>}
       </div>
+
+      {/* Import Modal */}
+      <AnimatePresence>
+        {showImportModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeImportModal}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('admin.users.importTitle', 'Benutzer importieren')}</h3>
+                <button onClick={closeImportModal} className="btn btn-ghost btn-icon btn-sm"><X weight="bold" className="w-5 h-5" /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                {/* File upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('admin.users.importFile', 'JSON-Datei hochladen')}</label>
+                  <input type="file" accept=".json,application/json" onChange={handleImportFile} className="input text-sm" />
+                </div>
+                {/* Textarea */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('admin.users.importPaste', 'Oder JSON einfügen')}</label>
+                  <textarea value={importJson} onChange={e => parseImportJson(e.target.value)} rows={6} placeholder={'[\n  { "username": "jdoe", "email": "jdoe@example.com", "name": "Jane Doe", "role": "user" }\n]'} className="input font-mono text-sm" />
+                </div>
+                {/* Error */}
+                {importError && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                    <XCircle weight="fill" className="w-5 h-5 flex-shrink-0" />
+                    {importError}
+                  </div>
+                )}
+                {/* Result */}
+                {importResult && (
+                  <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-green-700 dark:text-green-400 text-sm">
+                    <CheckCircle weight="fill" className="w-5 h-5 flex-shrink-0" />
+                    {t('admin.users.importSuccess', '{{imported}} von {{total}} Benutzern importiert.', { imported: importResult.imported, total: importResult.total })}
+                  </div>
+                )}
+                {/* Preview */}
+                {importPreview.length > 0 && !importResult && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('admin.users.importPreview', 'Vorschau')} ({importPreview.length})</p>
+                    <div className="overflow-x-auto max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <table className="w-full text-sm">
+                        <thead><tr className="bg-gray-50 dark:bg-gray-800/50">
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">Name</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">Email</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">Username</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">{t('admin.users.role')}</th>
+                        </tr></thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                          {importPreview.map((u, i) => (
+                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                              <td className="px-3 py-2 text-gray-900 dark:text-white">{u.name || u.username}</td>
+                              <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{u.email}</td>
+                              <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{u.username}</td>
+                              <td className="px-3 py-2"><span className={`badge ${u.role === 'admin' ? 'badge-error' : 'badge-info'}`}>{u.role || 'user'}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+                <button onClick={closeImportModal} className="btn btn-secondary">{importResult ? t('common.close', 'Schliessen') : t('common.cancel', 'Abbrechen')}</button>
+                {!importResult && (
+                  <button onClick={handleImport} disabled={importing || importPreview.length === 0} className="btn btn-primary">
+                    {importing ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : <UploadSimple weight="bold" className="w-4 h-4" />}
+                    {t('admin.users.importAction', '{{count}} Benutzer importieren', { count: importPreview.length })}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -838,7 +1008,7 @@ export function AdminPage() {
     <div>
       <div className="mb-2"><h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('admin.title')}</h1><p className="text-gray-500 dark:text-gray-400 mt-1">{t('admin.subtitle')}</p></div>
       <AdminNav />
-      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/slots" element={<AdminSlotsPage />} /><Route path="/guests" element={<AdminGuestBookingsPage />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/settings" element={<AdminSettingsPage />} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/announcements" element={<AdminAnnouncementsPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
+      <Routes><Route path="/" element={<AdminOverview />} /><Route path="/lots" element={<AdminLots />} /><Route path="/slots" element={<AdminSlotsPage />} /><Route path="/guests" element={<AdminGuestBookingsPage />} /><Route path="/users" element={<AdminUsers />} /><Route path="/bookings" element={<AdminBookings />} /><Route path="/reports" element={<AdminReportsPage />} /><Route path="/settings" element={<AdminSettingsPage />} /><Route path="/branding" element={<AdminBrandingPage />} /><Route path="/privacy" element={<AdminPrivacyPage />} /><Route path="/impressum" element={<AdminImpressPage />} /><Route path="/announcements" element={<AdminAnnouncementsPage />} /><Route path="/credits" element={<AdminCreditsPage />} /><Route path="/audit-log" element={<AuditLogPage />} /><Route path="/system" element={<AdminSystem />} /></Routes>
     </div>
   );
 }

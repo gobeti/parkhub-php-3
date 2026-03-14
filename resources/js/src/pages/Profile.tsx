@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Envelope, Shield, MapPin, CalendarCheck, House, PencilSimple, FloppyDisk, ChartBar, Eye, TextAa, HandSwipeRight, CircleHalf, DownloadSimple, Trash, Eraser, SpinnerGap } from '@phosphor-icons/react';
+import { User, Envelope, Shield, MapPin, CalendarCheck, House, PencilSimple, FloppyDisk, ChartBar, Eye, TextAa, HandSwipeRight, CircleHalf, DownloadSimple, Trash, Eraser, SpinnerGap, Lock, CaretDown, CaretUp } from '@phosphor-icons/react';
 import { useAuth } from '../context/auth-hook';
 import { api, UserStats } from '../api/client';
 import { useAccessibility, ColorMode, FontScale } from '../stores/accessibility';
@@ -21,6 +21,9 @@ export function ProfilePage() {
   const [gdprPassword, setGdprPassword] = useState('');
   const [stats, setStats] = useState<UserStats | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
     api.getUserStats().then((res: { success: boolean; data?: UserStats }) => { if (res.success && res.data) setStats(res.data); }).catch(() => {});
@@ -117,6 +120,47 @@ export function ProfilePage() {
     }
     setShowAnonymizeConfirm(false);
     setGdprPassword('');
+  }
+
+  async function handleChangePassword() {
+    if (pwForm.newPw.length < 8) {
+      toast.error(t('profile.passwordTooShort', 'Neues Passwort muss mindestens 8 Zeichen haben'));
+      return;
+    }
+    if (pwForm.newPw !== pwForm.confirm) {
+      toast.error(t('profile.passwordsMismatch', 'Passwörter stimmen nicht überein'));
+      return;
+    }
+    if (!pwForm.current) {
+      toast.error(t('profile.currentPasswordRequired', 'Bitte aktuelles Passwort eingeben'));
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const base = (import.meta.env.VITE_API_URL as string) || '';
+      const token = localStorage.getItem('parkhub_token');
+      const res = await fetch(`${base}/api/v1/users/me/password`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: pwForm.current, new_password: pwForm.newPw }),
+      });
+      if (res.status === 400) {
+        toast.error(t('profile.wrongCurrentPassword', 'Aktuelles Passwort ist falsch'));
+        return;
+      }
+      if (!res.ok) throw new Error('Password change failed');
+      const data = await res.json();
+      if (data.tokens?.access_token) {
+        localStorage.setItem('parkhub_token', data.tokens.access_token);
+      }
+      toast.success(t('profile.passwordChanged', 'Passwort erfolgreich geändert'));
+      setPwForm({ current: '', newPw: '', confirm: '' });
+      setPwOpen(false);
+    } catch {
+      toast.error(t('profile.passwordChangeFailed', 'Passwortänderung fehlgeschlagen'));
+    } finally {
+      setPwSaving(false);
+    }
   }
 
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
@@ -252,6 +296,43 @@ export function ProfilePage() {
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${a11y.highContrast ? 'translate-x-5' : ''}`} />
           </button>
         </div>
+      </motion.div>
+
+      {/* Password Change */}
+      <motion.div variants={itemVariants} className="card p-6">
+        <button onClick={() => setPwOpen(!pwOpen)} className="w-full flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Lock weight="fill" className="w-5 h-5 text-primary-600" />
+            {t('profile.changePassword', 'Passwort ändern')}
+          </h3>
+          {pwOpen ? <CaretUp weight="bold" className="w-5 h-5 text-gray-400" /> : <CaretDown weight="bold" className="w-5 h-5 text-gray-400" />}
+        </button>
+        {pwOpen && (
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="label" htmlFor="pw-current">{t('profile.currentPassword', 'Aktuelles Passwort')}</label>
+              <input id="pw-current" type="password" value={pwForm.current} onChange={e => setPwForm({ ...pwForm, current: e.target.value })} className="input" autoComplete="current-password" />
+            </div>
+            <div>
+              <label className="label" htmlFor="pw-new">{t('profile.newPassword', 'Neues Passwort')}</label>
+              <input id="pw-new" type="password" value={pwForm.newPw} onChange={e => setPwForm({ ...pwForm, newPw: e.target.value })} className="input" autoComplete="new-password" />
+              {pwForm.newPw.length > 0 && pwForm.newPw.length < 8 && (
+                <p className="text-xs text-amber-600 mt-1">{t('profile.passwordMinLength', 'Mindestens 8 Zeichen')}</p>
+              )}
+            </div>
+            <div>
+              <label className="label" htmlFor="pw-confirm">{t('profile.confirmPassword', 'Passwort bestätigen')}</label>
+              <input id="pw-confirm" type="password" value={pwForm.confirm} onChange={e => setPwForm({ ...pwForm, confirm: e.target.value })} className="input" autoComplete="new-password" />
+              {pwForm.confirm.length > 0 && pwForm.newPw !== pwForm.confirm && (
+                <p className="text-xs text-red-600 mt-1">{t('profile.passwordsMismatch', 'Passwörter stimmen nicht überein')}</p>
+              )}
+            </div>
+            <button onClick={handleChangePassword} disabled={pwSaving || pwForm.newPw.length < 8 || pwForm.newPw !== pwForm.confirm || !pwForm.current} className="btn btn-primary btn-sm disabled:opacity-60">
+              {pwSaving ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : <Lock weight="bold" className="w-4 h-4" />}
+              {t('profile.changePasswordBtn', 'Passwort ändern')}
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* GDPR Section */}
