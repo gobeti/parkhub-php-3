@@ -18,6 +18,11 @@ use App\Http\Controllers\Api\ZoneController;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 
+// Health check (no auth)
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'version' => '1.2.7']);
+});
+
 // Public routes (no auth) — rate limited to prevent brute-force and registration spam
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);

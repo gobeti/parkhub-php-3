@@ -336,9 +336,16 @@ class ApiClient {
   }
 
 
+  // Admin Reports
+  async getAdminReports(days?: number): Promise<ApiResponse<AdminReportData>> {
+    const q = days ? `?days=${days}` : '';
+    return this.request<AdminReportData>(`/api/v1/admin/reports${q}`);
+  }
+
   // Dashboard Charts
-  async getDashboardCharts(): Promise<ApiResponse<DashboardChartData>> {
-    return this.request<DashboardChartData>('/api/v1/admin/dashboard/charts');
+  async getDashboardCharts(days?: number): Promise<ApiResponse<DashboardChartData>> {
+    const q = days ? `?days=${days}` : '';
+    return this.request<DashboardChartData>(`/api/v1/admin/dashboard/charts${q}`);
   }
 
   // Calendar Events
@@ -454,6 +461,14 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(amount ? { amount } : {}),
     });
+  }
+
+  async adminGetCreditTransactions(params?: { user_id?: string; type?: string }): Promise<ApiResponse<CreditTransaction[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.user_id) searchParams.set('user_id', params.user_id);
+    if (params?.type) searchParams.set('type', params.type);
+    const q = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return this.request<CreditTransaction[]>(`/api/v1/admin/credits/transactions${q}`);
   }
 
   async getAdminHeatmap(): Promise<ApiResponse<HeatmapEntry[]>> {
@@ -820,6 +835,15 @@ export async function uploadBrandingLogo(file: File): Promise<ApiResponse<{ logo
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Types for new features
+export interface AdminReportData {
+  period_days: number;
+  total_bookings: number;
+  by_day: Record<string, number>;
+  by_status: Record<string, number>;
+  by_booking_type: Record<string, number>;
+  avg_duration_hours: number | null;
+}
+
 export interface DashboardChartData {
   booking_trend_7d: { date: string; count: number }[];
   booking_trend_30d: { date: string; count: number }[];
