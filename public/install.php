@@ -50,7 +50,17 @@ function isAlreadyInstalled(string $basePath, string $envPath): bool
         $stmt = $pdo->query('SELECT COUNT(*) FROM users');
 
         return (int) $stmt->fetchColumn() > 0;
-    } catch (Throwable) {
+    } catch (Throwable $e) {
+        // If .env exists and has an APP_KEY, assume installed (safe default).
+        // Only return false if there's genuinely no .env or no key yet.
+        $envPath = dirname(__DIR__).'/.env';
+        if (file_exists($envPath)) {
+            $env = parseEnvFile($envPath);
+            if (! empty($env['APP_KEY'])) {
+                return true;
+            }
+        }
+
         return false;
     }
 }
@@ -325,7 +335,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ! $error) {
                 'LOG_LEVEL=warning',
                 '',
                 "PARKHUB_ADMIN_EMAIL={$formData['admin_email']}",
-                "PARKHUB_ADMIN_PASSWORD={$formData['admin_password']}",
                 '',
             ];
 
@@ -337,7 +346,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ! $error) {
                 $envLines[] = "DB_PORT={$formData['db_port']}";
                 $envLines[] = "DB_DATABASE={$formData['db_database']}";
                 $envLines[] = "DB_USERNAME={$formData['db_username']}";
-                $envLines[] = "DB_PASSWORD={$formData['db_password']}";
+                $dbPass = str_replace('"', '\\"', $formData['db_password']);
+                $envLines[] = "DB_PASSWORD=\"{$dbPass}\"";
             }
 
             $envLines = array_merge($envLines, [

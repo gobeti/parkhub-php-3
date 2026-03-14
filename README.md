@@ -23,6 +23,7 @@
 </p>
 
 <p align="center">
+  <a href="https://parkhub-php-demo.onrender.com">Live Demo</a> ·
   <a href="docs/INSTALLATION.md">Installation</a> ·
   <a href="docs/API.md">API Reference</a> ·
   <a href="docs/GDPR.md">GDPR Guide</a> ·
