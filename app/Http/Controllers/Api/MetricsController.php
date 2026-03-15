@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class MetricsController extends Controller
 {
@@ -67,7 +66,7 @@ class MetricsController extends Controller
             // Skip if table doesn't exist
         }
 
-        return response(implode("\n", $lines) . "\n", 200)
+        return response(implode("\n", $lines)."\n", 200)
             ->header('Content-Type', 'text/plain; charset=utf-8');
     }
 }

@@ -145,26 +145,26 @@ class ProductionSimulationSeeder extends Seeder
             ['key' => 'impressum_email',          'value' => 'impressum@parkhub.test'],
             ['key' => 'impressum_phone',          'value' => '+49 89 123456'],
             ['key' => 'impressum_register_court', 'value' => 'Amtsgericht München'],
-            ['key' => 'impressum_register_number','value' => 'HRB 123456'],
+            ['key' => 'impressum_register_number', 'value' => 'HRB 123456'],
             ['key' => 'impressum_vat_id',         'value' => 'DE123456789'],
             ['key' => 'impressum_responsible',    'value' => 'Max Mustermann'],
             // Booking rules
             ['key' => 'max_booking_days',    'value' => '30'],
-            ['key' => 'max_bookings_per_day','value' => '3'],
+            ['key' => 'max_bookings_per_day', 'value' => '3'],
             ['key' => 'license_plate_mode',  'value' => 'visible'],
-            ['key' => 'allow_guest_bookings','value' => 'true'],
+            ['key' => 'allow_guest_bookings', 'value' => 'true'],
             ['key' => 'require_vehicle',     'value' => 'false'],
             ['key' => 'self_registration',   'value' => 'true'],
             ['key' => 'booking_visibility',  'value' => 'full'],
             // Auto-release
-            ['key' => 'auto_release_enabled','value' => 'true'],
-            ['key' => 'auto_release_minutes','value' => '30'],
+            ['key' => 'auto_release_enabled', 'value' => 'true'],
+            ['key' => 'auto_release_minutes', 'value' => '30'],
             // Credits — disabled by default (optional feature)
             ['key' => 'credits_enabled',     'value' => 'false'],
             ['key' => 'credits_per_booking', 'value' => '1'],
             // Branding
             ['key' => 'brand_primary_color', 'value' => '#d97706'],
-            ['key' => 'brand_secondary_color','value' => '#475569'],
+            ['key' => 'brand_secondary_color', 'value' => '#475569'],
             // GDPR
             ['key' => 'gdpr_enabled',        'value' => 'true'],
             ['key' => 'data_retention_days', 'value' => '365'],
