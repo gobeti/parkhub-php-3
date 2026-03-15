@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Plus, PencilSimple, Trash, SpinnerGap, Check, X,
-  MagnifyingGlass, CheckCircle, Prohibit, CurrencyDollar,
+  MagnifyingGlass, CheckCircle, Prohibit, CurrencyEur,
 } from '@phosphor-icons/react';
 import { api, type ParkingLot, type CreateLotRequest, type UpdateLotRequest } from '../api/client';
 import toast from 'react-hot-toast';
@@ -309,7 +309,7 @@ export function AdminLotsPage() {
                 <div>
                   <label htmlFor="lot-hourly_rate" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Hourly Rate</label>
                   <div className="relative">
-                    <CurrencyDollar weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                    <CurrencyEur weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                     <input
                       id="lot-hourly_rate"
                       type="number"
@@ -325,7 +325,7 @@ export function AdminLotsPage() {
                 <div>
                   <label htmlFor="lot-daily_max" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Daily Max</label>
                   <div className="relative">
-                    <CurrencyDollar weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                    <CurrencyEur weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                     <input
                       id="lot-daily_max"
                       type="number"
@@ -341,7 +341,7 @@ export function AdminLotsPage() {
                 <div>
                   <label htmlFor="lot-monthly_pass" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Monthly Pass</label>
                   <div className="relative">
-                    <CurrencyDollar weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                    <CurrencyEur weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                     <input
                       id="lot-monthly_pass"
                       type="number"

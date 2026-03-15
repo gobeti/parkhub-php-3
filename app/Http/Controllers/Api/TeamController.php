@@ -14,20 +14,26 @@ class TeamController extends Controller
     public function index()
     {
         $today = now()->toDateString();
+        $now = now();
         $users = User::where('is_active', true)->get();
         $privacyMode = Setting::get('booking_visibility', 'full');
 
-        $team = $users->map(function ($user) use ($today, $privacyMode) {
-            $absence = Absence::where('user_id', $user->id)
-                ->where('start_date', '<=', $today)
-                ->where('end_date', '>=', $today)
-                ->first();
+        // Batch-load all absences for today, keyed by user_id
+        $absencesByUser = Absence::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->get()
+            ->keyBy('user_id');
 
-            $booking = Booking::where('user_id', $user->id)
-                ->whereIn('status', ['confirmed', 'active'])
-                ->where('start_time', '<=', now())
-                ->where('end_time', '>=', now())
-                ->first();
+        // Batch-load all active bookings for right now, keyed by user_id
+        $bookingsByUser = Booking::whereIn('status', ['confirmed', 'active'])
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->get()
+            ->keyBy('user_id');
+
+        $team = $users->map(function ($user) use ($absencesByUser, $bookingsByUser, $privacyMode) {
+            $absence = $absencesByUser->get($user->id);
+            $booking = $bookingsByUser->get($user->id);
 
             $displayName = match ($privacyMode) {
                 'firstName' => explode(' ', $user->name)[0] ?? $user->username,

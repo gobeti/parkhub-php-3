@@ -22,6 +22,19 @@ use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
+    /**
+     * Sanitize a value for CSV output to prevent formula injection.
+     * Prefixes dangerous leading characters (=, +, -, @, TAB, CR) with a single quote.
+     */
+    private function csvSafe(mixed $value): string
+    {
+        $str = (string) $value;
+        if (preg_match('/^[=+\-@\t\r]/', $str)) {
+            return "'" . $str;
+        }
+        return $str;
+    }
+
     private function requireAdmin($request): void
     {
         if (! $request->user() || ! $request->user()->isAdmin()) {
@@ -334,7 +347,8 @@ class AdminController extends Controller
     {
         $this->requireAdmin($request);
 
-        $query = GuestBooking::orderBy('start_time', 'desc');
+        $query = GuestBooking::with(['lot', 'slot', 'creator'])
+            ->orderBy('start_time', 'desc');
 
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -347,24 +361,20 @@ class AdminController extends Controller
         }
 
         $guests = $query->get()->map(function ($g) {
-            $lot = ParkingLot::find($g->lot_id);
-            $slot = ParkingSlot::find($g->slot_id);
-            $creator = User::find($g->created_by);
-
             return [
                 'id' => $g->id,
                 'guest_name' => $g->guest_name,
                 'guest_code' => $g->guest_code,
                 'lot_id' => $g->lot_id,
-                'lot_name' => $lot?->name ?? '-',
+                'lot_name' => $g->lot?->name ?? '-',
                 'slot_id' => $g->slot_id,
-                'slot_number' => $slot?->number ?? '-',
+                'slot_number' => $g->slot?->number ?? '-',
                 'start_time' => $g->start_time,
                 'end_time' => $g->end_time,
                 'vehicle_plate' => $g->vehicle_plate,
                 'status' => $g->status,
                 'created_by' => $g->created_by,
-                'created_by_name' => $creator?->name ?? '-',
+                'created_by_name' => $g->creator?->name ?? '-',
                 'created_at' => $g->created_at,
             ];
         });
@@ -442,10 +452,10 @@ class AdminController extends Controller
         $headers = ['ID', 'User', 'Lot', 'Slot', 'Vehicle', 'Start', 'End', 'Status', 'Type'];
         $rows = $bookings->map(fn ($b) => [
             $b->id,
-            $b->user?->name ?? 'Guest',
-            $b->lot_name,
-            $b->slot_number,
-            $b->vehicle_plate ?? '',
+            $this->csvSafe($b->user?->name ?? 'Guest'),
+            $this->csvSafe($b->lot_name),
+            $this->csvSafe($b->slot_number),
+            $this->csvSafe($b->vehicle_plate ?? ''),
             $b->start_time?->format('Y-m-d H:i'),
             $b->end_time?->format('Y-m-d H:i'),
             $b->status,
@@ -490,12 +500,28 @@ class AdminController extends Controller
     {
         $this->requireAdmin($request);
         $days = (int) $request->get('days', 7);
+        $startDate = now()->subDays($days - 1)->toDateString();
+
+        // Single GROUP BY query instead of N individual count queries
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlite') {
+            $counts = Booking::where('start_time', '>=', $startDate)
+                ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
+                ->groupBy('date')
+                ->pluck('count', 'date');
+        } else {
+            $counts = Booking::where('start_time', '>=', $startDate)
+                ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
+                ->groupBy('date')
+                ->pluck('count', 'date');
+        }
+
         $labels = [];
         $bookingCounts = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->toDateString();
             $labels[] = $date;
-            $bookingCounts[] = Booking::whereDate('start_time', $date)->count();
+            $bookingCounts[] = $counts->get($date, 0);
         }
 
         return response()->json([
@@ -857,11 +883,11 @@ class AdminController extends Controller
         $headers = ['ID', 'Username', 'Name', 'Email', 'Role', 'Department', 'Active', 'Created'];
         $rows = $users->map(fn ($u) => [
             $u->id,
-            $u->username,
-            $u->name,
-            $u->email,
+            $this->csvSafe($u->username),
+            $this->csvSafe($u->name),
+            $this->csvSafe($u->email),
             $u->role,
-            $u->department ?? '',
+            $this->csvSafe($u->department ?? ''),
             $u->is_active ? 'yes' : 'no',
             optional($u->created_at)->format('Y-m-d'),
         ]);
