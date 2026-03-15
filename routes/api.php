@@ -137,6 +137,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
         Route::delete('/lots/{id}', [AdminController::class, 'deleteLot']);
         Route::put('/slots/{id}', [AdminController::class, 'updateSlot']);
+        Route::put('/users/{id}/quota', [AdminController::class, 'updateUserQuota']);
         Route::post('/users/{id}/credits', [AdminController::class, 'grantCredits']);
         Route::get('/credit-transactions', [AdminController::class, 'creditTransactions']);
         Route::post('/credits/refill', [AdminController::class, 'refillAllCredits']);

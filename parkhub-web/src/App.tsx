@@ -15,6 +15,7 @@ import { AdminPage } from './views/Admin';
 import { AdminSettingsPage } from './views/AdminSettings';
 import { AdminUsersPage } from './views/AdminUsers';
 import { AdminAnnouncementsPage } from './views/AdminAnnouncements';
+import { AdminLotsPage } from './views/AdminLots';
 import { AdminReportsPage } from './views/AdminReports';
 import { VehiclesPage } from './views/Vehicles';
 import { AbsencesPage } from './views/Absences';
@@ -69,6 +70,7 @@ function AppRoutes() {
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>}>
           <Route index element={<AdminReportsPage />} />
+          <Route path="lots" element={<AdminLotsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="announcements" element={<AdminAnnouncementsPage />} />
