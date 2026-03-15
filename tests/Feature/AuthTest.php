@@ -15,8 +15,8 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/v1/auth/register', [
             'username' => 'testuser',
             'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'name' => 'Test User',
         ]);
 
