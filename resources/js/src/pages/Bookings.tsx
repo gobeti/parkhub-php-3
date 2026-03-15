@@ -375,10 +375,10 @@ export function BookingsPage() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={async () => { setRespondingSwap(swap.id); await api.respondSwapRequest(swap.id, true); toast.success(t('swap.accepted', 'Tausch angenommen')); setRespondingSwap(null); load(); }} disabled={respondingSwap === swap.id} className="btn btn-sm btn-primary">
+                    <button onClick={async () => { setRespondingSwap(swap.id); await api.respondSwapRequest(swap.id, true); toast.success(t('swap.accepted', 'Tausch angenommen')); setRespondingSwap(null); loadData(); }} disabled={respondingSwap === swap.id} className="btn btn-sm btn-primary">
                       <Check weight="bold" className="w-4 h-4" />
                     </button>
-                    <button onClick={async () => { setRespondingSwap(swap.id); await api.respondSwapRequest(swap.id, false); toast.success(t('swap.declined', 'Tausch abgelehnt')); setRespondingSwap(null); load(); }} disabled={respondingSwap === swap.id} className="btn btn-sm btn-secondary">
+                    <button onClick={async () => { setRespondingSwap(swap.id); await api.respondSwapRequest(swap.id, false); toast.success(t('swap.declined', 'Tausch abgelehnt')); setRespondingSwap(null); loadData(); }} disabled={respondingSwap === swap.id} className="btn btn-sm btn-secondary">
                       <X weight="bold" className="w-4 h-4" />
                     </button>
                   </div>
