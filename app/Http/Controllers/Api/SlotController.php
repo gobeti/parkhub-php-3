@@ -20,7 +20,7 @@ class SlotController extends Controller
         $this->requireAdmin($request);
         $request->validate(['slot_number' => 'required|string']);
         $slot = ParkingSlot::create(array_merge(
-            $request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']),
+            $request->only(['slot_number', 'status', 'slot_type', 'features', 'reserved_for_department', 'zone_id']),
             ['lot_id' => $lotId]
         ));
 
@@ -31,7 +31,7 @@ class SlotController extends Controller
     {
         $this->requireAdmin($request);
         $slot = ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);
-        $slot->update($request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']));
+        $slot->update($request->only(['slot_number', 'status', 'slot_type', 'features', 'reserved_for_department', 'zone_id']));
 
         return response()->json($slot);
     }

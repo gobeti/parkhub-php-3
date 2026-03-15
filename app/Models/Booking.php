@@ -23,6 +23,7 @@ class Booking extends Model
         'user_id', 'lot_id', 'slot_id', 'booking_type', 'lot_name', 'slot_number',
         'vehicle_plate', 'start_time', 'end_time', 'status', 'notes',
         'recurrence', 'checked_in_at',
+        'base_price', 'tax_amount', 'total_price', 'currency',
     ];
 
     protected function casts(): array
@@ -32,6 +33,9 @@ class Booking extends Model
             'end_time' => 'datetime',
             'checked_in_at' => 'datetime',
             'recurrence' => 'array',
+            'base_price' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'total_price' => 'decimal:2',
         ];
     }
 

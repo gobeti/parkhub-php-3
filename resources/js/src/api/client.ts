@@ -665,7 +665,7 @@ export interface User {
   username: string;
   email: string;
   name: string;
-  role: 'user' | 'admin' | 'superadmin';
+  role: 'user' | 'premium' | 'admin' | 'superadmin';
   created_at: string;
 }
 
@@ -690,13 +690,22 @@ export interface ParkingLot {
   total_slots: number;
   available_slots: number;
   layout?: LotLayout;
+  hourly_rate?: number;
+  daily_max?: number;
+  monthly_pass?: number;
+  currency?: string;
 }
+
+export type SlotType = 'standard' | 'compact' | 'large' | 'handicap' | 'electric' | 'motorcycle' | 'reserved' | 'vip';
+export type SlotFeature = 'near_exit' | 'near_elevator' | 'near_stairs' | 'covered' | 'security_camera' | 'well_lit' | 'wide_lane' | 'charging_station';
 
 export interface ParkingSlot {
   id: string;
   lot_id: string;
   number: string;
   status: 'available' | 'occupied' | 'reserved' | 'disabled';
+  slot_type?: SlotType;
+  features?: SlotFeature[];
   floor?: number;
   section?: string;
 }
@@ -715,6 +724,10 @@ export interface Booking {
   booking_type?: 'einmalig' | 'mehrtaegig' | 'dauer';
   dauer_interval?: 'weekly' | 'monthly';
   checked_in_at?: string | null;
+  base_price?: number;
+  tax_amount?: number;
+  total_price?: number;
+  currency?: string;
   created_at: string;
 }
 

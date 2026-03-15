@@ -65,6 +65,7 @@
 | Booking swap requests between users | Done |
 | Booking cancellation with automatic slot release | Done |
 | Full booking history (active, past, cancelled) | Done |
+| Automatic pricing calculation (hourly rate × duration, 19% VAT) | Done |
 | Booking invoice (HTML, browser Print-to-PDF) | Done |
 | Check-in with QR code per booking and per slot | Done |
 | Waitlist for fully booked lots | Done |
@@ -80,6 +81,9 @@
 |---|---|
 | Create and manage multiple lots with per-lot zones | Done |
 | Slot layout with zone assignment and visual map | Done |
+| Slot types (standard, compact, large, handicap, electric, motorcycle, VIP) | Done |
+| Slot features (EV charging, covered, near exit, security camera, etc.) | Done |
+| Per-lot pricing (hourly rate, daily max, monthly pass) | Done |
 | Per-slot status management | Done |
 | Real-time occupancy statistics | Done |
 | Public occupancy display board | Done |
@@ -89,7 +93,7 @@
 | Feature | Status |
 |---|---|
 | User registration and login | Done |
-| Role-based access control: user / admin | Done |
+| Role-based access control: user / premium / admin / superadmin | Done |
 | Laravel Sanctum Bearer token authentication (7-day expiry) | Done |
 | Password reset via email | Done |
 | Forgot password flow | Done |
@@ -136,6 +140,7 @@
 | Branding: custom logo, company name, primary color | Done |
 | Webhooks (outbound event notifications) | Done |
 | Web Push notification subscriptions | Done |
+| Prometheus metrics endpoint (`/api/metrics`) | Done |
 | Health endpoints (`/health/live`, `/health/ready`) | Done |
 
 ### Deployment
