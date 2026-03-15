@@ -18,4 +18,19 @@ class GuestBooking extends Model
     {
         return ['start_time' => 'datetime', 'end_time' => 'datetime'];
     }
+
+    public function lot(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ParkingLot::class, 'lot_id');
+    }
+
+    public function slot(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ParkingSlot::class, 'slot_id');
+    }
+
+    public function creator(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

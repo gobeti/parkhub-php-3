@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ParkingLot;
+use App\Models\ParkingSlot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -103,5 +104,37 @@ class LotTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertDatabaseMissing('parking_lots', ['id' => $lot->id]);
+    }
+
+    public function test_non_admin_cannot_create_lot(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $token = $user->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/lots', [
+                'name' => 'Unauthorized Lot',
+                'total_slots' => 10,
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_lot_creation_generates_slots(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $token = $admin->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/lots', [
+                'name' => 'Slot Gen Lot',
+                'total_slots' => 5,
+            ]);
+
+        $response->assertStatus(201);
+
+        $lot = ParkingLot::where('name', 'Slot Gen Lot')->first();
+        $this->assertNotNull($lot);
+        $this->assertEquals(5, ParkingSlot::where('lot_id', $lot->id)->count());
     }
 }

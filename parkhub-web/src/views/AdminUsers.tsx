@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, SpinnerGap, MagnifyingGlass, ShieldCheck, Coins,
-  PencilSimple, X, Check, Trash, UserCircle, Timer,
+  PencilSimple, X, Check, UserCircle, Timer, UserMinus, UserPlus,
 } from '@phosphor-icons/react';
 import { api, type User } from '../api/client';
 import toast from 'react-hot-toast';
@@ -327,8 +327,8 @@ export function AdminUsersPage() {
                         title={user.is_active ? 'Deactivate' : 'Activate'}
                       >
                         {user.is_active
-                          ? <Trash weight="bold" className="w-4 h-4" />
-                          : <Check weight="bold" className="w-4 h-4" />
+                          ? <UserMinus weight="bold" className="w-4 h-4" />
+                          : <UserPlus weight="bold" className="w-4 h-4" />
                         }
                       </button>
                     </div>

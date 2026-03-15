@@ -6,11 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class MetricsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $expectedToken = config('app.metrics_token') ?: env('METRICS_TOKEN');
+        if ($expectedToken && $request->bearerToken() !== $expectedToken) {
+            return response('Unauthorized', 401);
+        }
+
         $lines = [];
 
         // Active bookings
