@@ -70,7 +70,7 @@ class AuthController extends Controller
         $request->validate([
             'username' => 'required|string|min:3|max:50|unique:users|alpha_dash',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|string|min:8|max:128|confirmed',
+            'password' => ['required', 'string', 'min:8', 'max:128', 'confirmed', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'regex:/[0-9]/'],
             'name' => 'required|string|max:255',
         ]);
 
@@ -235,7 +235,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email',
             'token' => 'required|string',
-            'password' => 'required|string|min:8',
+            'password' => ['required', 'string', 'min:8', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'regex:/[0-9]/'],
             'password_confirmation' => 'required|same:password',
         ]);
 
@@ -276,7 +276,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8',
+            'new_password' => ['required', 'string', 'min:8', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'regex:/[0-9]/'],
         ]);
         $user = $request->user();
         if (! Hash::check($request->current_password, $user->password)) {

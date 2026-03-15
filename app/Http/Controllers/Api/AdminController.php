@@ -941,6 +941,8 @@ class AdminController extends Controller
 
     public function grantCredits(Request $request, string $id)
     {
+        $this->requireAdmin($request);
+
         $validated = $request->validate([
             'amount' => 'required|integer|min:1|max:1000',
             'description' => 'nullable|string|max:255',

@@ -52,7 +52,7 @@ Route::middleware('throttle:5,1')->group(function () {
         if (! $admin || ! Hash::check($request->current_password, $admin->password)) {
             return response()->json(['success' => false, 'error' => ['code' => 'INVALID_PASSWORD', 'message' => 'Current password is incorrect']], 401);
         }
-        $admin->password = bcrypt($request->new_password);
+        $admin->password = Hash::make($request->new_password);
         $admin->save();
         Setting::set('needs_password_change', 'false');
         $token = $admin->createToken('auth-token');
@@ -85,7 +85,7 @@ Route::get('/public/display', [PublicController::class, 'display']);
 
 // VAPID public key for push subscriptions
 Route::get('/push/vapid-key', function () {
-    return response()->json(['publicKey' => \App\Models\Setting::get('vapid_public_key', '')]);
+    return response()->json(['publicKey' => Setting::get('vapid_public_key', '')]);
 });
 
 // Branding

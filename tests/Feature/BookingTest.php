@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -111,7 +112,7 @@ class BookingTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         // Enable guest bookings for this test
-        \App\Models\Setting::set('allow_guest_bookings', 'true');
+        Setting::set('allow_guest_bookings', 'true');
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/bookings/guest', [
