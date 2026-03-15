@@ -6,7 +6,11 @@
  */
 
 use App\Http\Controllers\Api\AbsenceController;
+use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminCreditController;
+use App\Http\Controllers\Api\AdminReportController;
+use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingInvoiceController;
@@ -214,32 +218,44 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Admin — middleware enforces admin role at the routing layer (defense in depth)
     Route::middleware('admin')->prefix('admin')->group(function () {
-        Route::get('/stats', [AdminController::class, 'stats']);
-        Route::get('/heatmap', [AdminController::class, 'heatmap']);
+        // Reports & stats
+        Route::get('/stats', [AdminReportController::class, 'stats']);
+        Route::get('/heatmap', [AdminReportController::class, 'heatmap']);
+        Route::get('/users/export-csv', [AdminReportController::class, 'exportUsersCsv']);
+
+        // Audit log
         Route::get('/audit-log', [AdminController::class, 'auditLog']);
-        Route::get('/settings', [AdminController::class, 'getSettings']);
-        Route::put('/settings', [AdminController::class, 'updateSettings']);
+
+        // Settings
+        Route::get('/settings', [AdminSettingsController::class, 'getSettings']);
+        Route::put('/settings', [AdminSettingsController::class, 'updateSettings']);
+
+        // User management
         Route::get('/users', [AdminController::class, 'users']);
         Route::put('/users/{id}', [AdminController::class, 'updateUser']);
         Route::post('/users/import', [AdminController::class, 'importUsers']);
-        Route::get('/users/export-csv', [AdminController::class, 'exportUsersCsv']);
+
+        // Bookings
         Route::get('/bookings', [AdminController::class, 'bookings']);
         Route::patch('/bookings/{id}/cancel', [AdminController::class, 'cancelBooking']);
         Route::get('/guest-bookings', [AdminController::class, 'guestBookings']);
         Route::patch('/guest-bookings/{id}/cancel', [AdminController::class, 'cancelGuestBooking']);
-        Route::get('/announcements', [AdminController::class, 'announcements']);
-        Route::post('/announcements', [AdminController::class, 'createAnnouncement']);
-        Route::put('/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
-        Route::delete('/announcements/{id}', [AdminController::class, 'deleteAnnouncement']);
+
+        // Announcements
+        Route::get('/announcements', [AdminAnnouncementController::class, 'announcements']);
+        Route::post('/announcements', [AdminAnnouncementController::class, 'createAnnouncement']);
+        Route::put('/announcements/{id}', [AdminAnnouncementController::class, 'updateAnnouncement']);
+        Route::delete('/announcements/{id}', [AdminAnnouncementController::class, 'deleteAnnouncement']);
+
         Route::get('/updates/check', function () {
             return response()->json(['update_available' => false, 'current_version' => '1.0.0-php']);
         });
 
         // Credits management
-        Route::put('/users/{id}/quota', [AdminController::class, 'updateUserQuota']);
-        Route::post('/users/{id}/credits', [AdminController::class, 'grantCredits']);
-        Route::get('/credits/transactions', [AdminController::class, 'creditTransactions']);
-        Route::post('/credits/refill-all', [AdminController::class, 'refillAllCredits']);
+        Route::put('/users/{id}/quota', [AdminCreditController::class, 'updateUserQuota']);
+        Route::post('/users/{id}/credits', [AdminCreditController::class, 'grantCredits']);
+        Route::get('/credits/transactions', [AdminCreditController::class, 'creditTransactions']);
+        Route::post('/credits/refill-all', [AdminCreditController::class, 'refillAllCredits']);
 
         // Feature flags — stub for frontend compatibility
         Route::get('/features', function () {
@@ -290,7 +306,7 @@ Route::get('/health/live', [HealthController::class, 'live']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
 
 // Impressum — public (DDG § 5 requires it to be freely accessible)
-Route::get('/legal/impressum', [AdminController::class, 'publicImpress']);
+Route::get('/legal/impressum', [AdminSettingsController::class, 'publicImpress']);
 
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // iCal export
@@ -315,7 +331,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::delete('/waitlist/{id}', [WaitlistController::class, 'destroy']);
 
     // Admin CSV export
-    Route::middleware('admin')->get('/admin/bookings/export', [AdminController::class, 'exportBookingsCsv']);
+    Route::middleware('admin')->get('/admin/bookings/export', [AdminReportController::class, 'exportBookingsCsv']);
 });
 
 // ── Feature parity batch 2: system, auth, bookings, absences ──────────────
@@ -331,7 +347,7 @@ Route::middleware('throttle:5,15')->group(function () {
 });
 
 // Branding logo (public)
-Route::get('/branding/logo', [AdminController::class, 'serveBrandingLogo']);
+Route::get('/branding/logo', [AdminSettingsController::class, 'serveBrandingLogo']);
 
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
@@ -374,24 +390,27 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Admin: branding, privacy, reports, charts, settings, reset
     Route::middleware('admin')->prefix('admin')->group(function () {
-        Route::get('/branding', [AdminController::class, 'getBranding']);
-        Route::put('/branding', [AdminController::class, 'updateBranding']);
-        Route::post('/branding/logo', [AdminController::class, 'uploadBrandingLogo']);
-        Route::get('/privacy', [AdminController::class, 'getPrivacy']);
-        Route::put('/privacy', [AdminController::class, 'updatePrivacy']);
+        // Settings (branding, privacy, impressum, auto-release, email, webhooks, reset)
+        Route::get('/branding', [AdminSettingsController::class, 'getBranding']);
+        Route::put('/branding', [AdminSettingsController::class, 'updateBranding']);
+        Route::post('/branding/logo', [AdminSettingsController::class, 'uploadBrandingLogo']);
+        Route::get('/privacy', [AdminSettingsController::class, 'getPrivacy']);
+        Route::put('/privacy', [AdminSettingsController::class, 'updatePrivacy']);
+        Route::get('/impressum', [AdminSettingsController::class, 'getImpress']);
+        Route::put('/impressum', [AdminSettingsController::class, 'updateImpress']);
+        Route::post('/reset', [AdminSettingsController::class, 'resetDatabase']);
+        Route::get('/settings/auto-release', [AdminSettingsController::class, 'getAutoReleaseSettings']);
+        Route::put('/settings/auto-release', [AdminSettingsController::class, 'updateAutoReleaseSettings']);
+        Route::get('/settings/email', [AdminSettingsController::class, 'getEmailSettings']);
+        Route::put('/settings/email', [AdminSettingsController::class, 'updateEmailSettings']);
+        Route::get('/settings/webhooks', [AdminSettingsController::class, 'getWebhookSettings']);
+        Route::put('/settings/webhooks', [AdminSettingsController::class, 'updateWebhookSettings']);
 
-        // Impressum admin editor (DDG § 5 fields)
-        Route::get('/impressum', [AdminController::class, 'getImpress']);
-        Route::put('/impressum', [AdminController::class, 'updateImpress']);
-        Route::get('/reports', [AdminController::class, 'reports']);
-        Route::get('/dashboard/charts', [AdminController::class, 'dashboardCharts']);
-        Route::post('/reset', [AdminController::class, 'resetDatabase']);
-        Route::get('/settings/auto-release', [AdminController::class, 'getAutoReleaseSettings']);
-        Route::put('/settings/auto-release', [AdminController::class, 'updateAutoReleaseSettings']);
-        Route::get('/settings/email', [AdminController::class, 'getEmailSettings']);
-        Route::put('/settings/email', [AdminController::class, 'updateEmailSettings']);
-        Route::get('/settings/webhooks', [AdminController::class, 'getWebhookSettings']);
-        Route::put('/settings/webhooks', [AdminController::class, 'updateWebhookSettings']);
+        // Reports
+        Route::get('/reports', [AdminReportController::class, 'reports']);
+        Route::get('/dashboard/charts', [AdminReportController::class, 'dashboardCharts']);
+
+        // User/lot/slot management
         Route::patch('/slots/{id}', [AdminController::class, 'updateSlot']);
         Route::delete('/lots/{id}', [AdminController::class, 'deleteLot']);
         Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);

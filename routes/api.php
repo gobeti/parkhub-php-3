@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AbsenceController;
+use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminCreditController;
+use App\Http\Controllers\Api\AdminReportController;
+use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\LotController;
@@ -104,43 +108,58 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin — requires admin or superadmin role
     Route::middleware(['admin'])->prefix('admin')->group(function () {
-        Route::get('/stats', [AdminController::class, 'stats']);
-        Route::get('/heatmap', [AdminController::class, 'heatmap']);
+        // Reports & stats
+        Route::get('/stats', [AdminReportController::class, 'stats']);
+        Route::get('/heatmap', [AdminReportController::class, 'heatmap']);
+        Route::get('/reports', [AdminReportController::class, 'reports']);
+        Route::get('/dashboard-charts', [AdminReportController::class, 'dashboardCharts']);
+        Route::get('/bookings/export-csv', [AdminReportController::class, 'exportBookingsCsv']);
+        Route::post('/users/export-csv', [AdminReportController::class, 'exportUsersCsv']);
+
+        // Audit log
         Route::get('/audit-log', [AdminController::class, 'auditLog']);
-        Route::get('/announcements', [AdminController::class, 'announcements']);
-        Route::post('/announcements', [AdminController::class, 'createAnnouncement']);
-        Route::put('/announcements/{id}', [AdminController::class, 'updateAnnouncement']);
-        Route::delete('/announcements/{id}', [AdminController::class, 'deleteAnnouncement']);
+
+        // Announcements
+        Route::get('/announcements', [AdminAnnouncementController::class, 'announcements']);
+        Route::post('/announcements', [AdminAnnouncementController::class, 'createAnnouncement']);
+        Route::put('/announcements/{id}', [AdminAnnouncementController::class, 'updateAnnouncement']);
+        Route::delete('/announcements/{id}', [AdminAnnouncementController::class, 'deleteAnnouncement']);
+
+        // Settings
+        Route::get('/settings', [AdminSettingsController::class, 'getSettings']);
+        Route::put('/settings', [AdminSettingsController::class, 'updateSettings']);
+        Route::get('/branding', [AdminSettingsController::class, 'getBranding']);
+        Route::put('/branding', [AdminSettingsController::class, 'updateBranding']);
+        Route::post('/branding/logo', [AdminSettingsController::class, 'uploadBrandingLogo']);
+        Route::get('/privacy', [AdminSettingsController::class, 'getPrivacy']);
+        Route::put('/privacy', [AdminSettingsController::class, 'updatePrivacy']);
+        Route::get('/impressum', [AdminSettingsController::class, 'getImpressum']);
+        Route::put('/impressum', [AdminSettingsController::class, 'updateImpressum']);
+        Route::post('/database/reset', [AdminSettingsController::class, 'resetDatabase']);
+        Route::get('/auto-release', [AdminSettingsController::class, 'getAutoReleaseSettings']);
+        Route::put('/auto-release', [AdminSettingsController::class, 'updateAutoReleaseSettings']);
+        Route::get('/email-settings', [AdminSettingsController::class, 'getEmailSettings']);
+        Route::put('/email-settings', [AdminSettingsController::class, 'updateEmailSettings']);
+
+        // User management
         Route::post('/users/import', [AdminController::class, 'importUsers']);
-        Route::get('/settings', [AdminController::class, 'getSettings']);
-        Route::put('/settings', [AdminController::class, 'updateSettings']);
         Route::get('/users', [AdminController::class, 'users']);
         Route::put('/users/{id}', [AdminController::class, 'updateUser']);
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+
+        // Bookings
         Route::get('/bookings', [AdminController::class, 'bookings']);
         Route::delete('/bookings/{id}', [AdminController::class, 'cancelBooking']);
-        Route::get('/bookings/export-csv', [AdminController::class, 'exportBookingsCsv']);
-        Route::get('/reports', [AdminController::class, 'reports']);
-        Route::get('/dashboard-charts', [AdminController::class, 'dashboardCharts']);
-        Route::get('/branding', [AdminController::class, 'getBranding']);
-        Route::put('/branding', [AdminController::class, 'updateBranding']);
-        Route::post('/branding/logo', [AdminController::class, 'uploadBrandingLogo']);
-        Route::get('/privacy', [AdminController::class, 'getPrivacy']);
-        Route::put('/privacy', [AdminController::class, 'updatePrivacy']);
-        Route::get('/impressum', [AdminController::class, 'getImpressum']);
-        Route::put('/impressum', [AdminController::class, 'updateImpressum']);
-        Route::post('/database/reset', [AdminController::class, 'resetDatabase']);
-        Route::get('/auto-release', [AdminController::class, 'getAutoReleaseSettings']);
-        Route::put('/auto-release', [AdminController::class, 'updateAutoReleaseSettings']);
-        Route::get('/email-settings', [AdminController::class, 'getEmailSettings']);
-        Route::put('/email-settings', [AdminController::class, 'updateEmailSettings']);
-        Route::post('/users/export-csv', [AdminController::class, 'exportUsersCsv']);
-        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+
+        // Lots & slots
         Route::delete('/lots/{id}', [AdminController::class, 'deleteLot']);
         Route::put('/slots/{id}', [AdminController::class, 'updateSlot']);
-        Route::put('/users/{id}/quota', [AdminController::class, 'updateUserQuota']);
-        Route::post('/users/{id}/credits', [AdminController::class, 'grantCredits']);
-        Route::get('/credit-transactions', [AdminController::class, 'creditTransactions']);
-        Route::post('/credits/refill', [AdminController::class, 'refillAllCredits']);
+
+        // Credits
+        Route::put('/users/{id}/quota', [AdminCreditController::class, 'updateUserQuota']);
+        Route::post('/users/{id}/credits', [AdminCreditController::class, 'grantCredits']);
+        Route::get('/credit-transactions', [AdminCreditController::class, 'creditTransactions']);
+        Route::post('/credits/refill', [AdminCreditController::class, 'refillAllCredits']);
     });
 
     // User
