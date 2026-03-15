@@ -64,10 +64,69 @@ class BookingController extends Controller
             ], 422);
         }
 
+        $user = $request->user();
+
+        // Enforce max bookings per day
+        $maxPerDay = (int) Setting::get('max_bookings_per_day', '0');
+        if ($maxPerDay > 0 && ! $user->isAdmin()) {
+            $todayCount = Booking::where('user_id', $user->id)
+                ->whereDate('start_time', $startTime->toDateString())
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
+                ->count();
+            if ($todayCount >= $maxPerDay) {
+                return response()->json([
+                    'success' => false, 'data' => null,
+                    'error' => ['code' => 'MAX_BOOKINGS_REACHED', 'message' => "Maximum {$maxPerDay} bookings per day reached."],
+                    'meta' => null,
+                ], 422);
+            }
+        }
+
+        // Enforce booking duration limits
+        $endTimeParsed = $request->end_time ? Carbon::parse($request->end_time) : $startTime->copy()->addHours(8);
+        $durationHours = $startTime->diffInMinutes($endTimeParsed) / 60;
+
+        $minDuration = (float) Setting::get('min_booking_duration_hours', '0');
+        if ($minDuration > 0 && $durationHours < $minDuration) {
+            return response()->json([
+                'success' => false, 'data' => null,
+                'error' => ['code' => 'DURATION_TOO_SHORT', 'message' => "Minimum booking duration is {$minDuration} hours."],
+                'meta' => null,
+            ], 422);
+        }
+
+        $maxDuration = (float) Setting::get('max_booking_duration_hours', '0');
+        if ($maxDuration > 0 && $durationHours > $maxDuration) {
+            return response()->json([
+                'success' => false, 'data' => null,
+                'error' => ['code' => 'DURATION_TOO_LONG', 'message' => "Maximum booking duration is {$maxDuration} hours."],
+                'meta' => null,
+            ], 422);
+        }
+
+        // Enforce license plate mode
+        $plateMode = Setting::get('license_plate_mode', 'optional');
+        $plate = $request->license_plate ?? $request->vehicle_plate;
+        if ($plateMode === 'required' && empty($plate) && ! $user->isAdmin()) {
+            return response()->json([
+                'success' => false, 'data' => null,
+                'error' => ['code' => 'PLATE_REQUIRED', 'message' => 'A license plate is required for booking.'],
+                'meta' => null,
+            ], 422);
+        }
+
+        // Enforce require_vehicle
+        if (Setting::get('require_vehicle', 'false') === 'true' && empty($plate) && ! $user->isAdmin()) {
+            return response()->json([
+                'success' => false, 'data' => null,
+                'error' => ['code' => 'VEHICLE_REQUIRED', 'message' => 'A vehicle is required for booking.'],
+                'meta' => null,
+            ], 422);
+        }
+
         // Credits check — if credits system is enabled, verify balance
         $creditsEnabled = Setting::get('credits_enabled', 'false') === 'true';
         $creditsPerBooking = (int) Setting::get('credits_per_booking', '1');
-        $user = $request->user();
 
         if ($creditsEnabled && ! $user->isAdmin()) {
             if ($user->credits_balance < $creditsPerBooking) {
@@ -339,6 +398,15 @@ class BookingController extends Controller
 
     public function guestBooking(Request $request)
     {
+        // Enforce allow_guest_bookings setting
+        if (Setting::get('allow_guest_bookings', 'false') !== 'true') {
+            return response()->json([
+                'success' => false, 'data' => null,
+                'error' => ['code' => 'GUEST_BOOKINGS_DISABLED', 'message' => 'Guest bookings are disabled.'],
+                'meta' => null,
+            ], 403);
+        }
+
         $request->validate([
             'lot_id' => 'required|uuid',
             'slot_id' => 'nullable|uuid',
