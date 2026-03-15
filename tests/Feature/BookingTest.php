@@ -110,6 +110,9 @@ class BookingTest extends TestCase
         [$user, $lot, $slot] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
 
+        // Enable guest bookings for this test
+        \App\Models\Setting::set('allow_guest_bookings', 'true');
+
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/bookings/guest', [
                 'lot_id' => $lot->id,

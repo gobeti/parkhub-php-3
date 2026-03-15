@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\WaitlistEntry;
 use Illuminate\Http\Request;
 
@@ -20,6 +21,14 @@ class WaitlistController extends Controller
 
     public function store(Request $request)
     {
+        // Enforce waitlist_enabled setting
+        if (Setting::get('waitlist_enabled', 'true') !== 'true') {
+            return response()->json([
+                'success' => false, 'data' => null,
+                'error' => ['code' => 'WAITLIST_DISABLED', 'message' => 'Waitlist is disabled.'],
+            ], 403);
+        }
+
         $request->validate([
             'lot_id' => 'required|uuid|exists:parking_lots,id',
         ]);
