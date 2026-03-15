@@ -50,7 +50,7 @@ class LotController extends Controller
     {
         $this->requireAdmin($request);
         $request->validate(['name' => 'required|string', 'total_slots' => 'sometimes|integer|min:1|max:1000']);
-        $lot = ParkingLot::create($request->only(['name', 'address', 'total_slots', 'layout', 'status']));
+        $lot = ParkingLot::create($request->only(['name', 'address', 'total_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency']));
 
         // Auto-generate slots for the new lot based on total_slots
         $totalSlots = (int) ($lot->total_slots ?? 0);
@@ -121,7 +121,7 @@ class LotController extends Controller
     {
         $this->requireAdmin($request);
         $lot = ParkingLot::findOrFail($id);
-        $lot->update($request->only(['name', 'address', 'total_slots', 'layout', 'status']));
+        $lot->update($request->only(['name', 'address', 'total_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency']));
 
         return response()->json($lot);
     }
@@ -134,7 +134,7 @@ class LotController extends Controller
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function slots(string $id)
+    public function slots(Request $request, string $id)
     {
         $lot = ParkingLot::findOrFail($id);
 
@@ -147,7 +147,19 @@ class LotController extends Controller
             ->get()
             ->keyBy('slot_id');
 
-        $slots = $lot->slots()->get()->map(function ($slot) use ($activeBookings) {
+        $query = $lot->slots();
+
+        // Filter by slot_type
+        if ($request->has('type')) {
+            $query->where('slot_type', $request->type);
+        }
+
+        // Filter by feature (JSON contains)
+        if ($request->has('feature')) {
+            $query->whereJsonContains('features', $request->feature);
+        }
+
+        $slots = $query->get()->map(function ($slot) use ($activeBookings) {
             $activeBooking = $activeBookings->get($slot->id);
 
             $slot->current_booking = $activeBooking ? [

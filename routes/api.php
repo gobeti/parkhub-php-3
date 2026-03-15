@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\LotController;
+use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\RecurringBookingController;
@@ -39,6 +40,9 @@ Route::get('/setup/status', [SetupController::class, 'status']);
 Route::post('/setup/init', [SetupController::class, 'init']);
 Route::get('/public/occupancy', [PublicController::class, 'occupancy']);
 Route::get('/public/display', [PublicController::class, 'display']);
+
+// Prometheus metrics (no auth — scraped by monitoring)
+Route::get('/metrics', [MetricsController::class, 'index']);
 
 // Public legal routes
 Route::get('/legal/privacy', function () {

@@ -199,6 +199,30 @@ class BookingController extends Controller
                     'notes' => $request->notes,
                     'recurrence' => $request->recurrence,
                 ]);
+                // Calculate pricing based on lot rates
+                if ($lot->hourly_rate) {
+                    $bookingStart = Carbon::parse($request->start_time);
+                    $bookingEnd = Carbon::parse($endTime);
+                    $durationHrs = $bookingStart->diffInMinutes($bookingEnd) / 60;
+                    $basePrice = round($durationHrs * (float) $lot->hourly_rate, 2);
+
+                    // Apply daily max cap if set
+                    if ($lot->daily_max && $basePrice > (float) $lot->daily_max) {
+                        $basePrice = round((float) $lot->daily_max, 2);
+                    }
+
+                    // German standard VAT at 19%
+                    $taxAmount = round($basePrice * 0.19, 2);
+                    $totalPrice = round($basePrice + $taxAmount, 2);
+
+                    $booking->update([
+                        'base_price' => $basePrice,
+                        'tax_amount' => $taxAmount,
+                        'total_price' => $totalPrice,
+                        'currency' => $lot->currency ?? 'EUR',
+                    ]);
+                }
+
                 // Deduct credits within the same transaction
                 if ($creditsEnabled && ! $request->user()->isAdmin()) {
                     $request->user()->decrement('credits_balance', $creditsPerBooking);
