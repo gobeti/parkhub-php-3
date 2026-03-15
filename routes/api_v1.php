@@ -236,6 +236,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         });
 
         // Credits management
+        Route::put('/users/{id}/quota', [AdminController::class, 'updateUserQuota']);
         Route::post('/users/{id}/credits', [AdminController::class, 'grantCredits']);
         Route::get('/credits/transactions', [AdminController::class, 'creditTransactions']);
         Route::post('/credits/refill-all', [AdminController::class, 'refillAllCredits']);

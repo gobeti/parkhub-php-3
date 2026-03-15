@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->integer('credits_balance')->default(0)->after('department');
-            $table->integer('credits_monthly_quota')->default(10)->after('credits_balance');
+            $table->integer('credits_monthly_quota')->default(40)->after('credits_balance');
             $table->timestamp('credits_last_refilled')->nullable()->after('credits_monthly_quota');
         });
 

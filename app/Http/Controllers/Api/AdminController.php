@@ -902,6 +902,43 @@ class AdminController extends Controller
 
     // ── Credits Management ──────────────────────────────────────────────────
 
+    public function updateUserQuota(Request $request, string $id)
+    {
+        $this->requireAdmin($request);
+
+        $validated = $request->validate([
+            'monthly_quota' => 'required|integer|min:0|max:999',
+        ]);
+
+        $user = User::findOrFail($id);
+        $oldQuota = $user->credits_monthly_quota;
+        $user->update(['credits_monthly_quota' => $validated['monthly_quota']]);
+
+        CreditTransaction::create([
+            'user_id' => $user->id,
+            'amount' => $validated['monthly_quota'] - $oldQuota,
+            'type' => 'quota_adjustment',
+            'description' => "Monthly quota changed: {$oldQuota} -> {$validated['monthly_quota']}",
+            'granted_by' => $request->user()->id,
+        ]);
+
+        AuditLog::log([
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->username,
+            'action' => 'quota_updated',
+            'details' => [
+                'target_user' => $user->id,
+                'old_quota' => $oldQuota,
+                'new_quota' => $validated['monthly_quota'],
+            ],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $user->fresh()->toArray(),
+        ]);
+    }
+
     public function grantCredits(Request $request, string $id)
     {
         $validated = $request->validate([

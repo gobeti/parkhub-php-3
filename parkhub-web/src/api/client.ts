@@ -70,6 +70,13 @@ export const api = {
 
   // ── Lots ──
   getLots: () => request<ParkingLot[]>('/api/v1/lots'),
+  getLot: (id: string) => request<ParkingLot>(`/api/v1/lots/${id}`),
+  createLot: (data: CreateLotRequest) =>
+    request<ParkingLot>('/api/v1/lots', { method: 'POST', body: JSON.stringify(data) }),
+  updateLot: (id: string, data: UpdateLotRequest) =>
+    request<ParkingLot>(`/api/v1/lots/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteLot: (id: string) =>
+    request<void>(`/api/v1/lots/${id}`, { method: 'DELETE' }),
   getLotSlots: (lotId: string) => request<ParkingSlot[]>(`/api/v1/lots/${lotId}/slots`),
 
   // ── Bookings ──
@@ -113,8 +120,10 @@ export const api = {
   adminDeleteUser: (id: string) => request<void>(`/api/v1/admin/users/${id}`, { method: 'DELETE' }),
   adminUpdateUserRole: (id: string, role: string) =>
     request<User>(`/api/v1/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  adminUpdateUserQuota: (userId: string, monthlyQuota: number) =>
+    request<User>(`/api/v1/admin/users/${userId}/quota`, { method: 'PUT', body: JSON.stringify({ monthly_quota: monthlyQuota }) }),
   adminGrantCredits: (userId: string, amount: number, description?: string) =>
-    request('/api/v1/admin/users/' + userId + '/credits', { method: 'POST', body: JSON.stringify({ amount, description }) }),
+    request(`/api/v1/admin/users/${userId}/credits`, { method: 'POST', body: JSON.stringify({ amount, description }) }),
   adminRefillAll: (amount?: number) =>
     request('/api/v1/admin/credits/refill-all', { method: 'POST', body: JSON.stringify(amount ? { amount } : {}) }),
   adminGetSettings: () => request<Record<string, string>>('/api/v1/admin/settings'),
@@ -180,6 +189,28 @@ export interface ParkingLot {
   daily_max?: number;
   monthly_pass?: number;
   currency?: string;
+}
+
+export interface CreateLotRequest {
+  name: string;
+  address?: string;
+  total_slots: number;
+  hourly_rate?: number;
+  daily_max?: number;
+  monthly_pass?: number;
+  currency?: string;
+  status?: string;
+}
+
+export interface UpdateLotRequest {
+  name?: string;
+  address?: string;
+  total_slots?: number;
+  hourly_rate?: number;
+  daily_max?: number;
+  monthly_pass?: number;
+  currency?: string;
+  status?: string;
 }
 
 export type SlotType = 'standard' | 'compact' | 'large' | 'handicap' | 'electric' | 'motorcycle' | 'reserved' | 'vip';
@@ -252,7 +283,7 @@ export interface AbsencePattern {
 export interface CreditTransaction {
   id: string;
   amount: number;
-  type: 'grant' | 'deduction' | 'refund' | 'monthly_refill';
+  type: 'grant' | 'deduction' | 'refund' | 'monthly_refill' | 'quota_adjustment';
   description?: string;
   created_at: string;
 }
