@@ -291,6 +291,9 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/push/subscribe', [MiscController::class, 'pushSubscribe']);
     Route::get('/webhooks', [MiscController::class, 'webhooks']);
     Route::post('/webhooks', [MiscController::class, 'createWebhook']);
+    Route::put('/webhooks/{id}', [MiscController::class, 'updateWebhook']);
+    Route::delete('/webhooks/{id}', [MiscController::class, 'deleteWebhook']);
+    Route::post('/webhooks/{id}/test', [MiscController::class, 'testWebhook']);
     Route::get('/update/check', function () {
         return response()->json(['update_available' => false, 'current_version' => '1.0.0']);
     });

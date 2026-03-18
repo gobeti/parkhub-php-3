@@ -159,4 +159,41 @@ class MiscController extends Controller
 
         return response()->json(['message' => 'Deleted']);
     }
+
+    public function testWebhook(Request $request, string $id)
+    {
+        if (! $request->user()->isAdmin()) {
+            abort(403, 'Admin access required');
+        }
+
+        $webhook = Webhook::findOrFail($id);
+        $payload = json_encode([
+            'event' => 'test',
+            'timestamp' => now()->toIso8601String(),
+            'data' => ['message' => 'Test webhook delivery from ParkHub'],
+        ]);
+
+        $signature = hash_hmac('sha256', $payload, $webhook->secret);
+
+        try {
+            $response = \Http::timeout(10)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'X-Webhook-Signature' => 'sha256='.$signature,
+                    'User-Agent' => 'ParkHub-Webhook/1.0',
+                ])
+                ->withBody($payload, 'application/json')
+                ->post($webhook->url);
+
+            return response()->json([
+                'success' => $response->successful(),
+                'status_code' => $response->status(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 502);
+        }
+    }
 }
