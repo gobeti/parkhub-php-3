@@ -457,7 +457,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ! $error) {
         case 'self_delete':
             if (@unlink(__FILE__)) {
                 session_destroy();
-                header('Location: '.($formData['app_url'] ?? '/'));
+                // Validate redirect URL — only allow same-origin or root
+                $redirectUrl = $formData['app_url'] ?? '/';
+                $parsed = parse_url($redirectUrl);
+                if (isset($parsed['host']) && $parsed['host'] !== ($_SERVER['HTTP_HOST'] ?? '')) {
+                    $redirectUrl = '/'; // Prevent open redirect
+                }
+                header('Location: '.$redirectUrl);
                 exit;
             } else {
                 $error = 'Could not auto-delete install.php. Please delete it manually.';
