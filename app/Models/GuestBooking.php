@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GuestBooking extends Model
 {
@@ -19,17 +20,17 @@ class GuestBooking extends Model
         return ['start_time' => 'datetime', 'end_time' => 'datetime'];
     }
 
-    public function lot(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function lot(): BelongsTo
     {
         return $this->belongsTo(ParkingLot::class, 'lot_id');
     }
 
-    public function slot(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function slot(): BelongsTo
     {
         return $this->belongsTo(ParkingSlot::class, 'slot_id');
     }
 
-    public function creator(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }

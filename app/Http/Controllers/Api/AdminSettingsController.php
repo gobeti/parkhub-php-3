@@ -3,8 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Absence;
 use App\Models\AuditLog;
+use App\Models\Booking;
+use App\Models\ParkingSlot;
 use App\Models\Setting;
+use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\Webhook;
 use Illuminate\Http\Request;
 
@@ -416,11 +421,11 @@ class AdminSettingsController extends Controller
         $request->validate(['confirm' => 'required|in:RESET']);
         // Delete all user data but keep admin account
         $admin = $request->user();
-        \App\Models\Booking::query()->delete();
-        \App\Models\Absence::query()->delete();
-        \App\Models\Vehicle::query()->delete();
-        \App\Models\ParkingSlot::query()->update(['status' => 'available']);
-        \App\Models\User::where('id', '!=', $admin->id)->delete();
+        Booking::query()->delete();
+        Absence::query()->delete();
+        Vehicle::query()->delete();
+        ParkingSlot::query()->update(['status' => 'available']);
+        User::where('id', '!=', $admin->id)->delete();
         AuditLog::log([
             'user_id' => $admin->id,
             'username' => $admin->username,
