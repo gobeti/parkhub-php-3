@@ -525,21 +525,24 @@ class BookingController extends Controller
             return response()->json(['error' => 'CROSS_LOT_SWAP', 'message' => 'Target slot must belong to the same lot as the current booking'], 422);
         }
 
-        $conflict = Booking::where('slot_id', $request->target_slot_id)
-            ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
-            ->where('start_time', '<', $booking->end_time)
-            ->where('end_time', '>', $booking->start_time)
-            ->exists();
+        return \DB::transaction(function () use ($booking, $newSlot, $request) {
+            $conflict = Booking::where('slot_id', $request->target_slot_id)
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
+                ->where('start_time', '<', $booking->end_time)
+                ->where('end_time', '>', $booking->start_time)
+                ->lockForUpdate()
+                ->exists();
 
-        if ($conflict) {
-            return response()->json(['error' => 'SLOT_UNAVAILABLE'], 409);
-        }
-        $booking->update([
-            'slot_id' => $request->target_slot_id,
-            'slot_number' => $newSlot->slot_number,
-        ]);
+            if ($conflict) {
+                return response()->json(['error' => 'SLOT_UNAVAILABLE'], 409);
+            }
+            $booking->update([
+                'slot_id' => $request->target_slot_id,
+                'slot_number' => $newSlot->slot_number,
+            ]);
 
-        return response()->json($booking->fresh());
+            return response()->json($booking->fresh());
+        });
     }
 
     public function updateNotes(Request $request, string $id)

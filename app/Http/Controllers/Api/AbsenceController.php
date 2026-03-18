@@ -118,15 +118,23 @@ class AbsenceController extends Controller
                 continue;
             }
             $startDate = substr($start[1], 0, 8);
-            $endDate = $end[1] ? substr($end[1], 0, 8) : $startDate;
-            $title = trim($summary[1] ?? '');
+            $endDate = ! empty($end[1]) ? substr($end[1], 0, 8) : $startDate;
+            $title = mb_substr(trim($summary[1] ?? ''), 0, 255);
             $type = str_contains(strtolower($title), 'vacation') || str_contains(strtolower($title), 'urlaub')
                 ? 'vacation' : 'other';
+
+            try {
+                $parsedStart = Carbon::createFromFormat('Ymd', $startDate);
+                $parsedEnd = Carbon::createFromFormat('Ymd', $endDate);
+            } catch (\Exception $e) {
+                continue; // Skip events with unparseable dates
+            }
+
             Absence::create([
                 'user_id' => $user->id,
                 'absence_type' => $request->input('type', $type),
-                'start_date' => Carbon::createFromFormat('Ymd', $startDate)->toDateString(),
-                'end_date' => Carbon::createFromFormat('Ymd', $endDate)->toDateString(),
+                'start_date' => $parsedStart->toDateString(),
+                'end_date' => $parsedEnd->toDateString(),
                 'note' => $title,
                 'source' => 'import',
             ]);

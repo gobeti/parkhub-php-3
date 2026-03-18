@@ -139,7 +139,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::put('/me', [AuthController::class, 'updateMe']);
     Route::get('/users/me', [AuthController::class, 'me']);
     Route::put('/users/me', [AuthController::class, 'updateMe']);
-    Route::get('/users/me/export', [UserController::class, 'exportData']);
+    Route::get('/users/me/export', [UserController::class, 'export']);
 
     // Feature flags — stub for frontend compatibility
     Route::get('/features', function () {
