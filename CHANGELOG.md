@@ -7,6 +7,26 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.3.0] - 2026-03-18
+
+### Added
+- **Demo auto-reset**: Scheduled auto-reset every 6 hours via Laravel scheduler when `DEMO_MODE=true`
+- **Demo status tracking**: `GET /api/v1/demo/status` now returns `last_reset_at`, `next_scheduled_reset`, `reset_in_progress`
+- **DemoOverlay countdown**: Frontend shows time since last reset, countdown to next auto-reset, and reset-in-progress indicator
+
+### Fixed
+- **GDPR export route**: Fixed broken `/users/me/export` route pointing to `exportData` instead of `export`
+- **Swap race condition**: Wrapped slot swap in `DB::transaction()` with `lockForUpdate()` to prevent double-booking
+- **Admin pagination**: Added pagination to admin bookings endpoint (prevent DOS via unbounded query)
+- **Demo reset error handling**: Returns HTTP 500 on failed reset instead of silently swallowing exception
+- **iCal import**: Added date validation and title truncation (prevents 500 on malformed iCal input)
+- **Duplicate scheduling**: Removed duplicate `bookings:auto-release` (ran via both command and job every 5 min)
+
+### Improved
+- **Reset tracking**: `performReset()` now tracks `last_reset_at`, `next_scheduled_reset`, and `reset_in_progress` via Cache
+
+---
+
 ## [1.2.0] - 2026-02-28
 
 ### Added
