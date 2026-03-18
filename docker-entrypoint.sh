@@ -50,4 +50,8 @@ php artisan sanctum:prune-expired --hours=168 2>&1 || true
 php artisan config:cache 2>&1 || true
 php artisan route:cache 2>&1 || true
 
+# Start Laravel scheduler in background (needed for auto-release, demo resets, etc.)
+# Render free tier doesn't support separate worker processes
+(while true; do php artisan schedule:run >> storage/logs/scheduler.log 2>&1; sleep 60; done) &
+
 exec "$@"

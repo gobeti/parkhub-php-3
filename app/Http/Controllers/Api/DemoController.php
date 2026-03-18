@@ -16,6 +16,8 @@ class DemoController extends Controller
 
     private const CACHE_PREFIX = 'demo_';
 
+    private const AUTO_RESET_INTERVAL_HOURS = 6;
+
     public function status(): JsonResponse
     {
         if (! config('parkhub.demo_mode')) {
@@ -42,6 +44,11 @@ class DemoController extends Controller
         $votes = Cache::get(self::CACHE_PREFIX.'votes', []);
         $hasVoted = isset($votes[$ip]);
 
+        // Reset tracking
+        $lastResetAt = Cache::get(self::CACHE_PREFIX.'last_reset_at');
+        $nextScheduledReset = Cache::get(self::CACHE_PREFIX.'next_scheduled_reset');
+        $resetInProgress = (bool) Cache::get(self::CACHE_PREFIX.'reset_in_progress', false);
+
         return response()->json([
             'enabled' => true,
             'timer' => [
@@ -55,6 +62,9 @@ class DemoController extends Controller
                 'has_voted' => $hasVoted,
             ],
             'viewers' => count($viewers),
+            'last_reset_at' => $lastResetAt ? date('c', $lastResetAt) : null,
+            'next_scheduled_reset' => $nextScheduledReset ? date('c', $nextScheduledReset) : null,
+            'reset_in_progress' => $resetInProgress,
         ]);
     }
 
@@ -112,6 +122,9 @@ class DemoController extends Controller
 
     private function performReset(): JsonResponse
     {
+        // Mark reset in progress
+        Cache::put(self::CACHE_PREFIX.'reset_in_progress', true, 300);
+
         // Clear demo state
         Cache::forget(self::CACHE_PREFIX.'votes');
         Cache::forget(self::CACHE_PREFIX.'started_at');
@@ -123,12 +136,20 @@ class DemoController extends Controller
             Artisan::call('db:seed', ['--class' => 'ProductionSimulationSeeder', '--force' => true]);
         } catch (\Exception $e) {
             \Log::error('Demo reset failed: '.$e->getMessage());
+            Cache::forget(self::CACHE_PREFIX.'reset_in_progress');
 
             return response()->json([
                 'error' => 'RESET_FAILED',
                 'message' => 'Demo reset failed. Please try again.',
             ], 500);
         }
+
+        // Update reset tracking
+        $now = now()->timestamp;
+        Cache::put(self::CACHE_PREFIX.'last_reset_at', $now, 86400);
+        Cache::put(self::CACHE_PREFIX.'next_scheduled_reset',
+            $now + (self::AUTO_RESET_INTERVAL_HOURS * 3600), 86400);
+        Cache::forget(self::CACHE_PREFIX.'reset_in_progress');
 
         return response()->json([
             'message' => 'Demo reset! Page will reload.',
