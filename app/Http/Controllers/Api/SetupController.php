@@ -14,15 +14,26 @@ class SetupController extends Controller
 {
     public function status()
     {
-        $completed = Setting::get('setup_completed', 'false') === 'true';
+        $completed = filter_var(Setting::get('setup_completed', false), FILTER_VALIDATE_BOOLEAN);
         $hasAdmin = User::where('role', 'admin')->orWhere('role', 'superadmin')->exists();
 
-        return response()->json(['setup_complete' => $completed,            'setup_completed' => $completed,            'has_admin' => $hasAdmin,            'has_parking_lots' => ParkingLot::count() > 0,            'has_users' => User::count() > 0,            'needs_password_change' => Setting::get('needs_password_change', 'false') === 'true',            'total_lots' => ParkingLot::count(),            'total_users' => User::count()]);
+        $needsPasswordChange = filter_var(Setting::get('needs_password_change', false), FILTER_VALIDATE_BOOLEAN);
+
+        return response()->json([
+            'setup_complete' => $completed,
+            'setup_completed' => $completed,
+            'has_admin' => $hasAdmin,
+            'has_parking_lots' => ParkingLot::count() > 0,
+            'has_users' => User::count() > 0,
+            'needs_password_change' => $needsPasswordChange,
+            'total_lots' => ParkingLot::count(),
+            'total_users' => User::count(),
+        ]);
     }
 
     public function init(Request $request)
     {
-        if (Setting::get('setup_completed') === 'true') {
+        if (filter_var(Setting::get('setup_completed', false), FILTER_VALIDATE_BOOLEAN)) {
             return response()->json(['error' => 'Setup already completed'], 400);
         }
 

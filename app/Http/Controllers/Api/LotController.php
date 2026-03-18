@@ -50,10 +50,14 @@ class LotController extends Controller
     {
         $this->requireAdmin($request);
         $request->validate(['name' => 'required|string', 'total_slots' => 'sometimes|integer|min:1|max:1000']);
-        $lot = ParkingLot::create($request->only(['name', 'address', 'total_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency']));
+
+        $data = $request->only(['name', 'address', 'total_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency']);
+        // Default to 10 slots if not specified — ensures bookings work immediately
+        $data['total_slots'] = $data['total_slots'] ?? 10;
+        $lot = ParkingLot::create($data);
 
         // Auto-generate slots for the new lot based on total_slots
-        $totalSlots = (int) ($lot->total_slots ?? 0);
+        $totalSlots = (int) $lot->total_slots;
         if ($totalSlots > 0) {
             $slots = [];
             for ($i = 1; $i <= $totalSlots; $i++) {
