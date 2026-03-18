@@ -193,15 +193,20 @@ DEMO_MODE=true docker compose up -d
 
 ## Live Demo
 
-Self-hosted — deploy your own instance with Docker Compose (see Quick Start below).
+| | |
+|---|---|
+| **URL** | [parkhub-php-demo.onrender.com](https://parkhub-php-demo.onrender.com) |
+| **Login** | `admin@parkhub-demo.de` / `ParkHub2026!` |
+| **Auto-reset** | Every 6 hours (all data reset to demo state) |
+| **Manual reset** | Vote with other viewers, or reset solo when alone |
 
-To start with pre-seeded German demo data (10 lots, 200 users, ~3,500 bookings):
+> The demo runs on Render free tier and may take ~30 seconds to wake from sleep.
+
+To run your own demo locally with pre-seeded German data (10 lots, 200 users, ~3,500 bookings):
 
 ```bash
 DEMO_MODE=true docker compose up -d
 ```
-
-Login: `admin@parkhub.test` / `ParkHub2026!`
 
 Screenshots are available in the `docs/screenshots/` directory.
 
