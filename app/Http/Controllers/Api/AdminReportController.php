@@ -28,8 +28,9 @@ class AdminReportController extends Controller
     {
         $str = (string) $value;
         if (preg_match('/^[=+\-@\t\r]/', $str)) {
-            return "'" . $str;
+            return "'".$str;
         }
+
         return $str;
     }
 
