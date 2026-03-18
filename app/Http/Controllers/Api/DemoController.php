@@ -122,8 +122,12 @@ class DemoController extends Controller
             Artisan::call('migrate:fresh', ['--force' => true]);
             Artisan::call('db:seed', ['--class' => 'ProductionSimulationSeeder', '--force' => true]);
         } catch (\Exception $e) {
-            // Log but don't fail - timer still resets
-            \Log::warning('Demo reset failed: '.$e->getMessage());
+            \Log::error('Demo reset failed: '.$e->getMessage());
+
+            return response()->json([
+                'error' => 'RESET_FAILED',
+                'message' => 'Demo reset failed. Please try again.',
+            ], 500);
         }
 
         return response()->json([

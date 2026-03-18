@@ -135,7 +135,9 @@ class AdminController extends Controller
             $query->where('end_time', '<=', $request->to_date.' 23:59:59');
         }
 
-        return response()->json($query->get());
+        $perPage = min((int) $request->get('per_page', 100), 500);
+
+        return response()->json($query->paginate($perPage));
     }
 
     public function cancelBooking(Request $request, string $id)
