@@ -196,7 +196,7 @@ DEMO_MODE=true docker compose up -d
 | | |
 |---|---|
 | **URL** | [parkhub-php-demo.onrender.com](https://parkhub-php-demo.onrender.com) |
-| **Login** | `admin@parkhub.demo` / `demo` |
+| **Login** | `admin@parkhub.test` / `demo` |
 | **Auto-reset** | Every 6 hours (all data reset to demo state) |
 | **Manual reset** | Vote with other viewers, or reset solo when alone |
 
