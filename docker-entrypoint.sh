@@ -22,6 +22,13 @@ else
     fi
 fi
 
+# Override .env with Docker env vars (env vars take precedence over .env.example defaults)
+[ -n "$PARKHUB_ADMIN_PASSWORD" ] && sed -i "s|^PARKHUB_ADMIN_PASSWORD=.*|PARKHUB_ADMIN_PASSWORD=$PARKHUB_ADMIN_PASSWORD|" .env
+[ -n "$PARKHUB_ADMIN_EMAIL" ] && sed -i "s|^PARKHUB_ADMIN_EMAIL=.*|PARKHUB_ADMIN_EMAIL=$PARKHUB_ADMIN_EMAIL|" .env
+[ -n "$DEMO_MODE" ] && (grep -q "^DEMO_MODE=" .env && sed -i "s|^DEMO_MODE=.*|DEMO_MODE=$DEMO_MODE|" .env || echo "DEMO_MODE=$DEMO_MODE" >> .env)
+[ -n "$DB_CONNECTION" ] && sed -i "s|^DB_CONNECTION=.*|DB_CONNECTION=$DB_CONNECTION|" .env
+[ -n "$DB_DATABASE" ] && sed -i "s|^DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE|" .env
+
 # Ensure storage directories exist
 mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
