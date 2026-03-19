@@ -7,6 +7,27 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.3.7] - 2026-03-19
+
+### Added
+- **Vehicle tests**: 9 feature tests covering CRUD, ownership isolation, validation, auth guard
+- **Setup tests**: 7 feature tests covering wizard status, admin detection, init flow, validation
+- **Health tests**: 5 feature tests covering liveness, readiness, health check, auth-free access
+- **Notification tests**: 6 feature tests covering list, ownership, mark-as-read, ordering
+- **Frontend Vitest tests**: 33 tests across 3 files (API client, DemoOverlay, Login)
+- **i18n keys**: Added `useCase.*` and `features.*` translation keys in English and German
+- **Use-case context providers**: `UseCaseProvider` and `FeaturesProvider` wired into App.tsx
+
+### Fixed
+- **Setup wizard admin role bug**: `role` was missing from User model `$fillable` — setup wizard created admin with `role=user` instead of `role=admin`. All new installs affected.
+- **AdminSettings use-case dropdown**: Options now match backend presets (company, residential, shared, rental, personal)
+
+### Improved
+- **Test coverage**: 67 PHP tests (160 assertions), 33 frontend vitest tests, all passing
+- **Frontend synced** with Rust edition (identical `parkhub-web/` source)
+
+---
+
 ## [1.3.0] - 2026-03-18
 
 ### Added

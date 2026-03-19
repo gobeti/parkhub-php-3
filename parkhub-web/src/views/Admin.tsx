@@ -6,9 +6,9 @@ import {
 
 const tabs = [
   { name: 'Overview', path: '/admin', icon: ChartBar },
-  { name: 'Lots', path: '/admin/lots', icon: MapPin },
   { name: 'Settings', path: '/admin/settings', icon: GearSix },
   { name: 'Users', path: '/admin/users', icon: Users },
+  { name: 'Lots', path: '/admin/lots', icon: MapPin },
   { name: 'Announcements', path: '/admin/announcements', icon: Megaphone },
   { name: 'Reports', path: '/admin/reports', icon: ChartLine },
 ];
