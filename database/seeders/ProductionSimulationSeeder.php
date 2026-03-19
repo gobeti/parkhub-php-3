@@ -192,7 +192,7 @@ class ProductionSimulationSeeder extends Seeder
                 'name' => 'Administrator',
                 'username' => 'admin',
                 'email' => 'admin@parkhub.test',
-                'password' => Hash::make('ParkHub2026!'),
+                'password' => Hash::make(env('PARKHUB_ADMIN_PASSWORD', 'demo')),
                 'role' => 'superadmin',
                 'department' => 'IT',
                 'is_active' => true,
