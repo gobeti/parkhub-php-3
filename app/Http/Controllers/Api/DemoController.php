@@ -20,7 +20,7 @@ class DemoController extends Controller
 
     public function status(): JsonResponse
     {
-        if (! config('parkhub.test_mode')) {
+        if (! config('parkhub.demo_mode')) {
             return response()->json(['error' => 'Demo mode is not enabled'], 403);
         }
 
@@ -70,7 +70,7 @@ class DemoController extends Controller
 
     public function vote(Request $request): JsonResponse
     {
-        if (! config('parkhub.test_mode')) {
+        if (! config('parkhub.demo_mode')) {
             return response()->json(['error' => 'Demo mode is not enabled'], 403);
         }
 
@@ -102,7 +102,7 @@ class DemoController extends Controller
 
     public function reset(Request $request): JsonResponse
     {
-        if (! config('parkhub.test_mode')) {
+        if (! config('parkhub.demo_mode')) {
             return response()->json(['error' => 'Demo mode is not enabled'], 403);
         }
 
@@ -162,7 +162,7 @@ class DemoController extends Controller
     public function config(): JsonResponse
     {
         return response()->json([
-            'demo_mode' => config('parkhub.test_mode', false),
+            'demo_mode' => (bool) config('parkhub.demo_mode'),
         ]);
     }
 }
