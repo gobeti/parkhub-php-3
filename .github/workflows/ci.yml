@@ -43,15 +43,11 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
       - name: Cache Composer dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Validate composer.json
@@ -66,13 +62,7 @@ jobs:
       - name: Generate key
         run: php artisan key:generate
 
-      - name: Run migrations (SQLite for speed)
-        run: php artisan migrate --force
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ":memory:"
-
-      - name: Run tests
+      - name: Run tests (SQLite in-memory)
         run: php artisan test
         env:
           DB_CONNECTION: sqlite
@@ -95,28 +85,28 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
       - name: Cache Composer dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Install dependencies (dev included for pint)
+      - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Run Laravel Pint (code style check)
+      - name: Run Laravel Pint
         run: ./vendor/bin/pint --test
 
   frontend:
-    name: Frontend Lint
+    name: Frontend Build & Test
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
+    defaults:
+      run:
+        working-directory: parkhub-web
 
     steps:
       - uses: actions/checkout@v4
@@ -124,14 +114,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
+          cache-dependency-path: parkhub-web/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: TypeScript check
-        run: npx tsc --noEmit
+      - name: Run Vitest
+        run: npx vitest run
 
       - name: Build frontend
         run: npm run build
@@ -139,7 +130,7 @@ jobs:
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
-    needs: [test, lint]
+    needs: [test, lint, frontend]
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: read
@@ -148,13 +139,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
-          tags: nash87/parkhub-php:latest
+          tags: ghcr.io/nash87/parkhub-php:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
