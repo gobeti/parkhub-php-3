@@ -263,10 +263,7 @@ export function AdminSettingsPage() {
 
           {/* License Plate Mode */}
           <div className="card p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-surface-900 dark:text-white flex items-center gap-2">
-              <Car weight="fill" className="w-5 h-5 text-primary-600" />
-              License Plate
-            </h3>
+            <h3 className="text-sm font-semibold text-surface-900 dark:text-white uppercase tracking-wide">License Plate</h3>
 
             <div>
               <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
