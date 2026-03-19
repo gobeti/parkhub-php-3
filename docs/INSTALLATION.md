@@ -59,7 +59,7 @@ This starts four containers:
 Visit **http://localhost:8080**. The container entrypoint automatically:
 
 1. Runs all pending database migrations
-2. Creates a default admin account: username `admin`, password `ParkHub2026!`
+2. Creates a default admin account: username `admin`, password `demo`
 3. Caches the Laravel configuration and routes
 
 The setup wizard guides you through:
@@ -662,7 +662,7 @@ curl https://parking.yourdomain.com/api/v1/health/ready
 After installation:
 
 - [ ] Login at `APP_URL` succeeds with admin credentials
-- [ ] Admin password changed from the default `ParkHub2026!` to a strong unique password
+- [ ] Admin password changed from the default `demo` to a strong unique password
 - [ ] `APP_DEBUG=false` and `APP_ENV=production` in `.env`
 - [ ] HTTPS active (certificate installed via certbot or reverse proxy)
 - [ ] `php artisan config:cache` run (speeds up startup, required for production)

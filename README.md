@@ -172,12 +172,12 @@ docker compose up -d
 
 Open **http://localhost:8080** in your browser.
 
-Default credentials (Docker): `admin@parkhub.test` / `ParkHub2026!` — **change immediately after login**.
+Default credentials (Docker): `admin@parkhub.test` / `demo` — **change immediately after login**.
 
 The container entrypoint automatically:
 1. Generates the Laravel `APP_KEY` if not set
 2. Runs database migrations
-3. Creates a default admin account (`admin@parkhub.test` / `ParkHub2026!`)
+3. Creates a default admin account (`admin@parkhub.test` / `demo`)
 
 To use custom credentials from the start:
 ```bash
@@ -196,7 +196,7 @@ DEMO_MODE=true docker compose up -d
 | | |
 |---|---|
 | **URL** | [parkhub-php-demo.onrender.com](https://parkhub-php-demo.onrender.com) |
-| **Login** | `admin@parkhub-demo.de` / `ParkHub2026!` |
+| **Login** | `admin@parkhub.demo` / `demo` |
 | **Auto-reset** | Every 6 hours (all data reset to demo state) |
 | **Manual reset** | Vote with other viewers, or reset solo when alone |
 
@@ -351,7 +351,7 @@ Key environment variables (full list in [docs/CONFIGURATION.md](docs/CONFIGURATI
 | `QUEUE_CONNECTION` | `database` | `database`, `sync`, or `redis` |
 | `BCRYPT_ROUNDS` | `12` | Password hashing cost (higher = slower = safer) |
 | `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.test` | Initial admin email (Docker / `install.php`) |
-| `PARKHUB_ADMIN_PASSWORD` | `ParkHub2026!` | Initial admin password — **change immediately** |
+| `PARKHUB_ADMIN_PASSWORD` | `demo` | Initial admin password — **change immediately** |
 | `DEMO_MODE` | `false` | Set `true` to seed German demo data on container start |
 
 ---
@@ -363,7 +363,7 @@ Quick example — list parking lots:
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"ParkHub2026!"}' | jq -r '.tokens.access_token')
+  -d '{"username":"admin","password":"demo"}' | jq -r '.tokens.access_token')
 
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/lots
 ```
