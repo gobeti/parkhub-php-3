@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   UserCircle, Envelope, Shield, PencilSimple, FloppyDisk, SpinnerGap, Lock,
@@ -89,6 +89,26 @@ export function ProfilePage() {
       toast.success(t('gdpr.deleted', 'Konto gel\u00f6scht'));
       logout();
     } catch { toast.error('L\u00f6schen fehlgeschlagen'); }
+  }
+
+  function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
+    const [display, setDisplay] = useState(0);
+    const rafRef = useRef<number>(0);
+    useEffect(() => {
+      if (value === 0) { setDisplay(0); return; }
+      const duration = 600;
+      const start = performance.now();
+      function tick(now: number) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplay(Math.round(eased * value));
+        if (progress < 1) rafRef.current = requestAnimationFrame(tick);
+      }
+      rafRef.current = requestAnimationFrame(tick);
+      return () => cancelAnimationFrame(rafRef.current);
+    }, [value]);
+    return <>{display}{suffix}</>;
   }
 
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
