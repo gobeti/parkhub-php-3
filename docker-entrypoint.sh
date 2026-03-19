@@ -27,8 +27,9 @@ mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
 # Demo mode: fresh DB + seed with realistic data on every container start
+# SEED_DEMO_DATA=true: seed data once in production mode (no demo UI/auto-reset)
 # Non-demo: incremental migrations only
-if [ "${DEMO_MODE}" = "true" ]; then
+if [ "${DEMO_MODE}" = "true" ] || [ "${SEED_DEMO_DATA}" = "true" ]; then
     echo "DEMO_MODE=true — running migrate:fresh + ProductionSimulationSeeder..."
     php artisan migrate:fresh --force 2>&1 || { echo "WARNING: Migrations failed"; }
     php artisan db:seed --class=ProductionSimulationSeeder --force 2>&1 || { echo "WARNING: Demo seeding failed"; }
