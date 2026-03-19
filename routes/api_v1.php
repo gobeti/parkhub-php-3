@@ -86,6 +86,7 @@ Route::middleware('throttle:5,1')->group(function () {
 // Public
 Route::get('/public/occupancy', [PublicController::class, 'occupancy']);
 Route::get('/public/display', [PublicController::class, 'display']);
+Route::get('/theme', [AdminSettingsController::class, 'getPublicTheme']);
 
 // VAPID public key for push subscriptions
 Route::get('/push/vapid-key', function () {
@@ -229,6 +230,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         // Settings
         Route::get('/settings', [AdminSettingsController::class, 'getSettings']);
         Route::put('/settings', [AdminSettingsController::class, 'updateSettings']);
+        Route::get('/settings/use-case', [AdminSettingsController::class, 'getUseCase']);
 
         // User management
         Route::get('/users', [AdminController::class, 'users']);
