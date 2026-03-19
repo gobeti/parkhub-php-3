@@ -56,18 +56,42 @@ jobs:
       - name: Ensure Render env vars
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          for kv in "DEMO_MODE=true" "PARKHUB_ADMIN_PASSWORD=demo" "DB_CONNECTION=sqlite" "DB_DATABASE=/var/www/html/database/database.sqlite" "LOG_CHANNEL=stderr"; do
-            KEY="${kv%%=*}"
-            VALUE="${kv#*=}"
-            curl -sf -X PUT "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/env-vars/${KEY}" \
-              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-              -H "Content-Type: application/json" \
-              -d "{\"value\":\"${VALUE}\"}" 2>/dev/null || \
-            curl -sf -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/env-vars" \
-              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-              -H "Content-Type: application/json" \
-              -d "[{\"key\":\"${KEY}\",\"value\":\"${VALUE}\"}]" 2>/dev/null || true
-          done
+          # Render API v1: PUT /env-vars replaces ALL env vars, so we must
+          # fetch existing, merge desired keys, then PUT the full set back.
+          SVC="https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}"
+          AUTH="Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+
+          # Fetch current env vars
+          CURRENT=$(curl -sf "$SVC/env-vars" -H "$AUTH" 2>/dev/null || echo "[]")
+
+          # Build merged JSON: update/add our keys, keep everything else
+          MERGED=$(echo "$CURRENT" | python3 -c "
+          import sys, json
+          current = json.load(sys.stdin)
+          if isinstance(current, list):
+              env = {e['key']: e['value'] for e in current}
+          else:
+              env = current.get('envVars', {}) if isinstance(current, dict) else {}
+          # Set required demo env vars
+          env['DEMO_MODE'] = 'true'
+          env['PARKHUB_ADMIN_PASSWORD'] = 'demo'
+          env['PARKHUB_ADMIN_EMAIL'] = 'admin@parkhub.test'
+          env['DB_CONNECTION'] = 'sqlite'
+          env['DB_DATABASE'] = '/var/www/html/database/database.sqlite'
+          env['LOG_CHANNEL'] = 'stderr'
+          env['APP_ENV'] = 'production'
+          env['APP_DEBUG'] = 'false'
+          env.setdefault('APP_URL', 'https://parkhub-php-demo.onrender.com')
+          env.setdefault('SESSION_DRIVER', 'file')
+          env.setdefault('CACHE_STORE', 'file')
+          env.setdefault('MAIL_MAILER', 'log')
+          print(json.dumps([{'key': k, 'value': v} for k, v in env.items()]))
+          ")
+
+          # PUT the merged set
+          curl -sf -X PUT "$SVC/env-vars" \
+            -H "$AUTH" -H "Content-Type: application/json" \
+            -d "$MERGED" || echo "WARNING: Failed to set env vars"
 
       - name: Deploy to Render
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
