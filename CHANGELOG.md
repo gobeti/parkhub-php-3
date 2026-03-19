@@ -7,6 +7,31 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.4.8] - 2026-03-19
+
+### Design
+- **Full UI overhaul**: Eliminated AI slop patterns across all views
+- Welcome, Login, Dashboard, Bookings, Profile, Admin — all redesigned
+- System font, tight tracking, 12px cards, 8px buttons, solid backgrounds
+- Left-aligned layouts, no floating shapes, no icons-in-circles
+
+### Added
+- **434 tests**: 150 PHP (376 assertions) + 137 frontend vitest + 147 Rust
+- **Maestro E2E**: 5 browser flows
+- **Skeleton loading, micro-interactions, animated stats**
+- **i18n**: 50+ keys (EN + DE) including nav.team, nav.calendar, nav.notifications
+- **Dynamic version from package.json**
+
+### Fixed
+- Setup wizard admin role ($fillable missing 'role')
+- DemoController wrong config key (test_mode → demo_mode)
+- Docker entrypoint .env override for env vars
+- GDPR anonymize audit_log table name
+- FeaturesContext crash (missing API method)
+- 2 Dependabot vulnerabilities (flatted, league/commonmark)
+
+---
+
 ## [1.3.7] - 2026-03-19
 
 ### Added
