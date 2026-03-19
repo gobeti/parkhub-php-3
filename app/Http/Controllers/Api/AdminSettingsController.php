@@ -29,7 +29,7 @@ class AdminSettingsController extends Controller
         $settings = Setting::all()->pluck('value', 'key')->toArray();
         $defaults = [
             'company_name' => 'ParkHub',
-            'use_case' => 'corporate',
+            'use_case' => 'company',
             'self_registration' => 'true',
             'license_plate_mode' => 'optional',
             'display_name_format' => 'first_name',
@@ -433,5 +433,71 @@ class AdminSettingsController extends Controller
         ]);
 
         return response()->json(['message' => 'Database reset. All user data deleted.']);
+    }
+
+    private static function useCaseTheme(string $key): array
+    {
+        $themes = [
+            'company' => [
+                'key' => 'company', 'name' => 'Company Parking',
+                'description' => 'Employee parking for offices and campuses',
+                'icon' => 'buildings', 'primary_color' => '#0d9488', 'accent_color' => '#0ea5e9',
+                'terminology' => ['user' => 'Employee', 'users' => 'Employees', 'lot' => 'Parking Area', 'slot' => 'Spot', 'booking' => 'Reservation', 'department' => 'Department'],
+                'features_emphasis' => ['team_calendar', 'absence_tracking', 'departments', 'credits'],
+            ],
+            'residential' => [
+                'key' => 'residential', 'name' => 'Residential Parking',
+                'description' => 'Parking for apartment buildings and housing complexes',
+                'icon' => 'house-line', 'primary_color' => '#059669', 'accent_color' => '#84cc16',
+                'terminology' => ['user' => 'Resident', 'users' => 'Residents', 'lot' => 'Parking Area', 'slot' => 'Space', 'booking' => 'Reservation', 'department' => 'Unit'],
+                'features_emphasis' => ['guest_parking', 'long_term_bookings', 'public_display'],
+            ],
+            'shared' => [
+                'key' => 'shared', 'name' => 'Shared Parking',
+                'description' => 'Community or co-working parking spaces',
+                'icon' => 'users-three', 'primary_color' => '#7c3aed', 'accent_color' => '#06b6d4',
+                'terminology' => ['user' => 'Member', 'users' => 'Members', 'lot' => 'Parking Zone', 'slot' => 'Spot', 'booking' => 'Booking', 'department' => 'Group'],
+                'features_emphasis' => ['quick_book', 'waitlist', 'public_display', 'qr_codes'],
+            ],
+            'rental' => [
+                'key' => 'rental', 'name' => 'Rental / Commercial',
+                'description' => 'Paid parking for customers and tenants',
+                'icon' => 'currency-circle-dollar', 'primary_color' => '#2563eb', 'accent_color' => '#f59e0b',
+                'terminology' => ['user' => 'Customer', 'users' => 'Customers', 'lot' => 'Parking Facility', 'slot' => 'Bay', 'booking' => 'Rental', 'department' => 'Account'],
+                'features_emphasis' => ['invoicing', 'pricing', 'revenue_reports', 'guest_bookings'],
+            ],
+            'personal' => [
+                'key' => 'personal', 'name' => 'Personal / Private',
+                'description' => 'Private parking for family and friends',
+                'icon' => 'car-simple', 'primary_color' => '#e11d48', 'accent_color' => '#f97316',
+                'terminology' => ['user' => 'Person', 'users' => 'People', 'lot' => 'Driveway', 'slot' => 'Spot', 'booking' => 'Booking', 'department' => 'Group'],
+                'features_emphasis' => ['simple_booking', 'guest_parking'],
+            ],
+        ];
+
+        return $themes[$key] ?? $themes['personal'];
+    }
+
+    public function getUseCase(Request $request)
+    {
+        $this->requireAdmin($request);
+        $current = Setting::get('use_case', 'company');
+        $allOptions = array_map(fn ($k) => self::useCaseTheme($k), ['company', 'residential', 'shared', 'rental', 'personal']);
+
+        return response()->json([
+            'success' => true,
+            'data' => ['current' => self::useCaseTheme($current), 'available' => $allOptions],
+        ]);
+    }
+
+    public static function getPublicTheme()
+    {
+        $useCase = Setting::get('use_case', 'company');
+        $companyName = Setting::get('company_name', 'ParkHub');
+
+        return response()->json([
+            'success' => true,
+            'data' => ['use_case' => self::useCaseTheme($useCase), 'company_name' => $companyName],
+        ]);
     }
 }
