@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -33,13 +33,11 @@ export function Layout() {
     navigate('/welcome');
   }
 
-  const handleSidebarKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') setSidebarOpen(false);
-  }, []);
-
   return (
     <div className="min-h-dvh bg-surface-50 dark:bg-surface-950 flex">
+      {/* Skip to content */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg">Skip to content</a>
+
       {/* Sidebar — desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 p-4 sticky top-0 h-dvh">
         {/* Logo */}
@@ -163,7 +161,6 @@ export function Layout() {
                 className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-surface-900 z-50 p-4 lg:hidden"
                 role="dialog"
                 aria-label="Navigation menu"
-                onKeyDown={handleSidebarKeyDown}
               >
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">

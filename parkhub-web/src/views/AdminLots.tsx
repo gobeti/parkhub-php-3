@@ -4,10 +4,8 @@ import {
   MapPin, Plus, PencilSimple, Trash, SpinnerGap, Check, X,
   MagnifyingGlass, CheckCircle, Prohibit, CurrencyEur,
 } from '@phosphor-icons/react';
-import { api, type ParkingLot, type CreateLotRequest, type UpdateLotRequest } from '../api/client';
+import { api, type ParkingLot, type CreateLotRequest, type UpdateLotRequest, type LotStatus } from '../api/client';
 import toast from 'react-hot-toast';
-
-type LotStatus = 'open' | 'closed' | 'full' | 'maintenance';
 
 interface LotForm {
   name: string;
@@ -196,7 +194,7 @@ export function AdminLotsPage() {
               onChange={e => setSearch(e.target.value)}
               placeholder="Search lots..."
               className="input pl-9 w-56"
-              aria-label="Search lots"
+              aria-label="Search parking lots"
             />
           </div>
           <button onClick={openCreate} className="btn btn-primary">
@@ -254,9 +252,9 @@ export function AdminLotsPage() {
               {/* Row 2: Slots + Status + Currency */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div>
-                  <label htmlFor="lot-total_slots" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Total Slots *</label>
+                  <label htmlFor="lot-total-slots" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Total Slots *</label>
                   <input
-                    id="lot-total_slots"
+                    id="lot-total-slots"
                     type="number"
                     min={1}
                     max={1000}
@@ -266,8 +264,8 @@ export function AdminLotsPage() {
                   />
                 </div>
                 <div>
-                  <label id="lot-status" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Status</label>
-                  <div className="flex flex-wrap gap-2" role="group" aria-labelledby="lot-status">
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Status</label>
+                  <div className="flex flex-wrap gap-2">
                     {(Object.keys(statusConfig) as LotStatus[]).map(s => {
                       const cfg = statusConfig[s];
                       const isSelected = form.status === s;
@@ -307,11 +305,11 @@ export function AdminLotsPage() {
               {/* Row 3: Pricing */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div>
-                  <label htmlFor="lot-hourly_rate" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Hourly Rate</label>
+                  <label htmlFor="lot-hourly-rate" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Hourly Rate</label>
                   <div className="relative">
                     <CurrencyEur weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                     <input
-                      id="lot-hourly_rate"
+                      id="lot-hourly-rate"
                       type="number"
                       min={0}
                       step="0.01"
@@ -323,11 +321,11 @@ export function AdminLotsPage() {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="lot-daily_max" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Daily Max</label>
+                  <label htmlFor="lot-daily-max" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Daily Max</label>
                   <div className="relative">
                     <CurrencyEur weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                     <input
-                      id="lot-daily_max"
+                      id="lot-daily-max"
                       type="number"
                       min={0}
                       step="0.01"
@@ -339,11 +337,11 @@ export function AdminLotsPage() {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="lot-monthly_pass" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Monthly Pass</label>
+                  <label htmlFor="lot-monthly-pass" className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Monthly Pass</label>
                   <div className="relative">
                     <CurrencyEur weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                     <input
-                      id="lot-monthly_pass"
+                      id="lot-monthly-pass"
                       type="number"
                       min={0}
                       step="0.01"
