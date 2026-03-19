@@ -54,7 +54,9 @@ php artisan vapid:generate 2>&1 || true
 # Prune expired Sanctum tokens (7 day expiry = 168 hours)
 php artisan sanctum:prune-expired --hours=168 2>&1 || true
 
-# Cache config for production
+# Clear old cache then rebuild — ensures Docker env vars are picked up
+php artisan config:clear 2>&1 || true
+php artisan route:clear 2>&1 || true
 php artisan config:cache 2>&1 || true
 php artisan route:cache 2>&1 || true
 
