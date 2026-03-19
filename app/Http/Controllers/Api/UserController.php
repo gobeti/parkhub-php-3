@@ -293,7 +293,7 @@ class UserController extends Controller
         PushSubscription::where('user_id', $user->id)->delete();
 
         // Anonymize audit logs — strip IP and identifying details
-        DB::table('audit_logs')->where('user_id', $user->id)->update([
+        DB::table('audit_log')->where('user_id', $user->id)->update([
             'username' => 'deleted-user',
             'ip_address' => '0.0.0.0',
             'details' => null,
