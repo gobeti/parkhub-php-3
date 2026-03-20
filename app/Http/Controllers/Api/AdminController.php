@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\BookingResource;
+use App\Http\Resources\ParkingSlotResource;
+use App\Http\Resources\UserResource;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\GuestBooking;
@@ -65,7 +68,7 @@ class AdminController extends Controller
         }
 
         // Return via toArray() to respect $hidden
-        return response()->json($user->fresh()->toArray());
+        return UserResource::make($user->fresh());
     }
 
     public function deleteUser(Request $request, string $id)
@@ -154,7 +157,7 @@ class AdminController extends Controller
             'details' => ['booking_id' => $id],
         ]);
 
-        return response()->json($booking->fresh());
+        return BookingResource::make($booking->fresh());
     }
 
     // ── Guest Bookings ────────────────────────────────────────────────────────
@@ -176,7 +179,10 @@ class AdminController extends Controller
             $query->where('end_time', '<=', $request->to_date.' 23:59:59');
         }
 
-        $guests = $query->get()->map(function ($g) {
+        $perPage = min((int) $request->get('per_page', 50), 200);
+        $paginated = $query->paginate($perPage);
+
+        $guests = collect($paginated->items())->map(function ($g) {
             return [
                 'id' => $g->id,
                 'guest_name' => $g->guest_name,
@@ -199,7 +205,12 @@ class AdminController extends Controller
             'success' => true,
             'data' => $guests,
             'error' => null,
-            'meta' => null,
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'last_page' => $paginated->lastPage(),
+            ],
         ]);
     }
 
@@ -258,7 +269,7 @@ class AdminController extends Controller
         $slot = ParkingSlot::findOrFail($id);
         $slot->update($request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']));
 
-        return response()->json($slot->fresh());
+        return ParkingSlotResource::make($slot->fresh());
     }
 
     public function deleteLot(Request $request, string $id)

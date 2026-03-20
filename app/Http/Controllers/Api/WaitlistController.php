@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\WaitlistEntryResource;
 use App\Models\Setting;
 use App\Models\WaitlistEntry;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class WaitlistController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        return response()->json(['success' => true, 'data' => $entries]);
+        return response()->json(['success' => true, 'data' => WaitlistEntryResource::collection($entries)]);
     }
 
     public function store(Request $request)
@@ -38,7 +39,7 @@ class WaitlistController extends Controller
             'lot_id' => $request->lot_id,
         ]);
 
-        return response()->json(['success' => true, 'data' => $entry], 201);
+        return response()->json(['success' => true, 'data' => WaitlistEntryResource::make($entry)], 201);
     }
 
     public function destroy(Request $request, string $id)
