@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | HSTS (HTTP Strict Transport Security)
+    |--------------------------------------------------------------------------
+    |
+    | Enable to add the Strict-Transport-Security header to all responses.
+    | Only enable when TLS termination is confirmed (reverse proxy or PaaS).
+    | Default: false (safe for local dev and HTTP-only setups).
+    |
+    */
+
+    'hsts' => (bool) env('APP_HSTS', false),
+
 ];
