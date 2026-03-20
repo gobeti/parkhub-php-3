@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Mail\PasswordResetEmail;
+use App\Jobs\SendPasswordResetNotificationJob;
 use App\Mail\WelcomeEmail;
 use App\Models\AuditLog;
 use App\Models\Setting;
@@ -220,10 +220,14 @@ class AuthController extends Controller
 
             $appUrl = config('app.url', 'http://localhost');
 
-            // Queue the email — non-blocking, fails silently if mail not configured
+            // Dispatch password reset email via job queue
             if ($user->email) {
-                Mail::to($user->email)
-                    ->queue(new PasswordResetEmail($user->name, $token, $appUrl));
+                SendPasswordResetNotificationJob::dispatch(
+                    $user->email,
+                    $user->name,
+                    $token,
+                    $appUrl,
+                );
             }
         }
 

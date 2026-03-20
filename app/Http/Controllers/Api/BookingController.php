@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\GuestBookingResource;
 use App\Http\Resources\SwapRequestResource;
+use App\Jobs\SendBookingConfirmationJob;
 use App\Jobs\SendWebhookJob;
-use App\Mail\BookingConfirmation;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\BookingNote;
@@ -23,7 +23,6 @@ use App\Models\Webhook;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class BookingController extends Controller
@@ -252,11 +251,8 @@ class BookingController extends Controller
             'details' => ['booking_id' => $booking->id, 'slot' => $booking->slot_number],
         ]);
 
-        // Send booking confirmation email (queued — non-blocking)
-        $recipient = $request->user();
-        if ($recipient->email) {
-            Mail::to($recipient->email)->queue(new BookingConfirmation($booking, $recipient));
-        }
+        // Send booking confirmation email via job queue
+        SendBookingConfirmationJob::dispatch($booking->id, $request->user()->id);
 
         // Dispatch webhook events
         foreach (Webhook::where('active', true)->get() as $webhook) {
