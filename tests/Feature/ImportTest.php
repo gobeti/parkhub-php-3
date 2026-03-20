@@ -14,7 +14,7 @@ class ImportTest extends TestCase
     {
         $lines = ["BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//Test//EN"];
         foreach ($events as $event) {
-            $lines[] = "BEGIN:VEVENT";
+            $lines[] = 'BEGIN:VEVENT';
             $lines[] = "DTSTART;VALUE=DATE:{$event['start']}";
             if (isset($event['end'])) {
                 $lines[] = "DTEND;VALUE=DATE:{$event['end']}";
@@ -22,9 +22,9 @@ class ImportTest extends TestCase
             if (isset($event['summary'])) {
                 $lines[] = "SUMMARY:{$event['summary']}";
             }
-            $lines[] = "END:VEVENT";
+            $lines[] = 'END:VEVENT';
         }
-        $lines[] = "END:VCALENDAR";
+        $lines[] = 'END:VCALENDAR';
 
         return implode("\r\n", $lines);
     }
