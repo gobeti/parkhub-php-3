@@ -181,6 +181,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Recurring
     Route::get('/recurring-bookings', [RecurringBookingController::class, 'index']);
     Route::post('/recurring-bookings', [RecurringBookingController::class, 'store']);
+    Route::put('/recurring-bookings/{id}', [RecurringBookingController::class, 'update']);
     Route::delete('/recurring-bookings/{id}', [RecurringBookingController::class, 'destroy']);
 
     // Absences (maps homeoffice + vacation to unified absences)
@@ -206,6 +207,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/vacation/team', [TeamController::class, 'index']);
     Route::get('/absences', [AbsenceController::class, 'index']);
     Route::post('/absences', [AbsenceController::class, 'store']);
+    Route::put('/absences/{id}', [AbsenceController::class, 'update']);
     Route::delete('/absences/{id}', [AbsenceController::class, 'destroy']);
 
     // Vehicles
