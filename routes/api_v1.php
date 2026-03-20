@@ -36,8 +36,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
-// Auth — rate limited: 10 attempts per minute per IP to prevent brute force
-Route::middleware('throttle:10,1')->group(function () {
+// Auth — rate limited: 5 attempts per minute per IP to prevent brute force
+Route::middleware('throttle:auth')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/register', [AuthController::class, 'register']);
 });
@@ -45,7 +45,7 @@ Route::middleware('throttle:10,1')->group(function () {
 // Setup — status is always public; mutation endpoints are blocked once setup is completed
 Route::get('/setup/status', [SetupController::class, 'status']);
 Route::post('/setup', [SetupController::class, 'init']);
-Route::middleware('throttle:5,1')->group(function () {
+Route::middleware('throttle:setup')->group(function () {
     Route::post('/setup/change-password', function (Request $request) {
         // Guard: reject if setup is already completed
         if (Setting::get('setup_completed') === 'true') {
@@ -126,15 +126,15 @@ Route::get('/announcements/active', function () {
 Route::prefix('demo')->group(function () {
     Route::get('/status', [DemoController::class, 'status']);
     Route::get('/config', [DemoController::class, 'config']);
-    // POST endpoints rate-limited: 3 per minute per IP
-    Route::middleware('throttle:3,1')->group(function () {
+    // POST endpoints rate-limited: 2 per minute per IP (heavy DB operations)
+    Route::middleware('throttle:demo-action')->group(function () {
         Route::post('/vote', [DemoController::class, 'vote']);
         Route::post('/reset', [DemoController::class, 'reset']);
     });
 });
 
 // Protected
-Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Auth (protected)
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 
@@ -318,7 +318,7 @@ Route::get('/health/ready', [HealthController::class, 'ready']);
 // Impressum — public (DDG § 5 requires it to be freely accessible)
 Route::get('/legal/impressum', [AdminSettingsController::class, 'publicImpress']);
 
-Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // iCal export
     Route::get('/user/calendar.ics', [UserController::class, 'calendarExport']);
 
@@ -350,8 +350,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 Route::get('/system/version', [SystemController::class, 'version']);
 Route::get('/system/maintenance', [SystemController::class, 'maintenance']);
 
-// Auth (public) — rate limited: 5 password resets per 15 min per IP
-Route::middleware('throttle:5,15')->group(function () {
+// Auth (public) — rate limited: 3 password resets per 15 min per IP
+Route::middleware('throttle:password-reset')->group(function () {
     Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 });
@@ -359,7 +359,7 @@ Route::middleware('throttle:5,15')->group(function () {
 // Branding logo (public)
 Route::get('/branding/logo', [AdminSettingsController::class, 'serveBrandingLogo']);
 
-Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // Auth (protected)
     Route::patch('/users/me/password', [AuthController::class, 'changePassword']);

@@ -17,8 +17,12 @@ $extraOrigins = env('APP_EXTRA_ALLOWED_ORIGINS')
 
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
-    'allowed_methods' => ['*'],
+
+    // Explicit methods — no wildcard. Only what the API actually uses.
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+
     'allowed_origins' => array_values(array_unique(array_merge($baseOrigins, $extraOrigins))),
+
     // Specific origin patterns can be added via APP_EXTRA_ALLOWED_ORIGINS env var
     // (comma-separated). Do NOT use wildcard patterns for PaaS provider domains
     // as they would allow any tenant on those platforms to make cross-origin requests.
@@ -26,8 +30,24 @@ return [
         // Allow demos page on GitHub Pages
         '^https://nash87\.github\.io$',
     ]),
-    'allowed_headers' => ['*'],
-    'exposed_headers' => [],
+
+    // Explicit headers — only what the frontend actually sends.
+    'allowed_headers' => [
+        'Content-Type',
+        'Authorization',
+        'Accept',
+        'X-Requested-With',
+        'X-XSRF-TOKEN',
+        'Origin',
+    ],
+
+    'exposed_headers' => [
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'Retry-After',
+    ],
+
     'max_age' => 86400,
+
     'supports_credentials' => false,
 ];

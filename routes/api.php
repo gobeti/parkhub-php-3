@@ -29,13 +29,13 @@ Route::get('/health', function () {
 });
 
 // Public routes (no auth) — rate limited to prevent brute-force and registration spam
-Route::middleware('throttle:10,1')->group(function () {
+Route::middleware('throttle:auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
 });
 
-// Password reset — tighter rate limit (5 attempts per 15 minutes)
-Route::middleware('throttle:5,15')->group(function () {
+// Password reset — tighter rate limit (3 per 15 min per IP)
+Route::middleware('throttle:password-reset')->group(function () {
     Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 });
