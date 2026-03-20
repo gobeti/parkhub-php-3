@@ -23,15 +23,12 @@ url: ${BASE_URL}
 # Enter credentials
 - tapOn:
     id: "username"
-- eraseText: 50
 - inputText: "admin@parkhub.test"
-
 - tapOn:
     id: "password"
-- eraseText: 50
 - inputText: "demo"
 
-# Click submit button by ID
+# Submit login
 - tapOn:
     id: "login-submit"
 
