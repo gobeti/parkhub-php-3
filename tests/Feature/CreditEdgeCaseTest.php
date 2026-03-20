@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\CreditTransaction;
-use App\Models\ParkingLot;
-use App\Models\ParkingSlot;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

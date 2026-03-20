@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Absence;
 use App\Models\Booking;
 use App\Models\Favorite;
 use App\Models\Notification;
