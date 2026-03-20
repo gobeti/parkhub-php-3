@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\VehicleResource;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -11,7 +12,7 @@ class VehicleController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(Vehicle::where('user_id', $request->user()->id)->get());
+        return VehicleResource::collection(Vehicle::where('user_id', $request->user()->id)->get());
     }
 
     public function store(Request $request)
@@ -22,7 +23,7 @@ class VehicleController extends Controller
             ['user_id' => $request->user()->id]
         ));
 
-        return response()->json($vehicle, 201);
+        return VehicleResource::make($vehicle)->response()->setStatusCode(201);
     }
 
     public function update(Request $request, string $id)
@@ -30,7 +31,7 @@ class VehicleController extends Controller
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
         $vehicle->update($request->only(['plate', 'make', 'model', 'color', 'is_default']));
 
-        return response()->json($vehicle);
+        return VehicleResource::make($vehicle);
     }
 
     public function destroy(Request $request, string $id)

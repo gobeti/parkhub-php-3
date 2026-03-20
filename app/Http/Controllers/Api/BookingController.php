@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\BookingResource;
+use App\Http\Resources\GuestBookingResource;
+use App\Http\Resources\SwapRequestResource;
 use App\Jobs\SendWebhookJob;
 use App\Mail\BookingConfirmation;
 use App\Models\AuditLog;
@@ -38,7 +41,7 @@ class BookingController extends Controller
             $query->where('end_time', '<=', $request->to_date);
         }
 
-        return response()->json($query->orderBy('start_time', 'desc')->get());
+        return BookingResource::collection($query->orderBy('start_time', 'desc')->get());
     }
 
     public function store(Request $request)
@@ -268,7 +271,7 @@ class BookingController extends Controller
             }
         }
 
-        return response()->json($booking, 201);
+        return BookingResource::make($booking)->response()->setStatusCode(201);
     }
 
     public function show(Request $request, string $id)
@@ -283,7 +286,7 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'data' => null, 'error' => ['code' => 'FORBIDDEN', 'message' => 'You do not have access to this booking.'], 'meta' => null], 403);
         }
 
-        return response()->json($booking);
+        return BookingResource::make($booking);
     }
 
     public function destroy(Request $request, string $id)
@@ -417,7 +420,7 @@ class BookingController extends Controller
             throw $e;
         }
 
-        return response()->json($booking, 200);
+        return BookingResource::make($booking)->response()->setStatusCode(200);
     }
 
     public function guestBooking(Request $request)
@@ -506,7 +509,7 @@ class BookingController extends Controller
             throw $e;
         }
 
-        return response()->json($guest, 201);
+        return GuestBookingResource::make($guest)->response()->setStatusCode(201);
     }
 
     public function swap(Request $request)
@@ -541,7 +544,7 @@ class BookingController extends Controller
                 'slot_number' => $newSlot->slot_number,
             ]);
 
-            return response()->json($booking->fresh());
+            return BookingResource::make($booking->fresh());
         });
     }
 
@@ -571,7 +574,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return response()->json($booking->fresh());
+        return BookingResource::make($booking->fresh());
     }
 
     public function checkin(Request $request, string $id)
@@ -585,7 +588,7 @@ class BookingController extends Controller
             'details' => ['booking_id' => $id],
         ]);
 
-        return response()->json($booking->fresh());
+        return BookingResource::make($booking->fresh());
     }
 
     public function update(Request $request, string $id)
@@ -642,7 +645,7 @@ class BookingController extends Controller
 
         $booking->update($data);
 
-        return response()->json($booking->fresh());
+        return BookingResource::make($booking->fresh());
     }
 
     public function calendarEvents(Request $request)
@@ -652,6 +655,7 @@ class BookingController extends Controller
         $bookings = Booking::where('user_id', $request->user()->id)
             ->where('start_time', '>=', $from)
             ->where('end_time', '<=', $to)
+            ->select(['id', 'lot_name', 'slot_number', 'start_time', 'end_time', 'status'])
             ->get();
         $events = $bookings->map(function ($b) {
             return [
@@ -712,7 +716,7 @@ class BookingController extends Controller
             'data' => ['swap_request_id' => $swap->id],
         ]);
 
-        return response()->json($swap->load(['requesterBooking', 'targetBooking', 'requester']), 201);
+        return SwapRequestResource::make($swap->load(['requesterBooking', 'targetBooking', 'requester']))->response()->setStatusCode(201);
     }
 
     public function respondSwapRequest(Request $request, string $id)
@@ -765,7 +769,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return response()->json($swap->fresh()->load(['requesterBooking', 'targetBooking']));
+        return SwapRequestResource::make($swap->fresh()->load(['requesterBooking', 'targetBooking']));
     }
 
     public function swapRequests(Request $request)
@@ -783,8 +787,8 @@ class BookingController extends Controller
             ->get();
 
         return response()->json([
-            'incoming' => $incoming,
-            'outgoing' => $outgoing,
+            'incoming' => SwapRequestResource::collection($incoming),
+            'outgoing' => SwapRequestResource::collection($outgoing),
         ]);
     }
 }

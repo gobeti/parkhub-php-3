@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\FavoriteResource;
+use App\Http\Resources\NotificationResource;
 use App\Models\Absence;
 use App\Models\AuditLog;
 use App\Models\Booking;
@@ -108,7 +110,7 @@ class UserController extends Controller
 
     public function favorites(Request $request)
     {
-        return response()->json(
+        return FavoriteResource::collection(
             Favorite::where('user_id', $request->user()->id)->with('slot')->get()
         );
     }
@@ -121,7 +123,7 @@ class UserController extends Controller
             'slot_id' => $request->slot_id,
         ]);
 
-        return response()->json($fav, 201);
+        return FavoriteResource::make($fav)->response()->setStatusCode(201);
     }
 
     public function removeFavorite(Request $request, string $slotId)
@@ -133,7 +135,7 @@ class UserController extends Controller
 
     public function notifications(Request $request)
     {
-        return response()->json(
+        return NotificationResource::collection(
             Notification::where('user_id', $request->user()->id)
                 ->orderBy('created_at', 'desc')
                 ->limit(50)
@@ -146,7 +148,7 @@ class UserController extends Controller
         $notif = Notification::where('user_id', $request->user()->id)->findOrFail($id);
         $notif->update(['read' => true]);
 
-        return response()->json($notif);
+        return NotificationResource::make($notif);
     }
 
     // iCal export — bookings as calendar feed
