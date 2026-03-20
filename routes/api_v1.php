@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\PulseController;
 use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\SlotController;
@@ -276,6 +277,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::put('/features', function (Request $request) {
             return response()->json(['success' => true, 'data' => ['enabled' => $request->input('enabled', [])], 'error' => null, 'meta' => null]);
         });
+
+        // System pulse / monitoring
+        Route::get('/pulse', [PulseController::class, 'index']);
     });
 
     // Notifications
@@ -424,5 +428,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::patch('/slots/{id}', [AdminController::class, 'updateSlot']);
         Route::delete('/lots/{id}', [AdminController::class, 'deleteLot']);
         Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+
+        // System pulse / monitoring
+        Route::get('/pulse', [PulseController::class, 'index']);
     });
 });

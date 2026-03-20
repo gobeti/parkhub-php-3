@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\PulseController;
 use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\SlotController;
@@ -160,6 +161,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{id}/credits', [AdminCreditController::class, 'grantCredits']);
         Route::get('/credit-transactions', [AdminCreditController::class, 'creditTransactions']);
         Route::post('/credits/refill', [AdminCreditController::class, 'refillAllCredits']);
+
+        // System pulse / monitoring
+        Route::get('/pulse', [PulseController::class, 'index']);
     });
 
     // User
