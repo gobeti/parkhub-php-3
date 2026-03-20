@@ -7,6 +7,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.0] - 2026-03-20
+
+### Added
+- **Typed error handling**: Consistent structured error responses across all endpoints
+- **Demo reset with DB wipe**: Full database truncate and re-seed on demo reset
+- **Auto-reset scheduler (6h)**: Demo mode auto-resets every 6 hours via Laravel scheduler
+- **React 19 useActionState**: Form handling migrated to `useActionState` pattern
+- **Tailwind CSS 4 @utility**: Custom utilities via `@utility` directives
+- **Admin user search**: Search/filter users by name, email, or role in admin panel
+- **Rate-limited demo endpoints**: Demo reset and status endpoints are rate-limited
+
+### Tests
+- **965 tests total**: 326 PHP + 213 Vitest + 426 Rust (up from 434 in v1.4.8)
+
+---
+
 ## [1.4.8] - 2026-03-19
 
 ### Design
