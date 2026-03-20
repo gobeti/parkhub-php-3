@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ParkingLotResource;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
@@ -36,7 +37,7 @@ class LotController extends Controller
             return $lot;
         });
 
-        return response()->json($lots);
+        return ParkingLotResource::collection($lots);
     }
 
     private function requireAdmin(Request $request): void
@@ -73,7 +74,7 @@ class LotController extends Controller
             ParkingSlot::insert($slots);
         }
 
-        return response()->json($lot, 201);
+        return ParkingLotResource::make($lot)->response()->setStatusCode(201);
     }
 
     public function show(string $id)
@@ -118,7 +119,7 @@ class LotController extends Controller
             $lot->layout = ['rows' => $rows, 'roadLabel' => 'Main Road'];
         }
 
-        return response()->json($lot);
+        return ParkingLotResource::make($lot);
     }
 
     public function update(Request $request, string $id)
@@ -127,7 +128,7 @@ class LotController extends Controller
         $lot = ParkingLot::findOrFail($id);
         $lot->update($request->only(['name', 'address', 'total_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency']));
 
-        return response()->json($lot);
+        return ParkingLotResource::make($lot);
     }
 
     public function destroy(Request $request, string $id)
