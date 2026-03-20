@@ -135,3 +135,4 @@ class QuickBookTest extends TestCase
         $booking = Booking::where('user_id', $user2->id)->first();
         $this->assertEquals($slots[1]->id, $booking->slot_id);
     }
+}
