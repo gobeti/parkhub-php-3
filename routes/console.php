@@ -4,6 +4,7 @@ use App\Jobs\AutoReleaseBookingsJob;
 use App\Jobs\ExpandRecurringBookingsJob;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::job(new AutoReleaseBookingsJob)->everyFiveMinutes();
