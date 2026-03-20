@@ -122,12 +122,15 @@ Route::get('/announcements/active', function () {
     ]);
 });
 
-// Demo mode (public, no auth required)
+// Demo mode (public, no auth — by design for public demo)
 Route::prefix('demo')->group(function () {
     Route::get('/status', [DemoController::class, 'status']);
-    Route::post('/vote', [DemoController::class, 'vote']);
-    Route::post('/reset', [DemoController::class, 'reset']);
     Route::get('/config', [DemoController::class, 'config']);
+    // POST endpoints rate-limited: 3 per minute per IP
+    Route::middleware('throttle:3,1')->group(function () {
+        Route::post('/vote', [DemoController::class, 'vote']);
+        Route::post('/reset', [DemoController::class, 'reset']);
+    });
 });
 
 // Protected
