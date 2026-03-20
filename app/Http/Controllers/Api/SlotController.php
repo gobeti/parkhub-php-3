@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ParkingSlotResource;
 use App\Models\ParkingSlot;
 use Illuminate\Http\Request;
 
@@ -24,7 +25,7 @@ class SlotController extends Controller
             ['lot_id' => $lotId]
         ));
 
-        return response()->json($slot, 201);
+        return ParkingSlotResource::make($slot)->response()->setStatusCode(201);
     }
 
     public function update(Request $request, string $lotId, string $slotId)
@@ -33,7 +34,7 @@ class SlotController extends Controller
         $slot = ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);
         $slot->update($request->only(['slot_number', 'status', 'slot_type', 'features', 'reserved_for_department', 'zone_id']));
 
-        return response()->json($slot);
+        return ParkingSlotResource::make($slot);
     }
 
     public function destroy(Request $request, string $lotId, string $slotId)

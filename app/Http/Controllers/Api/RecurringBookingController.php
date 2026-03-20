@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\RecurringBookingResource;
 use App\Models\RecurringBooking;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,7 @@ class RecurringBookingController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(
+        return RecurringBookingResource::collection(
             RecurringBooking::where('user_id', $request->user()->id)->get()
         );
     }
@@ -32,7 +33,7 @@ class RecurringBookingController extends Controller
             ['user_id' => $request->user()->id, 'active' => true]
         ));
 
-        return response()->json($recurring, 201);
+        return RecurringBookingResource::make($recurring)->response()->setStatusCode(201);
     }
 
     public function update(Request $request, string $id)
@@ -47,7 +48,7 @@ class RecurringBookingController extends Controller
         $recurring = RecurringBooking::where('user_id', $request->user()->id)->findOrFail($id);
         $recurring->update($request->only(['days_of_week', 'start_date', 'end_date', 'start_time', 'end_time', 'vehicle_plate', 'active']));
 
-        return response()->json($recurring);
+        return RecurringBookingResource::make($recurring);
     }
 
     public function destroy(Request $request, string $id)

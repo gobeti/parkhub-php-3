@@ -15,7 +15,9 @@ class TeamController extends Controller
     {
         $today = now()->toDateString();
         $now = now();
-        $users = User::where('is_active', true)->get();
+        $users = User::where('is_active', true)
+            ->select(['id', 'name', 'username', 'department'])
+            ->get();
         $privacyMode = Setting::get('booking_visibility', 'full');
 
         // Batch-load all absences for today, keyed by user_id
