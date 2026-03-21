@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MiscController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\PulseController;
+use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\SlotController;
@@ -174,6 +175,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/lots/{lotId}/zones', [ZoneController::class, 'store']);
 
     // Bookings
+    Route::get('/bookings/recommendations', [RecommendationController::class, 'index']);
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::get('/bookings/{id}', [BookingController::class, 'show']);
