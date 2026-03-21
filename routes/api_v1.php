@@ -310,8 +310,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         return response()->json(['update_available' => false, 'current_version' => '1.3.0']);
     });
 
-    // Translation management
-    Route::get('/translations/overrides', [TranslationController::class, 'overrides']);
+    // Translation management (overrides is public — see above)
     Route::get('/translations/proposals', [TranslationController::class, 'proposals']);
     Route::get('/translations/proposals/{id}', [TranslationController::class, 'showProposal']);
     Route::post('/translations/proposals', [TranslationController::class, 'createProposal']);
@@ -371,6 +370,9 @@ Route::middleware('throttle:password-reset')->group(function () {
 
 // Branding logo (public)
 Route::get('/branding/logo', [AdminSettingsController::class, 'serveBrandingLogo']);
+
+// Translation overrides (public — frontend needs runtime i18n patching without login)
+Route::get('/translations/overrides', [TranslationController::class, 'overrides']);
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 

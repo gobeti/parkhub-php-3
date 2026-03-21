@@ -139,11 +139,11 @@ class TranslationController extends Controller
         $proposal = TranslationProposal::findOrFail($id);
 
         if ($proposal->status !== 'pending') {
-            return response()->json(['error' => ['code' => 'NOT_PENDING', 'message' => 'Can only vote on pending proposals']], 400);
+            return response()->json(['success' => false, 'data' => null, 'error' => ['code' => 'NOT_PENDING', 'message' => 'Can only vote on pending proposals'], 'meta' => null], 400);
         }
 
         if ((string) $proposal->proposed_by === (string) $request->user()->id) {
-            return response()->json(['error' => ['code' => 'OWN_PROPOSAL', 'message' => 'Cannot vote on your own proposal']], 400);
+            return response()->json(['success' => false, 'data' => null, 'error' => ['code' => 'OWN_PROPOSAL', 'message' => 'Cannot vote on your own proposal'], 'meta' => null], 400);
         }
 
         $existingVote = TranslationVote::where('proposal_id', $id)
@@ -229,7 +229,7 @@ class TranslationController extends Controller
         $proposal = TranslationProposal::findOrFail($id);
 
         if ($proposal->status !== 'pending') {
-            return response()->json(['error' => ['code' => 'NOT_PENDING', 'message' => 'Proposal already reviewed']], 400);
+            return response()->json(['success' => false, 'data' => null, 'error' => ['code' => 'NOT_PENDING', 'message' => 'Proposal already reviewed'], 'meta' => null], 400);
         }
 
         $proposal->update([
