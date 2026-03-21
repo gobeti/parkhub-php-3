@@ -7,6 +7,7 @@ use App\Models\Announcement;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\Setting;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class PublicController extends Controller
@@ -75,6 +76,97 @@ class PublicController extends Controller
             'company_name' => $companyName,
             'lots' => $result,
             'announcements' => $announcements,
+        ]);
+    }
+
+    public function activeAnnouncements(): JsonResponse
+    {
+        $announcements = Announcement::where('active', true)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($announcements);
+    }
+
+    public function activeAnnouncementsWrapped(): JsonResponse
+    {
+        $announcements = Announcement::where('active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $announcements,
+            'error' => null,
+            'meta' => null,
+        ]);
+    }
+
+    public function vapidKey(): JsonResponse
+    {
+        return response()->json(['publicKey' => Setting::get('vapid_public_key', '')]);
+    }
+
+    public function branding(): JsonResponse
+    {
+        $s = Setting::pluck('value', 'key')->toArray();
+
+        return response()->json([
+            'company_name' => $s['company_name'] ?? 'ParkHub',
+            'primary_color' => $s['primary_color'] ?? '#d97706',
+            'secondary_color' => $s['secondary_color'] ?? '#475569',
+            'logo_url' => $s['logo_url'] ?? null,
+            'favicon_url' => null,
+            'login_background_color' => '#0f172a',
+            'custom_css' => null,
+        ]);
+    }
+
+    public function legalPrivacy(): JsonResponse
+    {
+        return response()->json(['type' => 'privacy', 'url' => '/datenschutz']);
+    }
+
+    public function legalImpressum(): JsonResponse
+    {
+        return response()->json(['type' => 'impressum', 'url' => '/impressum']);
+    }
+
+    public function healthCheck(): JsonResponse
+    {
+        return response()->json(['status' => 'ok', 'version' => SystemController::appVersion()]);
+    }
+
+    public function updateCheck(): JsonResponse
+    {
+        return response()->json(['update_available' => false, 'current_version' => SystemController::appVersion()]);
+    }
+
+    public function featureFlags(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => ['enabled' => ['micro_animations', 'credits']],
+            'error' => null,
+            'meta' => null,
+        ]);
+    }
+
+    public function adminFeatureFlags(): JsonResponse
+    {
+        $available = [
+            ['id' => 'micro_animations', 'name' => 'Micro Animations', 'description' => 'Subtle hover/tap animations'],
+            ['id' => 'credits', 'name' => 'Credits System', 'description' => 'Credit-based booking'],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => ['enabled' => ['micro_animations', 'credits'], 'available' => $available],
+            'error' => null,
+            'meta' => null,
         ]);
     }
 }
