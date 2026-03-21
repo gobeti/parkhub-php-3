@@ -58,7 +58,7 @@ class SecurityHeaders
         // --- Content-Security-Policy for the SPA ---
         // Only apply CSP to HTML responses (not API JSON or static assets)
         $contentType = $response->headers->get('Content-Type', '');
-        if (str_contains($contentType, 'text/html') || $request->is('/') || $request->is('*') && ! $request->is('api/*')) {
+        if (str_contains($contentType, 'text/html')) {
             $csp = $this->buildCsp($request);
             $response->headers->set('Content-Security-Policy', $csp);
         }
