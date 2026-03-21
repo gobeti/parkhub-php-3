@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\BookingCancelled;
+use App\Events\BookingCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\GuestBookingResource;
@@ -273,6 +275,9 @@ class BookingController extends Controller
             }
         }
 
+        // Broadcast real-time event to the booking owner's private channel
+        BookingCreated::dispatch($booking);
+
         return BookingResource::make($booking)->response()->setStatusCode(201);
     }
 
@@ -330,6 +335,9 @@ class BookingController extends Controller
                 ]);
             }
         }
+
+        // Broadcast real-time event to the booking owner's private channel
+        BookingCancelled::dispatch($booking);
 
         return response()->json(['message' => 'Booking cancelled']);
     }
