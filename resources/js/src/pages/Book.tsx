@@ -336,7 +336,7 @@ export function BookPage() {
             {selectedSlot && (
               <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800 flex items-center gap-3">
                 <CheckCircle weight="fill" className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                <span className="text-sm font-medium text-primary-700 dark:text-primary-300 flex-1" dangerouslySetInnerHTML={{ __html: t('book.slotSelected', { slot: selectedSlot.number }) }} />
+                <span className="text-sm font-medium text-primary-700 dark:text-primary-300 flex-1">{t('book.slotSelected', { slot: selectedSlot.number })}</span>
                 <button onClick={() => toggleFavorite(selectedSlot.id)} className="p-1.5 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors" aria-label="Toggle favorite">
                   <Heart weight={favoriteSlots.includes(selectedSlot.id) ? 'fill' : 'regular'} className={`w-5 h-5 ${favoriteSlots.includes(selectedSlot.id) ? 'text-red-500' : 'text-primary-400'}`} />
                 </button>

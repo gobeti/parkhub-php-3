@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\SlotController;
 use App\Http\Controllers\Api\SystemController;
 use App\Http\Controllers\Api\TeamController;
+use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WaitlistController;
@@ -308,6 +309,14 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/update/check', function () {
         return response()->json(['update_available' => false, 'current_version' => '1.3.0']);
     });
+
+    // Translation management
+    Route::get('/translations/overrides', [TranslationController::class, 'overrides']);
+    Route::get('/translations/proposals', [TranslationController::class, 'proposals']);
+    Route::get('/translations/proposals/{id}', [TranslationController::class, 'showProposal']);
+    Route::post('/translations/proposals', [TranslationController::class, 'createProposal']);
+    Route::post('/translations/proposals/{id}/vote', [TranslationController::class, 'vote']);
+    Route::put('/translations/proposals/{id}/review', [TranslationController::class, 'review']);
 });
 
 // ── New feature-parity routes ──────────────────────────────────────────────
