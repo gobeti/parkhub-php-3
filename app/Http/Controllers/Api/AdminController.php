@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ImportUsersRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\ParkingSlotResource;
 use App\Http\Resources\UserResource;
@@ -45,17 +47,9 @@ class AdminController extends Controller
         ]);
     }
 
-    public function updateUser(Request $request, string $id)
+    public function updateUser(UpdateUserRequest $request, string $id)
     {
         $this->requireAdmin($request);
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|max:255|unique:users,email,'.$id,
-            'role' => 'sometimes|in:user,admin,superadmin',
-            'is_active' => 'sometimes|boolean',
-            'department' => 'sometimes|nullable|string|max:255',
-            'password' => 'sometimes|string|min:8',
-        ]);
         $user = User::findOrFail($id);
         $data = $request->only(['name', 'email', 'is_active', 'department']);
         if ($request->filled('password')) {
@@ -83,19 +77,9 @@ class AdminController extends Controller
         return response()->json(['message' => 'User deleted']);
     }
 
-    public function importUsers(Request $request): JsonResponse
+    public function importUsers(ImportUsersRequest $request): JsonResponse
     {
         $this->requireAdmin($request);
-
-        $request->validate([
-            'users' => 'required|array|max:500',
-            'users.*.username' => 'required|string|min:3|max:50|alpha_dash',
-            'users.*.email' => 'required|email|max:255',
-            'users.*.name' => 'nullable|string|max:255',
-            'users.*.role' => 'nullable|in:user,admin',
-            'users.*.department' => 'nullable|string|max:255',
-            'users.*.password' => 'nullable|string|min:8|max:128',
-        ]);
 
         $imported = 0;
         $usersCollection = collect($request->users);
