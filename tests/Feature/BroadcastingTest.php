@@ -52,7 +52,7 @@ class BroadcastingTest extends TestCase
         $lot = ParkingLot::create(['name' => 'Lot', 'total_slots' => 5, 'available_slots' => 5, 'status' => 'open']);
         $slot = ParkingSlot::create(['lot_id' => $lot->id, 'slot_number' => 'A1', 'status' => 'available']);
 
-        $this->withHeader('Authorization', 'Bearer ' . $token)
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/bookings', [
                 'lot_id' => $lot->id,
                 'slot_id' => $slot->id,
@@ -71,7 +71,7 @@ class BroadcastingTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
         $booking = $this->makeBooking($user);
 
-        $this->withHeader('Authorization', 'Bearer ' . $token)
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->deleteJson("/api/v1/bookings/{$booking->id}");
 
         Event::assertDispatched(BookingCancelled::class);
@@ -86,7 +86,7 @@ class BroadcastingTest extends TestCase
         $channels = $event->broadcastOn();
 
         $this->assertCount(1, $channels);
-        $this->assertStringContainsString('user.' . $user->id, $channels[0]->name);
+        $this->assertStringContainsString('user.'.$user->id, $channels[0]->name);
     }
 
     public function test_booking_cancelled_event_broadcasts_on_user_channel(): void
@@ -98,7 +98,7 @@ class BroadcastingTest extends TestCase
         $channels = $event->broadcastOn();
 
         $this->assertCount(1, $channels);
-        $this->assertStringContainsString('user.' . $user->id, $channels[0]->name);
+        $this->assertStringContainsString('user.'.$user->id, $channels[0]->name);
     }
 
     public function test_booking_created_event_broadcast_name(): void
