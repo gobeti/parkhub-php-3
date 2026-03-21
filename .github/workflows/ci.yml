@@ -230,7 +230,7 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [test, coverage, audit, lint, analyse, frontend]
+    needs: [test, test-postgres, coverage, audit, lint, analyse, frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Check results
@@ -250,6 +250,10 @@ jobs:
           if [[ "${{ needs.audit.result }}" != "success" ]]; then
             echo "dependency audit failed: ${{ needs.audit.result }}"
             exit 1
+          fi
+          # PostgreSQL tests are informational — warn but don't block
+          if [[ "${{ needs.test-postgres.result }}" == "failure" ]]; then
+            echo "::warning::PostgreSQL tests failed — check DB-specific SQL compatibility"
           fi
           # analyse and coverage are informational — warn but don't block
           if [[ "${{ needs.analyse.result }}" == "failure" ]]; then
