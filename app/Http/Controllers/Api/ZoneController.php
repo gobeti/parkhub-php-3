@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ZoneResource;
 use App\Models\Zone;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ZoneController extends Controller
 {
-    public function index(string $lotId)
+    public function index(string $lotId): AnonymousResourceCollection
     {
         return ZoneResource::collection(Zone::where('lot_id', $lotId)->get());
     }
@@ -30,7 +32,7 @@ class ZoneController extends Controller
         return ZoneResource::make($zone);
     }
 
-    public function destroy(string $lotId, string $id)
+    public function destroy(string $lotId, string $id): JsonResponse
     {
         Zone::where('lot_id', $lotId)->findOrFail($id)->delete();
 

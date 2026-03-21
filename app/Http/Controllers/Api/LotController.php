@@ -7,12 +7,14 @@ use App\Http\Resources\ParkingLotResource;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Str;
 
 class LotController extends Controller
 {
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         $now = now();
 
@@ -131,7 +133,7 @@ class LotController extends Controller
         return ParkingLotResource::make($lot);
     }
 
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $this->requireAdmin($request);
         ParkingLot::findOrFail($id)->delete();
@@ -139,7 +141,7 @@ class LotController extends Controller
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function slots(Request $request, string $id)
+    public function slots(Request $request, string $id): JsonResponse
     {
         $lot = ParkingLot::findOrFail($id);
 
@@ -181,7 +183,7 @@ class LotController extends Controller
         return response()->json($slots);
     }
 
-    public function occupancy(string $id)
+    public function occupancy(string $id): JsonResponse
     {
         $lot = ParkingLot::findOrFail($id);
         $totalSlots = $lot->slots()->count();
@@ -222,7 +224,7 @@ class LotController extends Controller
      * already a transitive Laravel dependency, or `chillerlan/php-qrcode`) to
      * generate QR codes server-side without leaking URLs to external services.
      */
-    public function qrCode(Request $request, string $id)
+    public function qrCode(Request $request, string $id): JsonResponse
     {
         $lot = ParkingLot::findOrFail($id);
         $data = urlencode(url('/').'/book?lot='.$id);
@@ -236,7 +238,7 @@ class LotController extends Controller
     }
 
     /** @see self::qrCode() for privacy note about external QR API */
-    public function slotQrCode(Request $request, string $lotId, string $slotId)
+    public function slotQrCode(Request $request, string $lotId, string $slotId): JsonResponse
     {
         $slot = ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);
         $data = urlencode(url('/').'/book?lot='.$lotId.'&slot='.$slotId);

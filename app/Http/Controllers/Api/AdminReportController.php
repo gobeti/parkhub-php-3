@@ -8,7 +8,9 @@ use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class AdminReportController extends Controller
@@ -34,7 +36,7 @@ class AdminReportController extends Controller
         return $str;
     }
 
-    public function stats(Request $request)
+    public function stats(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -58,7 +60,7 @@ class AdminReportController extends Controller
         ]);
     }
 
-    public function heatmap(Request $request)
+    public function heatmap(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -84,7 +86,7 @@ class AdminReportController extends Controller
         return response()->json($bookings);
     }
 
-    public function reports(Request $request)
+    public function reports(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         $days = (int) $request->get('days', 30);
@@ -103,7 +105,7 @@ class AdminReportController extends Controller
         ]);
     }
 
-    public function dashboardCharts(Request $request)
+    public function dashboardCharts(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         $days = (int) $request->get('days', 7);
@@ -143,7 +145,7 @@ class AdminReportController extends Controller
         ]);
     }
 
-    public function exportBookingsCsv(Request $request)
+    public function exportBookingsCsv(Request $request): Response
     {
         $this->requireAdmin($request);
 
@@ -177,7 +179,7 @@ class AdminReportController extends Controller
         ]);
     }
 
-    public function exportUsersCsv(Request $request)
+    public function exportUsersCsv(Request $request): Response
     {
         $this->requireAdmin($request);
 

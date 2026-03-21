@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ParkingSlotResource;
 use App\Models\ParkingSlot;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SlotController extends Controller
@@ -37,7 +38,7 @@ class SlotController extends Controller
         return ParkingSlotResource::make($slot);
     }
 
-    public function destroy(Request $request, string $lotId, string $slotId)
+    public function destroy(Request $request, string $lotId, string $slotId): JsonResponse
     {
         $this->requireAdmin($request);
         ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId)->delete();

@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Webhook;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminSettingsController extends Controller
@@ -22,7 +23,7 @@ class AdminSettingsController extends Controller
         }
     }
 
-    public function getSettings(Request $request)
+    public function getSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -49,7 +50,7 @@ class AdminSettingsController extends Controller
         return response()->json(array_merge($defaults, $settings));
     }
 
-    public function updateSettings(Request $request)
+    public function updateSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -107,7 +108,7 @@ class AdminSettingsController extends Controller
         return response()->json(['message' => 'Settings updated']);
     }
 
-    public function getBranding(Request $request)
+    public function getBranding(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -119,7 +120,7 @@ class AdminSettingsController extends Controller
         ]);
     }
 
-    public function updateBranding(Request $request)
+    public function updateBranding(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         foreach (['company_name', 'primary_color', 'logo_url', 'use_case'] as $key) {
@@ -137,7 +138,7 @@ class AdminSettingsController extends Controller
         return response()->json(['message' => 'Branding updated']);
     }
 
-    public function uploadBrandingLogo(Request $request)
+    public function uploadBrandingLogo(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         $request->validate(['logo' => 'required|image|max:2048']);
@@ -166,7 +167,7 @@ class AdminSettingsController extends Controller
         return redirect($logoUrl);
     }
 
-    public function getPrivacy(Request $request)
+    public function getPrivacy(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -177,7 +178,7 @@ class AdminSettingsController extends Controller
         ]);
     }
 
-    public function updatePrivacy(Request $request)
+    public function updatePrivacy(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         foreach (['policy_text', 'data_retention_days', 'gdpr_enabled'] as $key) {
@@ -198,7 +199,7 @@ class AdminSettingsController extends Controller
         return response()->json(['message' => 'Privacy settings updated']);
     }
 
-    public function getAutoReleaseSettings(Request $request)
+    public function getAutoReleaseSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -208,7 +209,7 @@ class AdminSettingsController extends Controller
         ]);
     }
 
-    public function updateAutoReleaseSettings(Request $request)
+    public function updateAutoReleaseSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         if ($request->has('enabled')) {
@@ -221,7 +222,7 @@ class AdminSettingsController extends Controller
         return response()->json(['message' => 'Auto-release settings updated']);
     }
 
-    public function getEmailSettings(Request $request)
+    public function getEmailSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -235,7 +236,7 @@ class AdminSettingsController extends Controller
         ]);
     }
 
-    public function updateEmailSettings(Request $request)
+    public function updateEmailSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         foreach (['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'from_email', 'from_name'] as $key) {
@@ -250,7 +251,7 @@ class AdminSettingsController extends Controller
         return response()->json(['message' => 'Email settings updated']);
     }
 
-    public function getWebhookSettings(Request $request)
+    public function getWebhookSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         $hooks = Webhook::all();
@@ -258,7 +259,7 @@ class AdminSettingsController extends Controller
         return response()->json($hooks);
     }
 
-    public function updateWebhookSettings(Request $request)
+    public function updateWebhookSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         if ($request->has('webhooks')) {

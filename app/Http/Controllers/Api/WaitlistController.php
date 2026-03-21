@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\WaitlistEntryResource;
 use App\Models\Setting;
 use App\Models\WaitlistEntry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class WaitlistController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $entries = WaitlistEntry::with('lot')
             ->where('user_id', $request->user()->id)
@@ -20,7 +21,7 @@ class WaitlistController extends Controller
         return response()->json(['success' => true, 'data' => WaitlistEntryResource::collection($entries)]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         // Enforce waitlist_enabled setting
         if (Setting::get('waitlist_enabled', 'true') !== 'true') {
@@ -42,7 +43,7 @@ class WaitlistController extends Controller
         return response()->json(['success' => true, 'data' => WaitlistEntryResource::make($entry)], 201);
     }
 
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $entry = WaitlistEntry::where('user_id', $request->user()->id)->findOrFail($id);
         $entry->delete();

@@ -29,7 +29,8 @@ class BookingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Booking::where('user_id', $request->user()->id);
+        $query = Booking::with(['lot', 'slot'])
+            ->where('user_id', $request->user()->id);
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
@@ -524,7 +525,7 @@ class BookingController extends Controller
             return response()->json(['error' => 'CROSS_LOT_SWAP', 'message' => 'Target slot must belong to the same lot as the current booking'], 422);
         }
 
-        return \DB::transaction(function () use ($booking, $newSlot, $request) {
+        return DB::transaction(function () use ($booking, $newSlot, $request) {
             $conflict = Booking::where('slot_id', $request->target_slot_id)
                 ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                 ->where('start_time', '<', $booking->end_time)

@@ -8,6 +8,7 @@ use App\Models\PushSubscription;
 use App\Models\Setting;
 use App\Models\Webhook;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class MiscController extends Controller
 {
@@ -176,7 +177,7 @@ class MiscController extends Controller
         $signature = hash_hmac('sha256', $payload, $webhook->secret);
 
         try {
-            $response = \Http::timeout(10)
+            $response = Http::timeout(10)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
                     'X-Webhook-Signature' => 'sha256='.$signature,

@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Absence;
 use App\Models\Setting;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AbsenceController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $absences = Absence::where('user_id', $request->user()->id)
             ->orderBy('start_date', 'desc')
@@ -20,7 +21,7 @@ class AbsenceController extends Controller
         return response()->json($absences);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         // Accept both 'type' (Rust API parity) and 'absence_type'
         $request->merge([
@@ -44,7 +45,7 @@ class AbsenceController extends Controller
         );
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $absence = Absence::where('user_id', $request->user()->id)->findOrFail($id);
 
@@ -57,14 +58,14 @@ class AbsenceController extends Controller
         return response()->json(array_merge($absence->toArray(), ['type' => $absence->absence_type]));
     }
 
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, string $id): JsonResponse
     {
         Absence::where('user_id', $request->user()->id)->findOrFail($id)->delete();
 
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function teamAbsences(Request $request)
+    public function teamAbsences(Request $request): JsonResponse
     {
         $from = $request->from ?? now()->startOfMonth()->toDateString();
         $to = $request->to ?? now()->endOfMonth()->toDateString();
@@ -81,21 +82,21 @@ class AbsenceController extends Controller
         })->values());
     }
 
-    public function getPattern(Request $request)
+    public function getPattern(Request $request): JsonResponse
     {
         $pattern = Setting::get('homeoffice_pattern_'.$request->user()->id, null);
 
         return response()->json(['pattern' => $pattern ? json_decode($pattern, true) : []]);
     }
 
-    public function setPattern(Request $request)
+    public function setPattern(Request $request): JsonResponse
     {
         Setting::set('homeoffice_pattern_'.$request->user()->id, json_encode($request->input('pattern', [])));
 
         return response()->json(['message' => 'Pattern saved', 'pattern' => $request->input('pattern', [])]);
     }
 
-    public function importIcal(Request $request)
+    public function importIcal(Request $request): JsonResponse
     {
         // Accept either a file upload (multipart) or a raw 'ical' string body
         if ($request->hasFile('file')) {

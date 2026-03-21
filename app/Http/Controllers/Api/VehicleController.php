@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\VehicleResource;
 use App\Models\Vehicle;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
 
 class VehicleController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         return VehicleResource::collection(Vehicle::where('user_id', $request->user()->id)->get());
     }
@@ -34,7 +36,7 @@ class VehicleController extends Controller
         return VehicleResource::make($vehicle);
     }
 
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
 
@@ -48,7 +50,7 @@ class VehicleController extends Controller
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function uploadPhoto(Request $request, string $id)
+    public function uploadPhoto(Request $request, string $id): JsonResponse
     {
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
 
@@ -153,7 +155,7 @@ class VehicleController extends Controller
         return $out;
     }
 
-    public function cityCodes()
+    public function cityCodes(): JsonResponse
     {
         // 400+ German Unterscheidungszeichen
         $codes = [
