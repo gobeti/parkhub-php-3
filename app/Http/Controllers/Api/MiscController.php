@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Concerns\ValidatesExternalUrls;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\PushSubscription;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Http;
 
 class MiscController extends Controller
 {
+    use ValidatesExternalUrls;
+
     // Push
     public function pushSubscribe(Request $request)
     {
@@ -131,29 +134,6 @@ class MiscController extends Controller
         $webhook->update($request->only(['url', 'events', 'secret', 'active']));
 
         return response()->json($webhook);
-    }
-
-    private function isExternalUrl(string $url): bool
-    {
-        if (! preg_match('#^https?://#i', $url)) {
-            return false;
-        }
-        $parsed = parse_url($url);
-        $host = $parsed['host'] ?? '';
-        if (empty($host)) {
-            return false;
-        }
-        $ips = gethostbynamel($host);
-        if ($ips === false) {
-            return false;
-        }
-        foreach ($ips as $ip) {
-            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public function deleteWebhook(Request $request, string $id)
