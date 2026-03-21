@@ -32,7 +32,7 @@ class SendBookingConfirmationJob implements ShouldQueue
         $user = User::find($this->userId);
 
         if (! $booking || ! $user || ! $user->email) {
-            Log::info("SendBookingConfirmationJob: skipped — missing booking/user/email", [
+            Log::info('SendBookingConfirmationJob: skipped — missing booking/user/email', [
                 'booking_id' => $this->bookingId,
                 'user_id' => $this->userId,
             ]);
@@ -47,7 +47,7 @@ class SendBookingConfirmationJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error("SendBookingConfirmationJob: permanently failed", [
+        Log::error('SendBookingConfirmationJob: permanently failed', [
             'booking_id' => $this->bookingId,
             'user_id' => $this->userId,
             'error' => $e->getMessage(),

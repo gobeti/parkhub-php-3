@@ -36,7 +36,7 @@ class PurgeExpiredBookingsJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error("PurgeExpiredBookingsJob: failed", [
+        Log::error('PurgeExpiredBookingsJob: failed', [
             'error' => $e->getMessage(),
         ]);
     }

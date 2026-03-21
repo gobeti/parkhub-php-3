@@ -63,7 +63,7 @@ class NotifyLotClosureJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error("NotifyLotClosureJob: failed", [
+        Log::error('NotifyLotClosureJob: failed', [
             'user_id' => $this->userId,
             'lot_id' => $this->lotId,
             'error' => $e->getMessage(),

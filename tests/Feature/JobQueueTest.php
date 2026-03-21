@@ -12,7 +12,6 @@ use App\Mail\BookingConfirmation;
 use App\Mail\BookingReminderMail;
 use App\Mail\PasswordResetEmail;
 use App\Models\Booking;
-use App\Models\Notification;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\User;
@@ -108,7 +107,7 @@ class JobQueueTest extends TestCase
         [$user, $lot, $slot] = $this->createUserLotSlot();
         $token = $user->createToken('test')->plainTextToken;
 
-        $this->withHeader('Authorization', 'Bearer ' . $token)
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/bookings', [
                 'lot_id' => $lot->id,
                 'slot_id' => $slot->id,
@@ -292,8 +291,8 @@ class JobQueueTest extends TestCase
         $date = now()->subDay()->toDateString();
 
         $this->createBooking($user, $lot, $slot, [
-            'start_time' => $date . ' 09:00:00',
-            'end_time' => $date . ' 17:00:00',
+            'start_time' => $date.' 09:00:00',
+            'end_time' => $date.' 17:00:00',
             'status' => Booking::STATUS_COMPLETED,
         ]);
 
@@ -313,7 +312,7 @@ class JobQueueTest extends TestCase
 
     public function test_aggregate_stats_defaults_to_yesterday(): void
     {
-        $job = new AggregateOccupancyStatsJob();
+        $job = new AggregateOccupancyStatsJob;
         $job->handle();
 
         $yesterday = now()->subDay()->toDateString();
@@ -349,8 +348,8 @@ class JobQueueTest extends TestCase
         $date = now()->subDay()->toDateString();
 
         $this->createBooking($user, $lot, $slot, [
-            'start_time' => $date . ' 10:00:00',
-            'end_time' => $date . ' 12:00:00',
+            'start_time' => $date.' 10:00:00',
+            'end_time' => $date.' 12:00:00',
             'status' => Booking::STATUS_COMPLETED,
         ]);
 
@@ -451,7 +450,7 @@ class JobQueueTest extends TestCase
         });
 
         Bus::batch($jobs->toArray())
-            ->name('lot-closure-' . $lot->id)
+            ->name('lot-closure-'.$lot->id)
             ->dispatch();
 
         Bus::assertBatched(function ($batch) {
@@ -470,7 +469,7 @@ class JobQueueTest extends TestCase
 
     public function test_reminder_job_has_retry_config(): void
     {
-        $job = new SendBookingReminderJob();
+        $job = new SendBookingReminderJob;
         $this->assertEquals(3, $job->tries);
         $this->assertEquals([30, 60, 120], $job->backoff);
     }
@@ -484,7 +483,7 @@ class JobQueueTest extends TestCase
 
     public function test_purge_job_has_single_try(): void
     {
-        $job = new PurgeExpiredBookingsJob();
+        $job = new PurgeExpiredBookingsJob;
         $this->assertEquals(1, $job->tries);
     }
 
