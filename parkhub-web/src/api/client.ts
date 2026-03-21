@@ -70,6 +70,9 @@ export const api = {
       method: 'PUT', body: JSON.stringify({ current_password, password, password_confirmation }),
     }),
 
+  // ── Modules ──
+  getModules: () => request<{ modules: Record<string, boolean>; version: string }>('/api/v1/modules'),
+
   // ── Setup ──
   getSetupStatus: () => request<SetupStatus>('/api/v1/setup/status'),
   completeSetup: (data: any) => request('/api/v1/setup/complete', { method: 'POST', body: JSON.stringify(data) }),
