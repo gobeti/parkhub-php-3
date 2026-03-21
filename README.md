@@ -143,6 +143,11 @@
 | Web Push notification subscriptions | Done |
 | Prometheus metrics endpoint (`/api/metrics`) | Done |
 | Health endpoints (`/health/live`, `/health/ready`) | Done |
+| Community translation proposals (submit, vote, admin review/approve) | Done |
+| Runtime translation overrides (approved translations hot-loaded) | Done |
+| Smart slot recommendations (heuristic scoring: frequency, proximity, features) | Done |
+| Demo reset with full DB wipe and re-seed | Done |
+| Auto-reset scheduler (every 6h in demo mode) | Done |
 
 ### Deployment
 
@@ -156,6 +161,12 @@
 | Kubernetes deployment manifests | Planned |
 | Dark mode / light mode / system preference | Done |
 | Mobile-responsive Astro 6 + React 19 frontend | Done |
+| i18n — 10 languages (EN, DE, FR, ES, IT, PT, TR, PL, JA, ZH) | Done |
+| Favorites view — pin & manage preferred parking slots | Done |
+| DataTable CSV export (download any table as spreadsheet) | Done |
+| Dashboard analytics bar chart (7-day booking activity) | Done |
+| Command Palette (Ctrl+K) — quick navigation and actions | Done |
+| PWA (installable, offline-capable, service worker) | Done |
 
 ---
 
