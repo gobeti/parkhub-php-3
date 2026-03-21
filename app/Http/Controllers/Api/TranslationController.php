@@ -14,6 +14,7 @@ class TranslationController extends Controller
     public function overrides()
     {
         $overrides = TranslationOverride::all();
+
         return response()->json($overrides);
     }
 

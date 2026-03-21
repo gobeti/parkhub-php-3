@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ParkingLot;
-use App\Models\ParkingSlot;
 use Illuminate\Http\Request;
 
 class RecommendationController extends Controller
