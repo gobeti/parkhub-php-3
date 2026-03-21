@@ -1,16 +1,99 @@
 {
   "name": "ParkHub",
   "short_name": "ParkHub",
-  "description": "Self-hosted parking management for everyone",
+  "description": "Smart Parking Management — Book, manage, and optimize parking for your organization",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f1114",
-  "theme_color": "#d97706",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0d9488",
+  "orientation": "any",
+  "scope": "/",
+  "id": "/",
+  "categories": ["business", "productivity", "utilities", "transportation"],
   "icons": [
-    {"src": "/favicon.png", "sizes": "32x32", "type": "image/png"},
-    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-    {"src": "/icon-256.png", "sizes": "256x256", "type": "image/png"},
-    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
-    {"src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"}
-  ]
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ParkHub Dashboard — Overview of your parking bookings and availability"
+    },
+    {
+      "src": "/icons/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ParkHub Mobile — Quick booking from your phone"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Book",
+      "short_name": "Book",
+      "description": "Book a parking spot for today",
+      "url": "/book",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My Bookings",
+      "short_name": "Bookings",
+      "description": "View your upcoming and past bookings",
+      "url": "/bookings",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "description": "View parking calendar",
+      "url": "/calendar",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false
 }
