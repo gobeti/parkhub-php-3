@@ -106,7 +106,7 @@ class AdminExtendedTest extends TestCase
             ->deleteJson('/api/v1/admin/users/'.$user->id)
             ->assertStatus(200);
 
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
 
     public function test_admin_list_bookings(): void

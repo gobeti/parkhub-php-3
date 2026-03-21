@@ -250,7 +250,7 @@ class GdprTest extends TestCase
             ->deleteJson('/api/v1/users/me/delete', ['password' => 'password123']);
 
         $response->assertStatus(200);
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
 
     public function test_delete_account_requires_correct_password(): void
