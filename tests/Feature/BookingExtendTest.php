@@ -107,7 +107,7 @@ class BookingExtendTest extends TestCase
             ]);
 
         $response->assertStatus(409);
-        $response->assertJsonPath('error', 'SLOT_CONFLICT');
+        $response->assertJsonPath('error.code', 'SLOT_CONFLICT');
     }
 
     public function test_extend_requires_auth(): void
