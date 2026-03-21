@@ -1,0 +1,37 @@
+---
+import '../styles/global.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#042f2e" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="ParkHub — Smart Parking Management" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ParkHub" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>ParkHub</title>
+  </head>
+  <body class="min-h-dvh">
+    <div id="root"></div>
+    <script>
+      import { App } from '../App';
+      import { createRoot } from 'react-dom/client';
+      import { createElement } from 'react';
+      const root = createRoot(document.getElementById('root')!);
+      root.render(createElement(App));
+
+      // Register service worker for PWA offline support
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+    </script>
+  </body>
+</html>
