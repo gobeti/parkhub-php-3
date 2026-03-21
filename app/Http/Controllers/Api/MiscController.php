@@ -64,9 +64,14 @@ class MiscController extends Controller
     }
 
     // QR Code
-    public function qrCode(string $bookingId)
+    public function qrCode(Request $request, string $bookingId)
     {
-        $booking = Booking::findOrFail($bookingId);
+        $user = $request->user();
+        if ($user->isAdmin()) {
+            $booking = Booking::findOrFail($bookingId);
+        } else {
+            $booking = Booking::where('user_id', $user->id)->findOrFail($bookingId);
+        }
         $data = json_encode([
             'booking_id' => $booking->id,
             'slot' => $booking->slot_number,
