@@ -267,6 +267,12 @@ class AdminController extends Controller
     public function updateSlot(Request $request, string $id)
     {
         $this->requireAdmin($request);
+        $request->validate([
+            'slot_number' => 'sometimes|string|max:20',
+            'status' => 'sometimes|in:available,occupied,reserved,maintenance',
+            'reserved_for_department' => 'sometimes|nullable|string|max:255',
+            'zone_id' => 'sometimes|nullable|uuid|exists:zones,id',
+        ]);
         $slot = ParkingSlot::findOrFail($id);
         $slot->update($request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']));
 

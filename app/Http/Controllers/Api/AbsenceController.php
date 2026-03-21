@@ -131,9 +131,15 @@ class AbsenceController extends Controller
                 continue; // Skip events with unparseable dates
             }
 
+            $allowedTypes = ['homeoffice', 'vacation', 'sick', 'training', 'other'];
+            $requestedType = $request->input('type');
+            $resolvedType = ($requestedType && in_array($requestedType, $allowedTypes))
+                ? $requestedType
+                : $type;
+
             Absence::create([
                 'user_id' => $user->id,
-                'absence_type' => $request->input('type', $type),
+                'absence_type' => $resolvedType,
                 'start_date' => $parsedStart->toDateString(),
                 'end_date' => $parsedEnd->toDateString(),
                 'note' => $title,

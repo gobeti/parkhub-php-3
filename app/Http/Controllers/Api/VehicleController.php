@@ -19,7 +19,13 @@ class VehicleController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['plate' => 'required|string']);
+        $request->validate([
+            'plate' => 'required|string|max:20',
+            'make' => 'nullable|string|max:100',
+            'model' => 'nullable|string|max:100',
+            'color' => 'nullable|string|max:50',
+            'is_default' => 'nullable|boolean',
+        ]);
         $vehicle = Vehicle::create(array_merge(
             $request->only(['plate', 'make', 'model', 'color', 'is_default']),
             ['user_id' => $request->user()->id]
@@ -30,6 +36,13 @@ class VehicleController extends Controller
 
     public function update(Request $request, string $id)
     {
+        $request->validate([
+            'plate' => 'sometimes|required|string|max:20',
+            'make' => 'nullable|string|max:100',
+            'model' => 'nullable|string|max:100',
+            'color' => 'nullable|string|max:50',
+            'is_default' => 'nullable|boolean',
+        ]);
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
         $vehicle->update($request->only(['plate', 'make', 'model', 'color', 'is_default']));
 
