@@ -28,7 +28,7 @@ class MetricsController extends Controller
 
         $lines = $this->buildMetrics();
 
-        return response(implode("\n", $lines) . "\n", 200)
+        return response(implode("\n", $lines)."\n", 200)
             ->header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
     }
 
