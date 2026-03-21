@@ -21,6 +21,7 @@ use App\Models\SwapRequest;
 use App\Models\WaitlistEntry;
 use App\Models\Webhook;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -769,7 +770,7 @@ class BookingController extends Controller
         return SwapRequestResource::make($swap->fresh()->load(['requesterBooking', 'targetBooking']));
     }
 
-    public function extend(Request $request, string $id): \Illuminate\Http\JsonResponse
+    public function extend(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
             'new_end_time' => 'required|date|after:now',
