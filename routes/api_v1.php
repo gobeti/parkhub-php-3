@@ -384,6 +384,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Bookings
     Route::patch('/bookings/{id}', [BookingController::class, 'update']);
     Route::post('/bookings/{id}/checkin', [BookingController::class, 'checkin']);
+    Route::post('/bookings/{id}/extend', [BookingController::class, 'extend']);
     Route::get('/calendar/events', [BookingController::class, 'calendarEvents']);
     Route::get('/swap-requests', [BookingController::class, 'swapRequests']);
     Route::post('/bookings/{id}/swap-request', [BookingController::class, 'createSwapRequest']);
