@@ -7,6 +7,29 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.9.0] - 2026-03-21
+
+### Added
+- **Community translation management**: Proposal submission, up/down voting, admin review (approve/reject with comments)
+- **Runtime translation overrides**: Approved translations hot-loaded into i18n at app startup
+- **Smart slot recommendations**: Heuristic scoring engine (slot frequency, lot frequency, features, proximity, base) — top 5 returned
+- **Favorites UI**: Full view for managing pinned parking slots with live availability status
+- **Dashboard analytics**: 7-day booking activity bar chart with real booking data
+- **DataTable CSV export**: Download any data table as CSV with proper cell escaping
+- **A11y audit fixes**: ARIA labels, contrast fixes, confirm dialogs replacing window.confirm
+- **Demo reset tracking**: Cache-based `last_reset_at`, `next_scheduled_reset`, `reset_in_progress` with 9 tests
+- **i18n**: 10 languages with favorites section (150+ keys per locale)
+
+### Changed
+- Removed unused `ParkingSlot` import from RecommendationController
+- API response format standardized across translation endpoints
+- Version bumped to 1.9.0
+
+### Tests
+- **484 PHP (1094 assertions) + 401 Frontend** = 885 total tests
+
+---
+
 ## [1.6.0] - 2026-03-20
 
 ### Added
