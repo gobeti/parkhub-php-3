@@ -6,6 +6,7 @@
  */
 
 use App\Http\Controllers\Api\AbsenceController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminCreditController;
@@ -445,4 +446,16 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         // System pulse / monitoring
         Route::get('/pulse', [PulseController::class, 'index']);
     });
+});
+
+// ── Stripe Payments ────────────────────────────────────────────────────────
+
+// Stripe webhook (no auth — Stripe signs the payload)
+Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
+
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+    // Stripe Payments (stub — Rust API parity)
+    Route::post('/payments/create-intent', [PaymentController::class, 'createIntent']);
+    Route::post('/payments/confirm', [PaymentController::class, 'confirm']);
+    Route::get('/payments/{id}/status', [PaymentController::class, 'status']);
 });
