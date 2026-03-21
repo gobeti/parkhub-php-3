@@ -25,7 +25,7 @@ class BookingCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('user.' . $this->booking->user_id),
+            new PrivateChannel('user.'.$this->booking->user_id),
         ];
     }
 
