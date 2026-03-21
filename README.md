@@ -10,7 +10,6 @@
   <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.4"></a>
   <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-12-FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 12"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB.svg?style=for-the-badge&logo=react&logoColor=black" alt="React 19"></a>
-  <a href="https://www.mysql.com/"><img src="https://img.shields.io/badge/MySQL-8.0-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL 8"></a>
   <a href="docs/GDPR.md"><img src="https://img.shields.io/badge/DSGVO-konform-green.svg?style=for-the-badge" alt="GDPR Compliant"></a>
   <a href="COMPLIANCE-REPORT.md"><img src="https://img.shields.io/badge/Compliance-Audited-brightgreen.svg?style=for-the-badge" alt="Compliance Audited"></a>
   <a href="docker-compose.yml"><img src="https://img.shields.io/badge/Docker-ready-2496ED.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready"></a>
@@ -19,341 +18,130 @@
 
 <p align="center">
   <strong>Ihre Daten. Ihr Server. Ihre Kontrolle.</strong><br>
-  The on-premise parking management platform for enterprises, universities, and residential complexes.<br>
-  Runs on shared hosting, VPS, Docker, or Kubernetes. Zero cloud. Zero tracking. 100% GDPR compliant by design.
+  The on-premise parking management platform that runs anywhere — shared hosting, VPS, Docker, or Kubernetes.<br>
+  Built with Laravel 12 and React 19. Zero cloud. Zero tracking. 100% GDPR compliant by design.
 </p>
 
 <p align="center">
-  <a href="https://parkhub-php-demo.onrender.com">Live Demo</a> ·
-  <a href="docs/INSTALLATION.md">Installation</a> ·
-  <a href="docs/API.md">API Reference</a> ·
-  <a href="docs/GDPR.md">GDPR Guide</a> ·
-  <a href="COMPLIANCE-REPORT.md">Compliance Report</a> ·
-  <a href="docs/CONFIGURATION.md">Configuration</a> ·
+  <a href="https://parkhub-php-demo.onrender.com"><strong>Try the Live Demo</strong></a> &nbsp;·&nbsp;
+  <a href="docs/INSTALLATION.md">Installation</a> &nbsp;·&nbsp;
+  <a href="docs/API.md">API Docs</a> &nbsp;·&nbsp;
+  <a href="docs/GDPR.md">GDPR Guide</a> &nbsp;·&nbsp;
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 ---
 
-## Why ParkHub?
+## Why Self-Hosted?
 
-> Self-hosted means YOUR data never leaves YOUR server. No US cloud providers. No CLOUD Act risks.
-> No data processing agreements needed — because there is no data processor.
+Most parking management SaaS costs €200–2,000/month, stores your data on US cloud infrastructure, and requires a data processing agreement just to get started.
 
-| | ParkHub (self-hosted) | SaaS Alternatives |
-|---|---|---|
-| Your data location | Your server | Provider's cloud |
-| GDPR processor agreement | Not needed | Required |
-| Monthly SaaS fee | €0 | €200–2,000/month |
-| US CLOUD Act exposure | None | Possible |
-| Source code auditable | MIT License | Proprietary |
-| German legal templates | Included | Extra cost |
-| Shared hosting compatible | Yes | N/A |
-| Works offline / LAN-only | Yes | No |
+ParkHub is different. It runs on your server — a shared hosting plan, a VPS, or your company network. Your data never leaves your premises, which means **no GDPR processor agreement needed**, no CLOUD Act exposure, and no monthly fees. The entire source code is MIT-licensed and auditable.
 
 ---
 
-## Features
-
-### Booking Management
-
-| Feature | Status |
-|---|---|
-| One-time bookings with auto-slot assignment | Done |
-| Quick booking (one tap, system picks best available slot) | Done |
-| Recurring bookings (weekly day-of-week patterns) | Done |
-| Guest bookings (named guest, no account required) | Done |
-| Booking swap requests between users | Done |
-| Booking cancellation with automatic slot release | Done |
-| Full booking history (active, past, cancelled) | Done |
-| Automatic pricing calculation (hourly rate × duration, 19% VAT) | Done |
-| Booking invoice (HTML, browser Print-to-PDF) | Done |
-| Check-in with QR code per booking and per slot | Done |
-| Waitlist for fully booked lots | Done |
-| Auto-release (release no-show bookings after N minutes) | Done |
-| iCal export (bookings as .ics calendar feed) | Done |
-| Email notifications — welcome email + booking confirmation | Done |
-| Favorite slots per user | Done |
-| In-app notification feed | Done |
-
-### Parking Lot Management
-
-| Feature | Status |
-|---|---|
-| Create and manage multiple lots with per-lot zones | Done |
-| Slot layout with zone assignment and visual map | Done |
-| Slot types (standard, compact, large, handicap, electric, motorcycle, VIP) | Done |
-| Slot features (EV charging, covered, near exit, security camera, etc.) | Done |
-| Per-lot pricing (hourly rate, daily max, monthly pass) | Done |
-| Per-slot status management | Done |
-| Real-time occupancy statistics | Done |
-| Public occupancy display board | Done |
-
-### User Management
-
-| Feature | Status |
-|---|---|
-| User registration and login | Done |
-| Role-based access control: user / premium / admin / superadmin | Done |
-| Laravel Sanctum Bearer token authentication (7-day expiry) | Done |
-| Password reset via email | Done |
-| Forgot password flow | Done |
-| Vehicle management with photo upload (GD resize) | Done |
-| German licence plate city-code lookup (400+ codes) | Done |
-| Bulk user import (up to 500 users via CSV) | Done |
-| User preferences (theme, language, timezone, notifications) | Done |
-| Absence tracking (homeoffice, vacation, sick, training) | Done |
-| Absence patterns (recurring weekly homeoffice) | Done |
-| iCal import (absences and vacation from any calendar) | Done |
-| Team overview — who is in office / on vacation today | Done |
-
-### GDPR & Legal
-
-| Feature | Status |
-|---|---|
-| Art. 20 — full personal data export as JSON | Done |
-| Art. 17 — account anonymization (PII erasure, bookings kept per §147 AO) | Done |
-| Hard account deletion with CASCADE | Done |
-| DDG §5 Impressum — admin-editable, always publicly accessible | Done |
-| Privacy policy settings (GDPR retention days configurable) | Done |
-| Legal templates: Impressum, Datenschutz, AGB, AVV | Done |
-
-### Security
-
-| Feature | Status |
-|---|---|
-| Passwords hashed with bcrypt (12 rounds, configurable) | Done |
-| Rate limiting: login/register 10/min, password reset 5/15min | Done |
-| Audit log for all write operations | Done |
-| Input validation on every endpoint (Laravel validator) | Done |
-| Vehicle photo content validated via PHP GD (prevents polyglot attacks) | Done |
-| Admin-only routes enforce role check independent of middleware | Done |
-
-### Administration
-
-| Feature | Status |
-|---|---|
-| Admin dashboard with live occupancy stats | Done |
-| Booking heatmap by weekday and hour | Done |
-| Admin reports (bookings by day, status, type) | Done |
-| Admin CSV export of all bookings | Done |
-| Announcements system (info, warning, error, success) | Done |
-| Branding: custom logo, company name, primary color | Done |
-| Webhooks (outbound event notifications) | Done |
-| Web Push notification subscriptions | Done |
-| Prometheus metrics endpoint (`/api/metrics`) | Done |
-| Health endpoints (`/health/live`, `/health/ready`) | Done |
-| Community translation proposals (submit, vote, admin review/approve) | Done |
-| Runtime translation overrides (approved translations hot-loaded) | Done |
-| Smart slot recommendations (heuristic scoring: frequency, proximity, features) | Done |
-| Demo reset with full DB wipe and re-seed | Done |
-| Auto-reset scheduler (every 6h in demo mode) | Done |
-
-### Deployment
-
-| Feature | Status |
-|---|---|
-| Docker single-container (PHP 8.4 + Apache, zero-config) | Done |
-| Docker Compose with MySQL 8 | Done |
-| Shared hosting (cPanel, FTP + browser installer wizard) | Done |
-| VPS / LAMP / LEMP (Ubuntu 24.04) | Done |
-| PaaS (Railway, Render, Fly.io) | Done |
-| Kubernetes deployment manifests | Planned |
-| Dark mode / light mode / system preference | Done |
-| Mobile-responsive Astro 6 + React 19 frontend | Done |
-| i18n — 10 languages (EN, DE, FR, ES, IT, PT, TR, PL, JA, ZH) | Done |
-| Favorites view — pin & manage preferred parking slots | Done |
-| DataTable CSV export (download any table as spreadsheet) | Done |
-| Dashboard analytics bar chart (7-day booking activity) | Done |
-| Command Palette (Ctrl+K) — quick navigation and actions | Done |
-| PWA (installable, offline-capable, service worker) | Done |
-
----
-
-## Quick Start (3 commands)
+## Quick Start
 
 ```bash
-git clone https://github.com/nash87/parkhub-php.git
-cd parkhub-php
+git clone https://github.com/nash87/parkhub-php.git && cd parkhub-php
 docker compose up -d
+# Open http://localhost:8080 — Login: admin@parkhub.test / demo
 ```
 
-> **Note:** The first `docker compose up -d` builds the PHP + Node.js image from source.
-> This takes **2–5 minutes** on first run. Subsequent starts are instant (image is cached).
-> Watch progress: `docker compose logs -f app`
+The first build takes 2–5 minutes (installs Composer + Node dependencies, builds the React frontend). After that, starts are instant. Custom credentials from the start:
 
-Open **http://localhost:8080** in your browser.
-
-Default credentials (Docker): `admin@parkhub.test` / `demo` — **change immediately after login**.
-
-The container entrypoint automatically:
-1. Generates the Laravel `APP_KEY` if not set
-2. Runs database migrations
-3. Creates a default admin account (`admin@parkhub.test` / `demo`)
-
-To use custom credentials from the start:
 ```bash
-PARKHUB_ADMIN_EMAIL=you@example.com PARKHUB_ADMIN_PASSWORD=mypassword docker compose up -d
+PARKHUB_ADMIN_EMAIL=you@company.com PARKHUB_ADMIN_PASSWORD=secure docker compose up -d
 ```
 
-To start with pre-seeded German demo data (10 lots, 200 users, ~3,500 bookings):
-```bash
-DEMO_MODE=true docker compose up -d
-```
+**No Docker?** ParkHub PHP runs on any €3/month shared hosting with PHP 8.2+ and MySQL. Upload via FTP, open `install.php` in your browser, done. See [Installation Guide →](docs/INSTALLATION.md)
+
+**[Live Demo →](https://parkhub-php-demo.onrender.com)** &nbsp; Login: `admin@parkhub.test` / `demo` &nbsp; (auto-resets every 6 hours)
 
 ---
 
-## Live Demo
+## What You Get
+
+**Booking System** — Full booking lifecycle with automatic pricing (hourly rate × duration, 19% German VAT, daily max cap). One-tap quick booking, recurring reservations, guest bookings without accounts, swap requests, waitlists, and automatic no-show release. QR code check-in per booking and per slot. iCal export for calendar integration. Email confirmations via SMTP and Web Push notifications.
+
+**Smart Recommendations** — A heuristic scoring engine learns from usage patterns and suggests the best available slots. Users can pin favorites for one-tap access.
+
+**Parking Lot Management** — Create multiple lots with per-lot zones, slot types (standard, compact, handicap, EV, VIP, motorcycle), and slot features (EV charging, covered, near exit, security camera). Per-lot pricing with hourly rates, daily maximums, and monthly passes. Visual layout editor with real-time occupancy and a public display board for lobby screens.
+
+**User & Access Control** — Four-tier RBAC (user, premium, admin, superadmin) with Laravel Sanctum token auth (7-day expiry). Vehicle management with photo upload and German licence plate city-code lookup (400+ codes). Bulk user import via CSV (up to 500 users). Absence tracking with iCal import, recurring homeoffice patterns, and team overview.
+
+**Admin Dashboard** — Live occupancy stats, booking heatmaps by weekday and hour, CSV export, custom branding (logo, company name, primary color), announcements, and outbound webhooks for event-driven integrations. Prometheus metrics at `/api/metrics` and health endpoints for monitoring.
+
+**Internationalization** — Ships with 10 languages (EN, DE, FR, ES, IT, PT, TR, PL, JA, ZH). Community translation proposals with voting and admin review. Runtime overrides hot-loaded without restarts.
+
+**PWA** — Installable as a native app on phones and desktops. Service worker for offline capability. Command Palette (Ctrl+K) for quick navigation.
+
+**GDPR & German Legal Compliance** — Art. 20 data export, Art. 17 erasure with both anonymization and hard CASCADE deletion, DDG §5 Impressum, configurable retention days, and 7 ready-to-use legal templates. Audited for DSGVO, TTDSG, UK GDPR, CCPA, and nDSG. [Full Compliance Report →](COMPLIANCE-REPORT.md)
+
+**Security** — bcrypt password hashing (12 rounds), per-endpoint rate limiting, full audit log, input validation on every endpoint, vehicle photo content validation via GD (prevents polyglot attacks), and admin role checks independent of middleware. [Security Audit →](SECURITY-AUDIT.md)
+
+---
+
+## Screenshots
 
 | | |
 |---|---|
-| **URL** | [parkhub-php-demo.onrender.com](https://parkhub-php-demo.onrender.com) |
-| **Login** | `admin@parkhub.test` / `demo` |
-| **Auto-reset** | Every 6 hours (all data reset to demo state) |
-| **Manual reset** | Vote with other viewers, or reset solo when alone |
-
-> The demo runs on Render free tier and may take ~30 seconds to wake from sleep.
-
-### Deployment Modes
-
-| Mode | Env Vars | Behavior |
-|---|---|---|
-| **Production** | *(none)* | Clean install, setup wizard on first run |
-| **Production + seed data** | `SEED_DEMO_DATA=true` | Seeds 10 lots, 200 users, ~3,500 bookings — no demo UI |
-| **Demo** | `DEMO_MODE=true` | Seeds data + enables demo overlay, voting, 6h auto-reset |
-
-```bash
-# Production (fresh install with setup wizard)
-docker compose up -d
-
-# Production with sample data (great for evaluation)
-SEED_DEMO_DATA=true docker compose up -d
-
-# Full demo mode (auto-resets every 6 hours)
-DEMO_MODE=true docker compose up -d
-```
-
-Screenshots are available in the `docs/screenshots/` directory.
+| ![Dashboard](screenshots/05-dashboard.png) | ![Booking](screenshots/06-book.png) |
+| Dashboard with occupancy stats | Interactive booking flow |
+| ![Admin Panel](screenshots/09-admin.png) | ![Dark Mode](screenshots/10-dark-mode.png) |
+| Admin panel with lot management | Full dark mode support |
 
 ---
 
 ## Architecture
 
 ```
-Browser (Astro 6 + React 19 — TypeScript + Tailwind CSS)
-  |  Served from /public/
-  |  Bearer token (Laravel Sanctum, 7-day expiry)
-  |  JSON REST API
-  v
-Laravel 12  (PHP 8.4, Apache)
-  |
-  +-- /api/v1/*    REST API (auth required, role-enforced)
-  +-- /api/*       Legacy routes (backwards-compatible)
-  +-- /health/*    Kubernetes liveness + readiness probes
-  +-- /api/v1/legal  Public legal pages (DDG §5 Impressum)
-  |
-  +-- SQLite   (DB_CONNECTION=sqlite — development, single-node)
-  +-- MySQL 8  (DB_CONNECTION=mysql — production, Docker Compose)
-  |
-  +-- Queue worker  (email notifications, push notifications)
-  +-- Storage disk  (vehicle photos, branding logo)
+                    ┌─────────────────────────────────┐
+                    │     React 19 + Astro 6 SPA      │
+                    │   TypeScript · Tailwind CSS 4    │
+                    └───────────────┬─────────────────┘
+                                    │ Bearer Token (Sanctum)
+                    ┌───────────────▼─────────────────┐
+                    │     Laravel 12 + PHP 8.4         │
+                    │   /api/v1/*  · /api/metrics      │
+                    │   /health/*  · Web Push (VAPID)  │
+                    ├─────────────────────────────────┤
+                    │  MySQL 8 · SQLite · PostgreSQL   │
+                    └─────────────────────────────────┘
+                        Docker · Shared Hosting · VPS
 ```
 
-No external service is called at runtime. SMTP is optional — notifications fall back to the log driver if unconfigured. The entire stack runs on any PHP 8.4 host, including shared hosting.
+ParkHub PHP is designed for maximum deployment flexibility. It runs on €3/month shared hosting (Strato, IONOS, All-Inkl) with just PHP and MySQL, scales up to Docker Compose and Kubernetes, and supports PostgreSQL for cloud-native PaaS platforms like Render and Railway.
+
+The same React 19 + Astro 6 frontend is shared with the [Rust edition](https://github.com/nash87/parkhub-rust), making both backends fully interchangeable.
 
 ---
 
-## Demo Data
+## Deployment Options
 
-Seed a realistic German dataset (10 lots, 200 users, ~3,500 bookings over 30 days):
+**Shared Hosting** — Upload via FTP, run `install.php` in your browser. Works with cPanel, Plesk, and any PHP 8.2+ host. No SSH required.
+
+**Docker** — Single container with PHP 8.4 + Apache, or Docker Compose with MySQL 8. Supports MySQL, SQLite, and PostgreSQL via environment variables.
+
+**VPS / LAMP** — Standard Laravel deployment on Ubuntu 24.04. Nginx or Apache, Composer, npm.
+
+**PaaS** — One-click deploy on Railway, Render, and Fly.io. PostgreSQL support included via the Docker image.
+
+**Kubernetes** — Health probes and Prometheus metrics ready. Manifests coming soon.
+
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) for step-by-step guides for every platform.
+
+---
+
+## Testing
+
+**484 PHPUnit tests** (backend) + **401 Vitest tests** (frontend) + Playwright E2E. CI runs on every push via GitHub Actions.
 
 ```bash
-php artisan db:seed --class=ProductionSimulationSeeder
+composer test               # PHPUnit
+cd parkhub-web && npx vitest run  # Frontend
+npx playwright test         # E2E
 ```
-
-Lots include P+R Hauptbahnhof Munchen, Tiefgarage Marktplatz Stuttgart, Parkhaus Technologiepark Karlsruhe, and seven more German locations.
-
----
-
-## Installation
-
-| Platform | Guide | Difficulty |
-|---|---|---|
-| Docker Compose (recommended) | [docs/INSTALLATION.md](docs/INSTALLATION.md#docker-compose-recommended) | Easy |
-| Shared hosting (cPanel, FTP) | [docs/SHARED-HOSTING.md](docs/SHARED-HOSTING.md) | Easy |
-| VPS / LAMP / LEMP (Ubuntu 24.04) | [docs/INSTALLATION.md](docs/INSTALLATION.md#vps--lamp-stack) | Medium |
-| PaaS (Railway, Render, Fly.io) | [docs/PAAS.md](docs/PAAS.md) | Easy |
-| Kubernetes | [docs/INSTALLATION.md](docs/INSTALLATION.md#kubernetes) | Medium |
-
----
-
-## Legal Compliance & Data Protection
-
-> **Audited for German, EU, UK, US, and Swiss compliance.** See the full [Compliance Report](COMPLIANCE-REPORT.md).
-
-ParkHub PHP is designed for on-premise deployment in regulated environments.
-Because all data stays on your server, **no Auftragsverarbeitungsvertrag (AVV) with a cloud provider is needed**.
-
-### Regulatory Coverage
-
-| Regulation | Status | Scope |
-|---|---|---|
-| **DSGVO / GDPR** (EU/EEA) | **PASS** | On-premise — no cross-border transfers |
-| **TTDSG §25** (ePrivacy) | **PASS** | No cookies, localStorage technically necessary only |
-| **DDG §5** (Provider ID) | **PASS** | Impressum template + admin-editable endpoint |
-| **BGB §§305–310** (AGB) | **PASS** | B2B + B2C terms template included |
-| **BGB §§312g, 355, 356** (Withdrawal) | **PASS** | 14-day Widerrufsbelehrung template |
-| **AO §147** (Tax retention) | **PASS** | 10-year booking retention, PII anonymized on erasure |
-| **BFSG / EU Accessibility Act** | **Documented** | Operator guidance provided |
-| **UK GDPR + PECR** | **PASS** | Compatible with EU GDPR |
-| **CCPA/CPRA** (California) | **PASS** | Self-hosted, no data sale |
-| **nDSG** (Switzerland) | **PASS** | Compatible with DSGVO |
-
-### GDPR Endpoints
-
-| GDPR Article | Endpoint | Notes |
-|---|---|---|
-| Art. 20 — Data portability | `GET /api/v1/users/me/export` | JSON archive: profile, bookings, absences, vehicles |
-| Art. 17 — Right to erasure | `POST /api/v1/users/me/anonymize` | Anonymizes all PII fields |
-| Art. 17 + §147 AO | Booking records | Retained 10 years (German tax law), PII anonymized |
-| Hard delete | `DELETE /api/v1/users/me/delete` | Full CASCADE deletion including all records |
-| DDG §5 — Impressum | `GET /api/v1/legal/impressum` | Public endpoint, admin-editable |
-
-### Legal Templates (7 documents)
-
-All templates in `legal/` are ready for operator customization:
-
-| Template | Regulation | Use Case |
-|---|---|---|
-| [impressum-template.md](legal/impressum-template.md) | DDG §5 | Provider identification (mandatory for business) |
-| [datenschutz-template.md](legal/datenschutz-template.md) | Art. 13/14 DSGVO | Privacy policy |
-| [agb-template.md](legal/agb-template.md) | §§305–310 BGB | General terms and conditions |
-| [avv-template.md](legal/avv-template.md) | Art. 28 DSGVO | Data processing agreement (for SMTP provider) |
-| [cookie-policy-template.md](legal/cookie-policy-template.md) | TTDSG §25 | localStorage / service worker policy |
-| [widerrufsbelehrung-template.md](legal/widerrufsbelehrung-template.md) | §356 BGB | Right of withdrawal (B2C) |
-| [vvt-template.md](legal/vvt-template.md) | Art. 30 DSGVO | Record of processing activities |
-
-### No Cookie Consent Required
-
-ParkHub uses zero cookies. All `localStorage` entries are technically necessary (TTDSG §25 Abs. 2 Nr. 2):
-session token, theme, language, feature flags, use case preset, and onboarding hint dismissals.
-No tracking, analytics, or advertising technologies are used.
-
-See [docs/GDPR.md](docs/GDPR.md) for the full operator compliance guide and [COMPLIANCE-REPORT.md](COMPLIANCE-REPORT.md) for the detailed audit.
-
----
-
-## Security
-
-- **Passwords**: bcrypt with 12 rounds (configurable via `BCRYPT_ROUNDS`)
-- **API tokens**: Laravel Sanctum with 7-day expiry
-- **Rate limiting**: login/register 10/min, password reset 5/15 min
-- **Audit log**: every mutation recorded (login, register, booking create/delete, GDPR erasure, admin actions)
-- **Input validation**: Laravel validator on every endpoint — no raw user data reaches the database
-- **File uploads**: vehicle photos validated through PHP GD before storage (prevents polyglot file attacks)
-- **RBAC**: admin-only routes enforce role check in each controller method, independent of middleware
-
-See [docs/SECURITY.md](docs/SECURITY.md) for the full security model.
 
 ---
 
@@ -361,62 +149,20 @@ See [docs/SECURITY.md](docs/SECURITY.md) for the full security model.
 
 Key environment variables (full list in [docs/CONFIGURATION.md](docs/CONFIGURATION.md)):
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `APP_URL` | `http://localhost` | Public URL — required for QR codes and emails |
-| `APP_KEY` | (auto-generated) | 32-byte Laravel encryption key |
-| `DB_CONNECTION` | `sqlite` | `sqlite` or `mysql` |
-| `DB_HOST` | — | MySQL host (if `DB_CONNECTION=mysql`) |
-| `DB_DATABASE` | — | MySQL database name |
-| `DB_USERNAME` | — | MySQL username |
-| `DB_PASSWORD` | — | MySQL password |
-| `MAIL_MAILER` | `log` | `smtp`, `sendmail`, or `log` |
-| `MAIL_HOST` | — | SMTP server hostname |
-| `MAIL_PORT` | `587` | SMTP port |
-| `QUEUE_CONNECTION` | `database` | `database`, `sync`, or `redis` |
-| `BCRYPT_ROUNDS` | `12` | Password hashing cost (higher = slower = safer) |
-| `PARKHUB_ADMIN_EMAIL` | `admin@parkhub.test` | Initial admin email (Docker / `install.php`) |
-| `PARKHUB_ADMIN_PASSWORD` | `demo` | Initial admin password — **change immediately** |
-| `DEMO_MODE` | `false` | Set `true` to seed German demo data on container start |
+- `DB_CONNECTION` — `mysql`, `sqlite`, or `pgsql`
+- `DB_HOST` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` — Database connection
+- `DATABASE_URL` — Alternative single-URL format (PaaS platforms)
+- `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` — SMTP email
+- `PARKHUB_ADMIN_EMAIL` / `PARKHUB_ADMIN_PASSWORD` — Initial admin account
+- `DEMO_MODE=true` — Enable demo overlay with 6-hour auto-reset
 
 ---
 
-## API Reference
+## Rust Edition
 
-Quick example — list parking lots:
+A feature-equivalent **Rust edition** (Axum + redb embedded DB) exists for environments that need a single binary with zero dependencies, AES-256-GCM database encryption, or a desktop client with system tray integration.
 
-```bash
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"demo"}' | jq -r '.tokens.access_token')
-
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/lots
-```
-
-See [docs/API.md](docs/API.md) for the complete REST API reference with curl examples.
-The API is compatible with the Rust backend — both use the same `/api/v1/*` route structure.
-
----
-
-## Documentation Index
-
-| Document | Purpose |
-|---|---|
-| [docs/INSTALLATION.md](docs/INSTALLATION.md) | Full installation guide (Docker, VPS, K8s) |
-| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Every `.env` variable documented |
-| [docs/API.md](docs/API.md) | Full REST API reference with curl examples |
-| [docs/GDPR.md](docs/GDPR.md) | Operator DSGVO compliance guide |
-| [docs/SECURITY.md](docs/SECURITY.md) | Security model and responsible disclosure |
-| [CHANGELOG.md](CHANGELOG.md) | Release history |
-| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Development setup and PR process |
-| [docs/DOCKER.md](docs/DOCKER.md) | Docker-specific deployment guide |
-| [docs/VPS.md](docs/VPS.md) | VPS / LAMP manual deployment |
-| [docs/SHARED-HOSTING.md](docs/SHARED-HOSTING.md) | Shared hosting (FTP, install.php wizard) |
-| [docs/PAAS.md](docs/PAAS.md) | PaaS deployment (Railway, Render, Fly.io) |
-| [legal/impressum-template.md](legal/impressum-template.md) | German Impressum template (DDG §5) |
-| [legal/datenschutz-template.md](legal/datenschutz-template.md) | Datenschutzerklarung template |
-| [legal/agb-template.md](legal/agb-template.md) | AGB template |
-| [legal/avv-template.md](legal/avv-template.md) | Auftragsverarbeitungsvertrag template |
+**[nash87/parkhub-rust →](https://github.com/nash87/parkhub-rust)**
 
 ---
 
@@ -428,7 +174,6 @@ MIT — see [LICENSE](LICENSE).
 
 ## Contributing
 
-Contributions welcome. See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the development setup
-(PHPUnit/Pest testing, code style), and the PR process.
+Contributions welcome — see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for setup and PR process.
 
-Bug reports and feature requests: use the [GitHub issue tracker](https://github.com/nash87/parkhub-php/issues).
+Bug reports and feature requests: [GitHub Issues](https://github.com/nash87/parkhub-php/issues)
