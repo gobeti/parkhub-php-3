@@ -6,7 +6,6 @@
  */
 
 use App\Http\Controllers\Api\AbsenceController;
-use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminCreditController;
@@ -19,6 +18,7 @@ use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MiscController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\PulseController;
 use App\Http\Controllers\Api\RecommendationController;
