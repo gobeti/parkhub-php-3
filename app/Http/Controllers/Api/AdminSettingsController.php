@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Concerns\ValidatesExternalUrls;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Absence;
@@ -17,6 +18,8 @@ use Illuminate\Http\Request;
 
 class AdminSettingsController extends Controller
 {
+    use ValidatesExternalUrls;
+
     private function requireAdmin($request): void
     {
         if (! $request->user() || ! $request->user()->isAdmin()) {
@@ -338,51 +341,6 @@ class AdminSettingsController extends Controller
             'responsible_person' => Setting::get('impressum_responsible', ''),
             'custom_text' => Setting::get('impressum_custom_text', ''),
         ]);
-    }
-
-    /**
-     * Validate that a URL does not target internal/private networks (SSRF protection).
-     */
-    private function isExternalUrl(string $url): bool
-    {
-        // Must be http or https
-        if (! preg_match('#^https?://#i', $url)) {
-            return false;
-        }
-
-        $parsed = parse_url($url);
-        $host = $parsed['host'] ?? '';
-        if (empty($host)) {
-            return false;
-        }
-
-        // Resolve hostname to IP(s)
-        $ips = gethostbynamel($host);
-        if ($ips === false) {
-            // Unresolvable hostname — block to be safe
-            return false;
-        }
-
-        foreach ($ips as $ip) {
-            if ($this->isPrivateIp($ip)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function isPrivateIp(string $ip): bool
-    {
-        // Loopback: 127.0.0.0/8
-        // RFC1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
-        // Link-local: 169.254.0.0/16
-        // IPv6 mapped: ::1, ::ffff:127.0.0.1, etc.
-        return ! filter_var(
-            $ip,
-            FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-        );
     }
 
     public function resetDatabase(Request $request)
