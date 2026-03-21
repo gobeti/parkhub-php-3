@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ApiResponseWrapper;
+use App\Http\Middleware\CheckModule;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\RequireAdmin;
 use App\Http\Middleware\SecurityHeaders;
@@ -37,7 +38,10 @@ return Application::configure(basePath: dirname(__DIR__))
             ApiResponseWrapper::class,
         ]);
 
-        $middleware->alias(['admin' => RequireAdmin::class]);
+        $middleware->alias([
+            'admin' => RequireAdmin::class,
+            'module' => CheckModule::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Consistent JSON error responses for API routes

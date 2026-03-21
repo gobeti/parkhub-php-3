@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * Bookings module routes (api/v1).
+ * Loaded only when MODULE_BOOKINGS=true.
+ */
+
+use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminReportController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\BookingInvoiceController;
+use App\Http\Controllers\Api\RecommendationController;
+use Illuminate\Support\Facades\Route;
+
+// Protected booking routes
+Route::middleware(['module:bookings', 'auth:sanctum', 'throttle:api'])->group(function () {
+    Route::get('/bookings/recommendations', [RecommendationController::class, 'index']);
+    Route::get('/bookings', [BookingController::class, 'index']);
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::get('/bookings/{id}', [BookingController::class, 'show']);
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
+    Route::post('/bookings/quick', [BookingController::class, 'quickBook']);
+    Route::post('/bookings/guest', [BookingController::class, 'guestBooking']);
+    Route::put('/bookings/{id}/notes', [BookingController::class, 'updateNotes']);
+    Route::patch('/bookings/{id}', [BookingController::class, 'update']);
+    Route::post('/bookings/{id}/checkin', [BookingController::class, 'checkin']);
+    Route::post('/bookings/{id}/extend', [BookingController::class, 'extend']);
+    Route::get('/calendar', [BookingController::class, 'index']);
+    Route::get('/calendar/events', [BookingController::class, 'calendarEvents']);
+
+    // Invoice
+    Route::get('/bookings/{id}/invoice', [BookingInvoiceController::class, 'show']);
+
+    // Admin bookings
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('/bookings', [AdminController::class, 'bookings']);
+        Route::patch('/bookings/{id}/cancel', [AdminController::class, 'cancelBooking']);
+        Route::get('/guest-bookings', [AdminController::class, 'guestBookings']);
+        Route::patch('/guest-bookings/{id}/cancel', [AdminController::class, 'cancelGuestBooking']);
+        Route::get('/bookings/export', [AdminReportController::class, 'exportBookingsCsv']);
+    });
+});
