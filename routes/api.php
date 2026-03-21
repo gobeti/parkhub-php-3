@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PulseController;
 use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\SlotController;
+use App\Http\Controllers\Api\SystemController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
@@ -26,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 
 // Health check (no auth)
 Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'version' => '1.3.0']);
+    return response()->json(['status' => 'ok', 'version' => SystemController::appVersion()]);
 });
 
 // Public routes (no auth) — rate limited to prevent brute-force and registration spam
