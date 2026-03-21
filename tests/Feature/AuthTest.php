@@ -105,6 +105,6 @@ class AuthTest extends TestCase
             ->deleteJson('/api/v1/users/me/delete', ['password' => 'password123']);
 
         $response->assertStatus(200);
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
 }
