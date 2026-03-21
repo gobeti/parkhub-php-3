@@ -5,75 +5,120 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ParkingLot;
+use App\Models\ParkingSlot;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class MetricsController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Prometheus text format exposition.
+     *
+     * Endpoint is protected by an optional bearer token (METRICS_TOKEN env var).
+     * Returns Content-Type: text/plain; version=0.0.4 as per Prometheus spec.
+     */
+    public function index(Request $request): Response
     {
         $expectedToken = config('app.metrics_token');
         if ($expectedToken && $request->bearerToken() !== $expectedToken) {
             return response('Unauthorized', 401);
         }
 
+        $lines = $this->buildMetrics();
+
+        return response(implode("\n", $lines)."\n", 200)
+            ->header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    }
+
+    private function buildMetrics(): array
+    {
         $lines = [];
 
-        // Active bookings
-        $activeBookings = Booking::where('status', 'confirmed')
+        // ── parkhub_users_total ────────────────────────────────────────────
+        $usersTotal = User::count();
+        $lines[] = '# HELP parkhub_users_total Total registered users';
+        $lines[] = '# TYPE parkhub_users_total gauge';
+        $lines[] = "parkhub_users_total {$usersTotal}";
+        $lines[] = '';
+
+        // ── parkhub_bookings_total (by status) ────────────────────────────
+        $bookingsByStatus = Booking::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->all();
+
+        $lines[] = '# HELP parkhub_bookings_total Total bookings by status';
+        $lines[] = '# TYPE parkhub_bookings_total gauge';
+        foreach ($bookingsByStatus as $status => $count) {
+            $lines[] = "parkhub_bookings_total{status=\"{$status}\"} {$count}";
+        }
+        $lines[] = '';
+
+        // ── parkhub_bookings_active ────────────────────────────────────────
+        $activeBookings = Booking::whereIn('status', ['confirmed', 'active'])
             ->where('start_time', '<=', now())
             ->where('end_time', '>=', now())
             ->count();
-        $lines[] = '# HELP active_bookings Number of currently active bookings';
-        $lines[] = '# TYPE active_bookings gauge';
-        $lines[] = "active_bookings $activeBookings";
+        $lines[] = '# HELP parkhub_bookings_active Number of currently active/confirmed bookings in window';
+        $lines[] = '# TYPE parkhub_bookings_active gauge';
+        $lines[] = "parkhub_bookings_active {$activeBookings}";
+        $lines[] = '';
 
-        // Total users
-        $totalUsers = User::count();
-        $lines[] = '# HELP users_total Total registered users';
-        $lines[] = '# TYPE users_total gauge';
-        $lines[] = "users_total $totalUsers";
+        // ── parkhub_lots_total ─────────────────────────────────────────────
+        $lotsTotal = ParkingLot::count();
+        $lines[] = '# HELP parkhub_lots_total Total parking lots';
+        $lines[] = '# TYPE parkhub_lots_total gauge';
+        $lines[] = "parkhub_lots_total {$lotsTotal}";
+        $lines[] = '';
 
-        // Parking lot occupancy
-        $lots = ParkingLot::all();
-        $lines[] = '# HELP parking_lot_total_slots Total slots per parking lot';
-        $lines[] = '# TYPE parking_lot_total_slots gauge';
-        $lines[] = '# HELP parking_lot_occupied_slots Occupied slots per parking lot';
-        $lines[] = '# TYPE parking_lot_occupied_slots gauge';
-        $lines[] = '# HELP parking_lot_occupancy_percent Occupancy percentage per parking lot';
-        $lines[] = '# TYPE parking_lot_occupancy_percent gauge';
+        // ── parkhub_slots_total / parkhub_slots_available ─────────────────
+        $slotsTotal = ParkingSlot::count();
+        $slotsAvailable = ParkingSlot::where('status', 'available')->count();
+        $slotsActive = ParkingSlot::where('status', 'active')->count();
 
+        $lines[] = '# HELP parkhub_slots_total Total parking slots';
+        $lines[] = '# TYPE parkhub_slots_total gauge';
+        $lines[] = "parkhub_slots_total {$slotsTotal}";
+        $lines[] = '';
+
+        $lines[] = '# HELP parkhub_slots_available Parking slots with status=available';
+        $lines[] = '# TYPE parkhub_slots_available gauge';
+        $lines[] = "parkhub_slots_available {$slotsAvailable}";
+        $lines[] = '';
+
+        $lines[] = '# HELP parkhub_slots_active Parking slots with status=active (in use)';
+        $lines[] = '# TYPE parkhub_slots_active gauge';
+        $lines[] = "parkhub_slots_active {$slotsActive}";
+        $lines[] = '';
+
+        // ── parkhub_lot_occupancy_percent (per lot) ────────────────────────
+        $lots = ParkingLot::all(['id', 'name', 'total_slots', 'available_slots']);
+        $lines[] = '# HELP parkhub_lot_occupancy_percent Occupancy percentage per parking lot';
+        $lines[] = '# TYPE parkhub_lot_occupancy_percent gauge';
         foreach ($lots as $lot) {
-            $total = $lot->total_slots;
-            $occupied = $total - $lot->available_slots;
-            $pct = $total > 0 ? round(($occupied / $total) * 100, 1) : 0;
-            $name = preg_replace('/[^a-zA-Z0-9_]/', '_', $lot->name);
-
-            $lines[] = "parking_lot_total_slots{lot_id=\"{$lot->id}\",lot_name=\"$name\"} $total";
-            $lines[] = "parking_lot_occupied_slots{lot_id=\"{$lot->id}\",lot_name=\"$name\"} $occupied";
-            $lines[] = "parking_lot_occupancy_percent{lot_id=\"{$lot->id}\",lot_name=\"$name\"} $pct";
+            $total = (int) $lot->total_slots;
+            $occupied = $total - (int) $lot->available_slots;
+            $pct = $total > 0 ? round(($occupied / $total) * 100, 2) : 0;
+            $safeName = preg_replace('/[^a-zA-Z0-9_]/', '_', $lot->name);
+            $lines[] = "parkhub_lot_occupancy_percent{lot_id=\"{$lot->id}\",lot_name=\"{$safeName}\"} {$pct}";
         }
+        $lines[] = '';
 
-        // Bookings today
-        $todayBookings = Booking::whereDate('start_time', today())->count();
-        $lines[] = '# HELP bookings_today Number of bookings for today';
-        $lines[] = '# TYPE bookings_today gauge';
-        $lines[] = "bookings_today $todayBookings";
-
-        // Active sessions (approximation via Sanctum tokens)
+        // ── parkhub_active_sessions ────────────────────────────────────────
         try {
             $activeSessions = DB::table('personal_access_tokens')
                 ->where('last_used_at', '>=', now()->subHour())
                 ->count();
-            $lines[] = '# HELP active_sessions Approximate active sessions (tokens used in last hour)';
-            $lines[] = '# TYPE active_sessions gauge';
-            $lines[] = "active_sessions $activeSessions";
-        } catch (\Exception $e) {
-            // Skip if table doesn't exist
+            $lines[] = '# HELP parkhub_active_sessions Active API sessions (tokens used in last hour)';
+            $lines[] = '# TYPE parkhub_active_sessions gauge';
+            $lines[] = "parkhub_active_sessions {$activeSessions}";
+            $lines[] = '';
+        } catch (\Exception) {
+            // Skip if table doesn't exist in test environment
         }
 
-        return response(implode("\n", $lines)."\n", 200)
-            ->header('Content-Type', 'text/plain; charset=utf-8');
+        return $lines;
     }
 }
