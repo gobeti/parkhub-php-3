@@ -1,0 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app/
+
+    # Level 0 with baseline — increase incrementally as errors are fixed.
+    level: 0
+
+    # Exclude generated/cache files
+    excludePaths:
+        - storage/
+        - bootstrap/cache/
+        - vendor/

@@ -149,4 +149,16 @@ return [
 
     'metrics_token' => env('METRICS_TOKEN'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | VAPID Subject
+    |--------------------------------------------------------------------------
+    |
+    | The contact URI (mailto: or https:) for Web Push VAPID authentication.
+    | Must be a valid URL. Used as the "subject" claim in VAPID tokens.
+    |
+    */
+
+    'vapid_subject' => env('VAPID_SUBJECT', 'mailto:admin@parkhub.test'),
+
 ];

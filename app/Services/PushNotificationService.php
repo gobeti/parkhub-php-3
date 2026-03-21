@@ -24,7 +24,7 @@ class PushNotificationService
 
         $auth = [
             'VAPID' => [
-                'subject' => Setting::get('vapid_subject', env('VAPID_SUBJECT', 'mailto:admin@parkhub.test')),
+                'subject' => Setting::get('vapid_subject', config('app.vapid_subject', 'mailto:admin@parkhub.test')),
                 'publicKey' => $publicKey,
                 'privateKey' => $privateKey,
             ],
