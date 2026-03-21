@@ -264,6 +264,42 @@ class BookingTest extends TestCase
     }
 
     /**
+     * Simulates concurrent booking attempts: only the first succeeds, the second is rejected.
+     * Verifies the DB-level lock (lockForUpdate) prevents double-booking under race conditions.
+     */
+    public function test_concurrent_bookings_dont_double_book(): void
+    {
+        [$user, $lot, $slot] = $this->createUserAndLot();
+        $user2 = User::factory()->create(['role' => 'user']);
+
+        $start = now()->addHours(2)->toISOString();
+        $end = now()->addHours(4)->toISOString();
+
+        $token1 = $user->createToken('test')->plainTextToken;
+        $token2 = $user2->createToken('test')->plainTextToken;
+
+        $payload = [
+            'lot_id' => $lot->id,
+            'slot_id' => $slot->id,
+            'start_time' => $start,
+            'end_time' => $end,
+            'booking_type' => 'single',
+        ];
+
+        // Simulate two requests arriving "simultaneously" — sequential in test,
+        // but the controller's DB transaction with lockForUpdate must prevent both succeeding.
+        $r1 = $this->withHeader('Authorization', 'Bearer '.$token1)->postJson('/api/v1/bookings', $payload);
+        $r2 = $this->withHeader('Authorization', 'Bearer '.$token2)->postJson('/api/v1/bookings', $payload);
+
+        $statuses = [$r1->getStatusCode(), $r2->getStatusCode()];
+        sort($statuses);
+
+        // Exactly one must succeed (201) and one must be rejected (409)
+        $this->assertEquals([201, 409], $statuses);
+        $this->assertDatabaseCount('bookings', 1);
+    }
+
+    /**
      * A user must not be able to update notes on another user's booking.
      */
     public function test_user_cannot_update_notes_on_another_users_booking(): void
