@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { UseCaseProvider } from './context/UseCaseContext';
 import { FeaturesProvider } from './context/FeaturesContext';
+import { ModuleProvider } from './context/ModuleContext';
 import './i18n';
 
 // Eagerly loaded shell
@@ -153,6 +154,7 @@ export function App() {
         <ThemeLoader>
         <UseCaseProvider>
         <FeaturesProvider>
+        <ModuleProvider>
         <AuthProvider>
           <AppRoutes />
           <Suspense fallback={null}><DemoOverlay /></Suspense>
@@ -166,6 +168,7 @@ export function App() {
             }}
           />
         </AuthProvider>
+        </ModuleProvider>
         </FeaturesProvider>
         </UseCaseProvider>
         </ThemeLoader>
