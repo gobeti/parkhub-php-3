@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1: Frontend build (Astro)
 # ---------------------------------------------------------------------------
-FROM node:22-slim AS frontend
+FROM docker.io/library/node:22-slim AS frontend
 WORKDIR /app
 COPY parkhub-web/package*.json ./
 RUN npm ci
@@ -16,7 +16,7 @@ RUN DOCKER=1 npm run build
 # ---------------------------------------------------------------------------
 # Stage 2: Composer dependency install (no dev deps)
 # ---------------------------------------------------------------------------
-FROM composer:2 AS vendor
+FROM docker.io/library/composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
@@ -28,7 +28,7 @@ RUN composer dump-autoload --optimize --no-dev
 # Stage 3: Runtime — PHP + Apache
 # Pin to bookworm (Debian 12) for reproducible OS packages
 # ---------------------------------------------------------------------------
-FROM php:8.4-apache-bookworm AS runtime
+FROM docker.io/library/php:8.4-apache-bookworm AS runtime
 
 # Install PHP extensions in a single layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
