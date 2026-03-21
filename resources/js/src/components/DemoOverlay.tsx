@@ -1,201 +1,200 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, ArrowsClockwise, Eye, CaretUp, CaretDown, Sparkle } from '@phosphor-icons/react';
+import { useTranslation } from 'react-i18next';
+import { Sparkle, Eye, Timer, ArrowsClockwise, CaretDown, CaretUp } from '@phosphor-icons/react';
+import { api, type DemoStatus } from '../api/client';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+function formatRelativeTime(isoString: string): string {
+  const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
+}
 
-interface DemoStatus {
-  enabled: boolean;
-  timer: { remaining: number; duration: number; started_at: number };
-  votes: { current: number; threshold: number; has_voted: boolean };
-  viewers: number;
+function formatCountdown(isoString: string): string {
+  const diff = Math.max(0, Math.floor((new Date(isoString).getTime() - Date.now()) / 1000));
+  if (diff === 0) return 'now';
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 export function DemoOverlay() {
-  const [status, setStatus] = useState<DemoStatus | null>(null);
+  const { t } = useTranslation();
+  const [demo, setDemo] = useState<DemoStatus | null>(null);
+  const [enabled, setEnabled] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [voting, setVoting] = useState(false);
-  const [localRemaining, setLocalRemaining] = useState<number | null>(null);
-  const [demoEnabled, setDemoEnabled] = useState<boolean>(
-    import.meta.env.VITE_DEMO_MODE === 'true'
-  );
-  const lastSyncRef = useRef<number>(0);
+  const [localTimer, setLocalTimer] = useState(0);
+  const [, setTick] = useState(0); // force re-render for relative times
 
   // Check if demo mode is enabled
   useEffect(() => {
-    if (demoEnabled) return;
-    fetch(`${API_BASE}/api/v1/demo/config`)
-      .then(r => r.json())
-      .then(data => { if (data.demo_mode) setDemoEnabled(true); })
-      .catch(() => {});
-  }, [demoEnabled]);
-
-  // Fetch demo status
-  const fetchStatus = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/demo/status`);
-      if (!res.ok) return;
-      const data: DemoStatus = await res.json();
-      setStatus(data);
-      setLocalRemaining(data.timer.remaining);
-      lastSyncRef.current = Date.now();
-    } catch {
-      // silently ignore fetch errors
-    }
+    api.getDemoConfig().then(res => {
+      if (res.success && res.data?.demo_mode) {
+        setEnabled(true);
+      }
+    }).catch(() => {});
   }, []);
 
-  // Initial fetch + polling every 15s
+  // Poll demo status
   useEffect(() => {
-    if (!demoEnabled) return;
+    if (!enabled) return;
+
+    function fetchStatus() {
+      api.getDemoStatus().then(res => {
+        if (res.success && res.data) {
+          setDemo(res.data);
+          setLocalTimer(res.data.timer_seconds);
+          if (res.data.reset) {
+            window.location.reload();
+          }
+        }
+      }).catch(() => {});
+    }
+
     fetchStatus();
     const interval = setInterval(fetchStatus, 15000);
     return () => clearInterval(interval);
-  }, [demoEnabled, fetchStatus]);
+  }, [enabled]);
 
-  // Local countdown (ticks every second between server polls)
+  // Local countdown + relative time refresh (only when expanded)
   useEffect(() => {
-    if (localRemaining === null) return;
+    if (!enabled || collapsed) return;
     const interval = setInterval(() => {
-      setLocalRemaining(prev => {
-        if (prev === null || prev <= 0) return 0;
-        return prev - 1;
-      });
+      setLocalTimer(t => Math.max(0, t - 1));
+      setTick(t => t + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [localRemaining !== null]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [enabled, collapsed]);
 
-  // Vote handler
-  const handleVote = async () => {
-    if (voting || status?.votes.has_voted) return;
-    setVoting(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/demo/vote`, { method: 'POST' });
-      const data = await res.json();
-      if (data.reset) {
-        // Demo is resetting
-        setStatus(prev => prev ? { ...prev, votes: { ...prev.votes, current: 0 } } : prev);
-        setTimeout(() => window.location.reload(), 2000);
-      } else {
-        // Update vote count locally
-        setStatus(prev => prev ? {
-          ...prev,
-          votes: { ...prev.votes, current: data.votes, has_voted: true }
-        } : prev);
+  const handleVote = useCallback(() => {
+    api.voteDemoReset().then(res => {
+      if (res.success) {
+        setDemo(prev => prev ? { ...prev, has_voted: true, votes: prev.votes + 1 } : prev);
       }
-    } catch {
-      // silently ignore vote errors
-    } finally {
-      setVoting(false);
-    }
-  };
+    });
+  }, []);
 
-  if (!demoEnabled || !status) return null;
+  const lastReset = useMemo(
+    () => demo?.last_reset_at ? formatRelativeTime(demo.last_reset_at) : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [demo?.last_reset_at, localTimer]
+  );
 
-  const remaining = localRemaining ?? status.timer.remaining;
-  const minutes = Math.floor(remaining / 60);
-  const seconds = remaining % 60;
-  const timerStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  const isUrgent = remaining < 300;
-  const voteProgress = (status.votes.current / status.votes.threshold) * 100;
+  const nextReset = useMemo(
+    () => demo?.next_scheduled_reset ? formatCountdown(demo.next_scheduled_reset) : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [demo?.next_scheduled_reset, localTimer]
+  );
+
+  if (!enabled || !demo) return null;
+
+  const minutes = Math.floor(localTimer / 60);
+  const seconds = localTimer % 60;
+  const isLow = localTimer < 300;
+  const voteProgress = demo.vote_threshold > 0 ? (demo.votes / demo.vote_threshold) * 100 : 0;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -80, opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed top-3 left-1/2 -translate-x-1/2 z-[60]"
-      >
-        {collapsed ? (
-          /* Minimized pill */
-          <motion.button
-            layout
-            onClick={() => setCollapsed(false)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full
-                       bg-primary-500/90 backdrop-blur-xl text-stone-900
-                       text-xs font-bold shadow-lg shadow-primary-500/25
-                       hover:bg-primary-400/90 transition-colors"
-          >
-            <Sparkle weight="fill" className="w-3.5 h-3.5" />
-            DEMO
-            <span className="font-mono text-[10px] opacity-80">{timerStr}</span>
-            <CaretDown weight="bold" className="w-3 h-3" />
-          </motion.button>
-        ) : (
-          /* Full overlay bar */
-          <motion.div
-            layout
-            className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-2xl
-                       bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl
-                       border border-gray-200/50 dark:border-gray-700/50
-                       shadow-xl shadow-black/10 dark:shadow-black/30
-                       text-sm max-w-[95vw]"
-          >
-            {/* DEMO badge */}
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg
-                            bg-primary-500 text-stone-900 font-bold text-xs tracking-wide">
-              <Sparkle weight="fill" className="w-3.5 h-3.5 animate-pulse" />
-              DEMO
-            </div>
+    <motion.div
+      initial={{ y: -80, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="fixed top-3 left-1/2 -translate-x-1/2 z-50 max-sm:scale-90 max-sm:origin-top"
+    >
+      <div className="glass-card shadow-xl">
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          aria-expanded={!collapsed}
+          aria-label={t('demo.badge', 'Demo mode overlay')}
+          className="flex items-center gap-3 px-4 py-3 min-w-[200px]"
+        >
+          {/* Demo badge */}
+          <span className="flex items-center gap-1 badge badge-primary">
+            <Sparkle weight="fill" className="w-3 h-3 animate-pulse" />
+            {t('demo.badge')}
+          </span>
 
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+          {/* Timer */}
+          <span className={`font-mono text-sm font-bold transition-colors duration-300 ${isLow ? 'text-red-500' : 'text-surface-700 dark:text-surface-300'}`}>
+            <Timer weight="bold" className="w-3.5 h-3.5 inline mr-1" />
+            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+          </span>
 
-            {/* Timer */}
-            <div className={`flex items-center gap-1.5 font-mono font-semibold tabular-nums
-                            ${isUrgent ? 'text-red-500 animate-pulse' : 'text-gray-700 dark:text-gray-300'}`}>
-              <Timer weight="bold" className="w-4 h-4" />
-              {timerStr}
-            </div>
+          {/* Viewers */}
+          <span className="flex items-center gap-1 text-xs text-surface-500">
+            <Eye weight="regular" className="w-3.5 h-3.5" />
+            {demo.viewers}
+          </span>
 
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+          {collapsed ? <CaretDown weight="bold" className="w-3 h-3 text-surface-400" /> : <CaretUp weight="bold" className="w-3 h-3 text-surface-400" />}
+        </button>
 
-            {/* Viewers */}
-            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-              <Eye weight="bold" className="w-4 h-4" />
-              <span className="text-xs font-medium">{status.viewers}</span>
-            </div>
-
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 hidden sm:block" />
-
-            {/* Vote to reset */}
-            <button
-              onClick={handleVote}
-              disabled={voting || status.votes.has_voted}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium
-                         transition-all duration-200
-                         ${status.votes.has_voted
-                           ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 cursor-default'
-                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-700 dark:hover:text-primary-400'
-                         }`}
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
             >
-              <ArrowsClockwise weight="bold" className={`w-3.5 h-3.5 ${voting ? 'animate-spin' : ''}`} />
-              <span>
-                {status.votes.has_voted ? 'Voted' : 'Reset'}
-              </span>
-              {/* Vote progress bar */}
-              <div className="w-10 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary-500 transition-all duration-500"
-                  style={{ width: `${voteProgress}%` }}
-                />
+              <div className="px-4 pb-3 pt-1 border-t border-surface-200/50 dark:border-surface-700/50">
+                {/* Vote progress */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className="flex-1 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={demo.votes}
+                    aria-valuemin={0}
+                    aria-valuemax={demo.vote_threshold}
+                    aria-label={t('demo.votesNeeded', { current: demo.votes, needed: demo.vote_threshold })}
+                  >
+                    <motion.div
+                      className="h-full bg-primary-500 rounded-full"
+                      animate={{ width: `${voteProgress}%` }}
+                      transition={{ type: 'spring', stiffness: 100 }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-surface-500">
+                    {t('demo.votesNeeded', { current: demo.votes, needed: demo.vote_threshold })}
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleVote}
+                  disabled={demo.has_voted || demo.reset_in_progress}
+                  className="btn btn-sm btn-primary w-full disabled:opacity-50"
+                >
+                  <ArrowsClockwise weight="bold" className={`w-3.5 h-3.5 ${demo.reset_in_progress ? 'animate-spin' : ''}`} />
+                  {demo.reset_in_progress
+                    ? t('demo.resetting', 'Resetting...')
+                    : demo.has_voted
+                      ? t('demo.votesNeeded', { current: demo.votes, needed: demo.vote_threshold })
+                      : t('demo.voteReset')}
+                </button>
+
+                {/* Auto-reset info */}
+                {(lastReset || nextReset) && (
+                  <div className="mt-2 pt-2 border-t border-surface-200/30 dark:border-surface-700/30 text-xs text-surface-500 dark:text-surface-400 space-y-0.5">
+                    {lastReset && (
+                      <div className="flex justify-between">
+                        <span>{t('demo.lastReset', 'Last reset')}</span>
+                        <span className="font-mono">{lastReset}</span>
+                      </div>
+                    )}
+                    {nextReset && (
+                      <div className="flex justify-between">
+                        <span>{t('demo.nextReset', 'Next reset')}</span>
+                        <span className="font-mono">{nextReset}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <span className="text-[10px] opacity-60">
-                {status.votes.current}/{status.votes.threshold}
-              </span>
-            </button>
-
-            {/* Collapse button */}
-            <button
-              onClick={() => setCollapsed(true)}
-              className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              aria-label="Minimize demo bar"
-            >
-              <CaretUp weight="bold" className="w-3.5 h-3.5" />
-            </button>
-          </motion.div>
-        )}
-      </motion.div>
-    </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }

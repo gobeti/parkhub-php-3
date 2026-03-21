@@ -1,202 +1,178 @@
-import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './context/AuthContext';
-import { useAuth } from './context/auth-hook';
-import { BrandingProvider } from './context/BrandingContext';
-import { useTheme, applyTheme } from './stores/theme';
-import { useAccessibility, applyAccessibility } from './stores/accessibility';
-import { usePalette, applyPalette } from "./stores/palette";
-import { useTranslation } from 'react-i18next';
-import { supportedLanguages } from './i18n';
+import { AnimatePresence } from 'framer-motion';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { UseCaseProvider } from './context/UseCaseContext';
+import { FeaturesProvider } from './context/FeaturesContext';
+import './i18n';
+import { loadTranslationOverrides } from './i18n';
+
+// Eagerly loaded shell
 import { Layout } from './components/Layout';
-import { LoginPage } from './pages/Login';
-import { RegisterPage } from './pages/Register';
-import { DashboardPage } from './pages/Dashboard';
-import { BookPage } from './pages/Book';
-import { BookingsPage } from './pages/Bookings';
-import { VehiclesPage } from './pages/Vehicles';
-import { ConsentBanner } from './components/ConsentBanner';
-import { SpinnerGap } from '@phosphor-icons/react';
-import { WelcomePage } from './pages/Welcome';
-import { SetupGuard } from './components/SetupGuard';
-import { useSetupStatus } from './components/setup-status-hook';
-import { SetupPage } from './pages/Setup';
-import { MaintenanceScreen } from './components/MaintenanceScreen';
-import { DemoOverlay } from './components/DemoOverlay';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-const AdminPage = lazy(() => import('./pages/Admin').then(m => ({ default: m.AdminPage })));
-const AbsencesPage = lazy(() => import('./pages/Absences').then(m => ({ default: m.AbsencesPage })));
-const ProfilePage = lazy(() => import('./pages/Profile').then(m => ({ default: m.ProfilePage })));
-const PrivacyPage = lazy(() => import('./pages/Privacy').then(m => ({ default: m.PrivacyPage })));
-const TermsPage = lazy(() => import('./pages/Terms').then(m => ({ default: m.TermsPage })));
-const LegalPage = lazy(() => import('./pages/Legal').then(m => ({ default: m.LegalPage })));
-const AboutPage = lazy(() => import('./pages/About').then(m => ({ default: m.AboutPage })));
-const HelpPage = lazy(() => import('./pages/Help').then(m => ({ default: m.HelpPage })));
-const TeamPage = lazy(() => import('./pages/Team').then(m => ({ default: m.TeamPage })));
-const CalendarPage = lazy(() => import('./pages/Calendar').then(m => ({ default: m.CalendarPage })));
-const OccupancyDisplayPage = lazy(() => import('./pages/OccupancyDisplay').then(m => ({ default: m.OccupancyDisplayPage })));
-const ForgotPasswordPage = lazy(() => import("./pages/ForgotPassword").then(m => ({ default: m.ForgotPasswordPage })));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPassword").then(m => ({ default: m.ResetPasswordPage })));
-const ImpressumPage = lazy(() => import('./pages/Impressum').then(m => ({ default: m.ImpressumPage })));
-const TransparencyPage = lazy(() => import('./pages/Transparency').then(m => ({ default: m.TransparencyPage })));
-const NotificationsPage = lazy(() => import('./pages/Notifications').then(m => ({ default: m.NotificationsPage })));
+// Lazy helper — wraps named exports for React.lazy
+const lazy = <T extends Record<string, React.ComponentType>>(
+  loader: () => Promise<T>,
+  name: keyof T,
+) => React.lazy(() => loader().then(m => ({ default: m[name] as React.ComponentType })));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60,
-      retry: 1,
-    },
-  },
-});
+// Auth pages (small, on critical path for unauthenticated users)
+const WelcomePage = lazy(() => import('./views/Welcome'), 'WelcomePage');
+const LoginPage = lazy(() => import('./views/Login'), 'LoginPage');
+const RegisterPage = lazy(() => import('./views/Register'), 'RegisterPage');
+const ForgotPasswordPage = lazy(() => import('./views/ForgotPassword'), 'ForgotPasswordPage');
+const UseCaseSelectorPage = lazy(() => import('./views/UseCaseSelector'), 'UseCaseSelectorPage');
+const NotFoundPage = lazy(() => import('./views/NotFound'), 'NotFoundPage');
 
-function LoadingScreen() {
+// Main app pages
+const DashboardPage = lazy(() => import('./views/Dashboard'), 'DashboardPage');
+const BookPage = lazy(() => import('./views/Book'), 'BookPage');
+const BookingsPage = lazy(() => import('./views/Bookings'), 'BookingsPage');
+const CreditsPage = lazy(() => import('./views/Credits'), 'CreditsPage');
+const VehiclesPage = lazy(() => import('./views/Vehicles'), 'VehiclesPage');
+const AbsencesPage = lazy(() => import('./views/Absences'), 'AbsencesPage');
+const ProfilePage = lazy(() => import('./views/Profile'), 'ProfilePage');
+const TeamPage = lazy(() => import('./views/Team'), 'TeamPage');
+const NotificationsPage = lazy(() => import('./views/Notifications'), 'NotificationsPage');
+const CalendarPage = lazy(() => import('./views/Calendar'), 'CalendarPage');
+const DemoOverlay = lazy(() => import('./components/DemoOverlay'), 'DemoOverlay');
+const InstallPrompt = lazy(() => import('./components/InstallPrompt'), 'InstallPrompt');
+
+// Admin pages
+const AdminPage = lazy(() => import('./views/Admin'), 'AdminPage');
+const AdminSettingsPage = lazy(() => import('./views/AdminSettings'), 'AdminSettingsPage');
+const AdminUsersPage = lazy(() => import('./views/AdminUsers'), 'AdminUsersPage');
+const AdminAnnouncementsPage = lazy(() => import('./views/AdminAnnouncements'), 'AdminAnnouncementsPage');
+const AdminLotsPage = lazy(() => import('./views/AdminLots'), 'AdminLotsPage');
+const AdminReportsPage = lazy(() => import('./views/AdminReports'), 'AdminReportsPage');
+const TranslationsPage = lazy(() => import('./views/Translations'), 'TranslationsPage');
+const AdminTranslationsPage = lazy(() => import('./views/AdminTranslations'), 'AdminTranslationsPage');
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingSplash />;
+  if (!user) {
+    // First-time visitors see the welcome/language screen
+    const seen = localStorage.getItem('parkhub_welcome_seen');
+    return <Navigate to={seen ? '/login' : '/welcome'} replace />;
+  }
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user || !['admin', 'superadmin'].includes(user.role)) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+function LoadingSplash() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-      <SpinnerGap weight="bold" className="w-8 h-8 text-primary-600 animate-spin" />
+    <div className="min-h-dvh flex items-center justify-center mesh-gradient" role="status" aria-label="Loading ParkHub">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-16 h-16 rounded-xl bg-primary-600 flex items-center justify-center">
+          <span className="text-2xl font-black text-white tracking-tight">P</span>
+        </div>
+        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+      </div>
     </div>
   );
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const { setupComplete } = useSetupStatus();
-  if (isLoading) return <LoadingScreen />;
-  if (!isAuthenticated) {
-    if (!setupComplete) {
-      return <Navigate to="/welcome" replace />;
-    }
-    return <Navigate to="/login" replace />;
-  }
-  return <Layout>{children}</Layout>;
-}
-
-function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const { setupComplete } = useSetupStatus();
-  if (isLoading) return <LoadingScreen />;
-  if (!isAuthenticated) {
-    if (!setupComplete) {
-      return <Navigate to="/welcome" replace />;
-    }
-    return <Navigate to="/login" replace />;
-  }
-  if (user?.role !== 'admin' && user?.role !== 'superadmin') return <Navigate to="/" replace />;
-  return <Layout>{children}</Layout>;
-}
-
-function PublicPageWithLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
-
-function ThemeInitializer({ children }: { children: React.ReactNode }) {
-  const theme = useTheme();
-  const palette = usePalette();
-  const accessibility = useAccessibility();
-  const { i18n } = useTranslation();
-
-  useEffect(() => { applyTheme(theme.isDark); }, [theme.isDark]);
-  useEffect(() => { applyPalette(palette.paletteId, theme.isDark); }, [palette.paletteId, theme.isDark]);
-  useEffect(() => { applyAccessibility(accessibility); }, [accessibility]);
+/** Fetch /api/v1/theme on mount and apply use-case CSS theme + load translation overrides */
+function useThemeLoader() {
   useEffect(() => {
-    const normalized = i18n.resolvedLanguage ?? i18n.language ?? 'en';
-    const active = supportedLanguages.find(({ code }) => normalized.startsWith(code));
-    const lang = active?.code ?? 'en';
-    document.documentElement.lang = lang;
-    const dir = active && 'dir' in active ? active.dir : undefined;
-    document.documentElement.dir = dir === 'rtl' ? 'rtl' : 'ltr';
-  }, [i18n.language, i18n.resolvedLanguage]);
-
-  return <>{children}</>;
+    fetch('/api/v1/theme')
+      .then(r => r.json())
+      .then(res => {
+        const key = res?.data?.use_case?.key;
+        if (key) document.documentElement.dataset.usecase = key;
+      })
+      .catch(() => {});
+    loadTranslationOverrides();
+  }, []);
 }
 
-function LoginRedirectGuard() {
-  const { setupComplete } = useSetupStatus();
-  // If setup not complete, redirect to welcome/onboarding instead of showing login
-  if (setupComplete === false) {
-    return <Navigate to="/welcome" replace />;
-  }
-  return <LoginPage />;
+function SuspenseRoute({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LoadingSplash />}>{children}</Suspense>;
+}
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/welcome" element={<SuspenseRoute><WelcomePage /></SuspenseRoute>} />
+        <Route path="/login" element={<SuspenseRoute><LoginPage /></SuspenseRoute>} />
+        <Route path="/register" element={<SuspenseRoute><RegisterPage /></SuspenseRoute>} />
+        <Route path="/forgot-password" element={<SuspenseRoute><ForgotPasswordPage /></SuspenseRoute>} />
+        <Route path="/choose" element={<SuspenseRoute><UseCaseSelectorPage /></SuspenseRoute>} />
+        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route index element={<SuspenseRoute><DashboardPage /></SuspenseRoute>} />
+          <Route path="book" element={<SuspenseRoute><BookPage /></SuspenseRoute>} />
+          <Route path="bookings" element={<SuspenseRoute><BookingsPage /></SuspenseRoute>} />
+          <Route path="credits" element={<SuspenseRoute><CreditsPage /></SuspenseRoute>} />
+          <Route path="vehicles" element={<SuspenseRoute><VehiclesPage /></SuspenseRoute>} />
+          <Route path="absences" element={<SuspenseRoute><AbsencesPage /></SuspenseRoute>} />
+          <Route path="profile" element={<SuspenseRoute><ProfilePage /></SuspenseRoute>} />
+          <Route path="team" element={<SuspenseRoute><TeamPage /></SuspenseRoute>} />
+          <Route path="notifications" element={<SuspenseRoute><NotificationsPage /></SuspenseRoute>} />
+          <Route path="calendar" element={<SuspenseRoute><CalendarPage /></SuspenseRoute>} />
+          <Route path="translations" element={<SuspenseRoute><TranslationsPage /></SuspenseRoute>} />
+          <Route path="admin" element={<AdminRoute><SuspenseRoute><AdminPage /></SuspenseRoute></AdminRoute>}>
+            <Route index element={<SuspenseRoute><AdminReportsPage /></SuspenseRoute>} />
+            <Route path="settings" element={<SuspenseRoute><AdminSettingsPage /></SuspenseRoute>} />
+            <Route path="users" element={<SuspenseRoute><AdminUsersPage /></SuspenseRoute>} />
+            <Route path="lots" element={<SuspenseRoute><AdminLotsPage /></SuspenseRoute>} />
+            <Route path="announcements" element={<SuspenseRoute><AdminAnnouncementsPage /></SuspenseRoute>} />
+            <Route path="reports" element={<SuspenseRoute><AdminReportsPage /></SuspenseRoute>} />
+            <Route path="translations" element={<SuspenseRoute><AdminTranslationsPage /></SuspenseRoute>} />
+          </Route>
+        </Route>
+        <Route path="*" element={<SuspenseRoute><NotFoundPage /></SuspenseRoute>} />
+      </Routes>
+    </AnimatePresence>
+  );
 }
 
 function AppRoutes() {
-  return (
-    <Routes>
-      {/* Public */}
-      <Route path="/display" element={<Suspense fallback={<LoadingScreen />}><OccupancyDisplayPage /></Suspense>} />
-      <Route path="/maintenance" element={<MaintenanceScreen />} />
-            <Route path="/welcome" element={<WelcomePage />} />
-      <Route path="/login" element={<LoginRedirectGuard />} />
-      <Route path="/setup" element={<SetupPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<Suspense fallback={<LoadingScreen />}><ForgotPasswordPage /></Suspense>} />
-      <Route path="/reset-password" element={<Suspense fallback={<LoadingScreen />}><ResetPasswordPage /></Suspense>} />
-      <Route path="/privacy" element={<PublicPageWithLayout><Suspense fallback={<LoadingScreen />}><PrivacyPage /></Suspense></PublicPageWithLayout>} />
-      <Route path="/datenschutz" element={<Navigate to="/privacy" replace />} />
-      <Route path="/terms" element={<PublicPageWithLayout><Suspense fallback={<LoadingScreen />}><TermsPage /></Suspense></PublicPageWithLayout>} />
-      <Route path="/agb" element={<Navigate to="/terms" replace />} />
-      <Route path="/legal" element={<PublicPageWithLayout><Suspense fallback={<LoadingScreen />}><LegalPage /></Suspense></PublicPageWithLayout>} />
-      <Route path="/about" element={<PublicPageWithLayout><Suspense fallback={<LoadingScreen />}><AboutPage /></Suspense></PublicPageWithLayout>} />
-      <Route path="/impressum" element={<PublicPageWithLayout><Suspense fallback={<LoadingScreen />}><ImpressumPage /></Suspense></PublicPageWithLayout>} />
-      <Route path="/transparency" element={<PublicPageWithLayout><Suspense fallback={<LoadingScreen />}><TransparencyPage /></Suspense></PublicPageWithLayout>} />
-      <Route path="/help" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><HelpPage /></Suspense></ProtectedRoute>} />
-
-      {/* Protected */}
-      <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/book" element={<ProtectedRoute><BookPage /></ProtectedRoute>} />
-      <Route path="/bookings" element={<ProtectedRoute><BookingsPage /></ProtectedRoute>} />
-      <Route path="/vehicles" element={<ProtectedRoute><VehiclesPage /></ProtectedRoute>} />
-      <Route path="/absences" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><AbsencesPage /></Suspense></ProtectedRoute>} />
-      <Route path="/homeoffice" element={<Navigate to="/absences" replace />} />
-      <Route path="/vacation" element={<Navigate to="/absences" replace />} />
-      <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><ProfilePage /></Suspense></ProtectedRoute>} />
-
-      <Route path="/team" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><TeamPage /></Suspense></ProtectedRoute>} />
-      <Route path="/calendar" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><CalendarPage /></Suspense></ProtectedRoute>} />
-      <Route path="/notifications" element={<ProtectedRoute><Suspense fallback={<LoadingScreen />}><NotificationsPage /></Suspense></ProtectedRoute>} />
-      {/* Admin */}
-      <Route path="/admin/*" element={<AdminRoute><Suspense fallback={<LoadingScreen />}><AdminPage /></Suspense></AdminRoute>} />
-
-      {/* Catch all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+  return <AnimatedRoutes />;
 }
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename={import.meta.env.VITE_BASE_URL || '/'}>
-        <DemoOverlay />
-        <ThemeInitializer>
-          <BrandingProvider>
-            <SetupGuard>
-            <AuthProvider>
-            <AppRoutes />
-            <ConsentBanner />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'var(--toast-bg, #fff)',
-                  color: 'var(--toast-color, #1f2937)',
-                  borderRadius: '12px',
-                  boxShadow: '0 10px 40px -10px rgba(0, 0, 0, 0.2)',
-                },
-                success: { iconTheme: { primary: '#22c55e', secondary: '#fff' } },
-                error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
-              }}
-            />
-          </AuthProvider>
-            </SetupGuard>
-          </BrandingProvider>
-        </ThemeInitializer>
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
+function ThemeLoader({ children }: { children: React.ReactNode }) {
+  useThemeLoader();
+  return <>{children}</>;
 }
 
-export default App;
+export function App() {
+  return (
+    <ErrorBoundary>
+    <BrowserRouter>
+      <ThemeProvider>
+        <ThemeLoader>
+        <UseCaseProvider>
+        <FeaturesProvider>
+        <AuthProvider>
+          <AppRoutes />
+          <Suspense fallback={null}><DemoOverlay /></Suspense>
+          <Suspense fallback={null}><InstallPrompt /></Suspense>
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              className: '!bg-surface-800 !text-white !rounded-xl !shadow-lg !text-sm !font-medium',
+              duration: 3000,
+              ariaProps: { role: 'status', 'aria-live': 'polite' },
+            }}
+          />
+        </AuthProvider>
+        </FeaturesProvider>
+        </UseCaseProvider>
+        </ThemeLoader>
+      </ThemeProvider>
+    </BrowserRouter>
+    </ErrorBoundary>
+  );
+}
