@@ -42,7 +42,11 @@ class BookingController extends Controller
             $query->where('end_time', '<=', $request->to_date);
         }
 
-        return BookingResource::collection($query->orderBy('start_time', 'desc')->get());
+        $perPage = min((int) $request->get('per_page', 50), 200);
+
+        return BookingResource::collection(
+            $query->orderBy('start_time', 'desc')->paginate($perPage)
+        );
     }
 
     public function store(Request $request)
@@ -813,20 +817,21 @@ class BookingController extends Controller
     public function swapRequests(Request $request)
     {
         $userId = $request->user()->id;
+        $perPage = min((int) $request->get('per_page', 50), 200);
 
         $incoming = SwapRequest::where('target_id', $userId)
             ->with(['requesterBooking', 'targetBooking', 'requester'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($perPage, ['*'], 'incoming_page');
 
         $outgoing = SwapRequest::where('requester_id', $userId)
             ->with(['requesterBooking', 'targetBooking', 'target'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($perPage, ['*'], 'outgoing_page');
 
         return response()->json([
-            'incoming' => SwapRequestResource::collection($incoming),
-            'outgoing' => SwapRequestResource::collection($outgoing),
+            'incoming' => SwapRequestResource::collection($incoming)->response()->getData(true),
+            'outgoing' => SwapRequestResource::collection($outgoing)->response()->getData(true),
         ]);
     }
 }
