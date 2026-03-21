@@ -54,7 +54,7 @@ class SendBookingReminderJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error("SendBookingReminderJob: permanently failed", [
+        Log::error('SendBookingReminderJob: permanently failed', [
             'error' => $e->getMessage(),
         ]);
     }

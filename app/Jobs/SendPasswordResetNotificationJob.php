@@ -37,7 +37,7 @@ class SendPasswordResetNotificationJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error("SendPasswordResetNotificationJob: permanently failed", [
+        Log::error('SendPasswordResetNotificationJob: permanently failed', [
             'email' => $this->email,
             'error' => $e->getMessage(),
         ]);

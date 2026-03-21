@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
-use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,8 +31,8 @@ class AggregateOccupancyStatsJob implements ShouldQueue
     public function handle(): void
     {
         $date = $this->date ?? now()->subDay()->toDateString();
-        $dayStart = $date . ' 00:00:00';
-        $dayEnd = $date . ' 23:59:59';
+        $dayStart = $date.' 00:00:00';
+        $dayEnd = $date.' 23:59:59';
 
         $totalSlots = ParkingSlot::count();
         $lots = ParkingLot::all();
@@ -52,7 +51,7 @@ class AggregateOccupancyStatsJob implements ShouldQueue
         $hourlyOccupancy = [];
 
         for ($hour = 0; $hour < 24; $hour++) {
-            $timepoint = $date . ' ' . str_pad($hour, 2, '0', STR_PAD_LEFT) . ':30:00';
+            $timepoint = $date.' '.str_pad($hour, 2, '0', STR_PAD_LEFT).':30:00';
 
             $occupied = $bookingsForDay->filter(function ($b) use ($timepoint) {
                 return $b->start_time <= $timepoint && $b->end_time >= $timepoint;
@@ -116,7 +115,7 @@ class AggregateOccupancyStatsJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        Log::error("AggregateOccupancyStatsJob: failed", [
+        Log::error('AggregateOccupancyStatsJob: failed', [
             'date' => $this->date,
             'error' => $e->getMessage(),
         ]);
