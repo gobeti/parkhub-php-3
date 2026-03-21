@@ -13,7 +13,7 @@ class BookingExtendTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function setup(): array
+    private function createTestFixtures(): array
     {
         $user = User::factory()->create(['role' => 'user']);
         $lot = ParkingLot::create([
@@ -44,7 +44,7 @@ class BookingExtendTest extends TestCase
 
     public function test_user_can_extend_booking(): void
     {
-        [$user, $lot, $slot, $booking] = $this->setup();
+        [$user, $lot, $slot, $booking] = $this->createTestFixtures();
         $token = $user->createToken('test')->plainTextToken;
 
         $newEndTime = now()->addHours(5)->toISOString();
@@ -60,7 +60,7 @@ class BookingExtendTest extends TestCase
 
     public function test_extend_requires_new_end_time(): void
     {
-        [$user, $lot, $slot, $booking] = $this->setup();
+        [$user, $lot, $slot, $booking] = $this->createTestFixtures();
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
@@ -71,7 +71,7 @@ class BookingExtendTest extends TestCase
 
     public function test_extend_fails_if_new_end_time_in_past(): void
     {
-        [$user, $lot, $slot, $booking] = $this->setup();
+        [$user, $lot, $slot, $booking] = $this->createTestFixtures();
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
@@ -84,7 +84,7 @@ class BookingExtendTest extends TestCase
 
     public function test_extend_fails_on_slot_conflict(): void
     {
-        [$user, $lot, $slot, $booking] = $this->setup();
+        [$user, $lot, $slot, $booking] = $this->createTestFixtures();
         $user2 = User::factory()->create(['role' => 'user']);
         $token = $user->createToken('test')->plainTextToken;
 
@@ -112,7 +112,7 @@ class BookingExtendTest extends TestCase
 
     public function test_extend_requires_auth(): void
     {
-        [$user, $lot, $slot, $booking] = $this->setup();
+        [$user, $lot, $slot, $booking] = $this->createTestFixtures();
 
         $response = $this->postJson("/api/v1/bookings/{$booking->id}/extend", [
             'new_end_time' => now()->addHours(5)->toISOString(),
@@ -123,7 +123,7 @@ class BookingExtendTest extends TestCase
 
     public function test_user_cannot_extend_other_users_booking(): void
     {
-        [$user, $lot, $slot, $booking] = $this->setup();
+        [$user, $lot, $slot, $booking] = $this->createTestFixtures();
         $other = User::factory()->create(['role' => 'user']);
         $token = $other->createToken('test')->plainTextToken;
 
