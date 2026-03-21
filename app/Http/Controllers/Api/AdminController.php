@@ -104,8 +104,7 @@ class AdminController extends Controller
         $existingUsernames = User::whereIn('username', $usersCollection->pluck('username'))->pluck('username');
         $existingEmails = User::whereIn('email', $usersCollection->pluck('email'))->pluck('email');
 
-        $toImport = $usersCollection->reject(fn ($u) =>
-            $existingUsernames->contains($u['username']) || $existingEmails->contains($u['email'])
+        $toImport = $usersCollection->reject(fn ($u) => $existingUsernames->contains($u['username']) || $existingEmails->contains($u['email'])
         );
 
         foreach ($toImport as $userData) {
