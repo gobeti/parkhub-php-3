@@ -9,7 +9,7 @@
 FROM node:22-slim AS frontend
 WORKDIR /app
 COPY parkhub-web/package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 COPY parkhub-web/ ./
 RUN DOCKER=1 npm run build
 
