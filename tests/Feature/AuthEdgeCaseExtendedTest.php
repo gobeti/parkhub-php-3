@@ -115,7 +115,7 @@ class AuthEdgeCaseExtendedTest extends TestCase
             ->deleteJson('/api/v1/users/me/delete', ['password' => 'DeleteMe1'])
             ->assertStatus(200);
 
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
 
     public function test_change_password_new_password_weak_rejected(): void
