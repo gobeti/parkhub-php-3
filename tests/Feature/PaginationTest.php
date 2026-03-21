@@ -60,12 +60,14 @@ class PaginationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
-            'data',
-            'links',
-            'meta' => ['current_page', 'last_page', 'per_page', 'total'],
+            'data' => [
+                'data',
+                'links',
+                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
+            ],
         ]);
 
-        $this->assertEquals(5, $response->json('meta.total'));
+        $this->assertEquals(5, $response->json('data.meta.total'));
     }
 
     public function test_booking_index_respects_per_page_param(): void
@@ -90,9 +92,9 @@ class PaginationTest extends TestCase
             ->getJson('/api/v1/bookings?per_page=3');
 
         $response->assertStatus(200);
-        $this->assertCount(3, $response->json('data'));
-        $this->assertEquals(3, $response->json('meta.per_page'));
-        $this->assertEquals(10, $response->json('meta.total'));
+        $this->assertCount(3, $response->json('data.data'));
+        $this->assertEquals(3, $response->json('data.meta.per_page'));
+        $this->assertEquals(10, $response->json('data.meta.total'));
     }
 
     public function test_booking_index_page_2_returns_correct_results(): void
@@ -117,8 +119,8 @@ class PaginationTest extends TestCase
             ->getJson('/api/v1/bookings?per_page=3&page=2');
 
         $response->assertStatus(200);
-        $this->assertCount(2, $response->json('data'));
-        $this->assertEquals(2, $response->json('meta.current_page'));
+        $this->assertCount(2, $response->json('data.data'));
+        $this->assertEquals(2, $response->json('data.meta.current_page'));
     }
 
     public function test_booking_index_per_page_capped_at_200(): void
@@ -130,7 +132,7 @@ class PaginationTest extends TestCase
             ->getJson('/api/v1/bookings?per_page=9999');
 
         $response->assertStatus(200);
-        $this->assertLessThanOrEqual(200, $response->json('meta.per_page'));
+        $this->assertLessThanOrEqual(200, $response->json('data.meta.per_page'));
     }
 
     public function test_swap_requests_returns_paginated_incoming_and_outgoing(): void
@@ -171,14 +173,16 @@ class PaginationTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/bookings/swap-requests');
+            ->getJson('/api/v1/swap-requests');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
-            'outgoing' => ['data', 'meta'],
-            'incoming' => ['data', 'meta'],
+            'data' => [
+                'outgoing' => ['data', 'meta'],
+                'incoming' => ['data', 'meta'],
+            ],
         ]);
-        $this->assertCount(1, $response->json('outgoing.data'));
-        $this->assertCount(0, $response->json('incoming.data'));
+        $this->assertCount(1, $response->json('data.outgoing.data'));
+        $this->assertCount(0, $response->json('data.incoming.data'));
     }
 }
