@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PaymentController extends Controller
@@ -21,13 +23,13 @@ class PaymentController extends Controller
             'metadata' => 'nullable|array',
         ]);
 
-        $intentId = 'pi_' . Str::random(24);
+        $intentId = 'pi_'.Str::random(24);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $intentId,
-                'client_secret' => $intentId . '_secret_' . Str::random(24),
+                'client_secret' => $intentId.'_secret_'.Str::random(24),
                 'amount' => $request->amount,
                 'currency' => strtolower($request->currency ?? 'eur'),
                 'status' => 'requires_payment_method',
@@ -91,7 +93,7 @@ class PaymentController extends Controller
         // $payload = $request->getContent();
         // $sigHeader = $request->header('Stripe-Signature');
 
-        \Illuminate\Support\Facades\Log::info('Stripe webhook received', [
+        Log::info('Stripe webhook received', [
             'type' => $request->input('type'),
             'data' => $request->input('data.object.id'),
         ]);
