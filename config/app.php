@@ -136,4 +136,17 @@ return [
 
     'hsts' => (bool) env('APP_HSTS', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Metrics Token
+    |--------------------------------------------------------------------------
+    |
+    | Optional bearer token for protecting the /api/metrics endpoint.
+    | When set, requests must include Authorization: Bearer <token>.
+    | Leave empty to allow unauthenticated access (NOT recommended in production).
+    |
+    */
+
+    'metrics_token' => env('METRICS_TOKEN'),
+
 ];

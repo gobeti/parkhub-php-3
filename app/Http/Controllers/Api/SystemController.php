@@ -11,9 +11,25 @@ class SystemController extends Controller
     public function version(Request $request)
     {
         return response()->json([
-            'version' => '1.0.0-php',
+            'version' => self::appVersion(),
             'build' => 'php-laravel',
         ]);
+    }
+
+    /**
+     * Read application version from the VERSION file (single source of truth).
+     */
+    public static function appVersion(): string
+    {
+        static $version = null;
+        if ($version === null) {
+            $versionFile = base_path('VERSION');
+            $version = file_exists($versionFile)
+                ? trim(file_get_contents($versionFile))
+                : '0.0.0';
+        }
+
+        return $version;
     }
 
     public function maintenance(Request $request)
