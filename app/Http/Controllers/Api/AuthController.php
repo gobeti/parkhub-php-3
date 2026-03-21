@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\ResetPasswordRequest;
 use App\Jobs\SendPasswordResetNotificationJob;
 use App\Mail\WelcomeEmail;
 use App\Models\AuditLog;
@@ -17,12 +21,8 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
-        ]);
 
         $user = User::where('username', $request->username)
             ->orWhere('email', $request->username)
@@ -62,18 +62,11 @@ class AuthController extends Controller
         ]);
     }
 
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
         if (Setting::get('self_registration', 'true') !== 'true') {
             return response()->json(['message' => 'Registration is currently disabled'], 403);
         }
-
-        $request->validate([
-            'username' => 'required|string|min:3|max:50|unique:users|alpha_dash',
-            'email' => 'required|email|max:255|unique:users',
-            'password' => ['required', 'string', 'min:8', 'max:128', 'confirmed', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'regex:/[0-9]/'],
-            'name' => 'required|string|max:255',
-        ]);
 
         $user = User::create([
             'username' => $request->username,
@@ -235,14 +228,8 @@ class AuthController extends Controller
         return response()->json(['message' => 'If an account with that email exists, a reset link has been sent.']);
     }
 
-    public function resetPassword(Request $request): JsonResponse
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'token' => 'required|string',
-            'password' => ['required', 'string', 'min:8', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'regex:/[0-9]/'],
-            'password_confirmation' => 'required|same:password',
-        ]);
 
         // Look up the single token row by email (O(1) instead of scanning all rows)
         $record = DB::table('password_reset_tokens')
@@ -277,12 +264,8 @@ class AuthController extends Controller
         return response()->json(['message' => 'Passwort erfolgreich zurückgesetzt. Sie können sich nun anmelden.']);
     }
 
-    public function changePassword(Request $request): JsonResponse
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'new_password' => ['required', 'string', 'min:8', 'regex:/[a-z]/', 'regex:/[A-Z]/', 'regex:/[0-9]/'],
-        ]);
         $user = $request->user();
         if (! Hash::check($request->current_password, $user->password)) {
             return response()->json(['error' => 'INVALID_PASSWORD', 'message' => 'Current password is incorrect'], 400);

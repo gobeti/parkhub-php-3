@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\BookingCancelled;
 use App\Events\BookingCreated;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreBookingRequest;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\GuestBookingResource;
 use App\Http\Resources\SwapRequestResource;
@@ -51,18 +52,9 @@ class BookingController extends Controller
         );
     }
 
-    public function store(Request $request)
+    public function store(StoreBookingRequest $request)
     {
-        $validated = $request->validate([
-            'lot_id' => 'required|uuid',
-            'slot_id' => 'nullable|uuid',
-            'start_time' => 'required|date',
-            'end_time' => 'nullable|date|after:start_time',
-            'booking_type' => 'nullable|string|max:50',
-            'notes' => 'nullable|string|max:2000',
-            'vehicle_plate' => 'nullable|string|max:20',
-            'license_plate' => 'nullable|string|max:20',
-        ]);
+        $validated = $request->validated();
 
         $startTime = Carbon::parse($request->start_time);
         if ($startTime->isPast()) {
