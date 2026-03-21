@@ -16,19 +16,15 @@ use App\Http\Controllers\Api\PulseController;
 use App\Http\Controllers\Api\RecurringBookingController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\SlotController;
-use App\Http\Controllers\Api\SystemController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WaitlistController;
 use App\Http\Controllers\Api\ZoneController;
-use App\Models\Announcement;
 use Illuminate\Support\Facades\Route;
 
 // Health check (no auth)
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'version' => SystemController::appVersion()]);
-});
+Route::get('/health', [PublicController::class, 'healthCheck']);
 
 // Public routes (no auth) — rate limited to prevent brute-force and registration spam
 Route::middleware('throttle:auth')->group(function () {
@@ -51,12 +47,8 @@ Route::get('/public/display', [PublicController::class, 'display']);
 Route::get('/metrics', [MetricsController::class, 'index']);
 
 // Public legal routes
-Route::get('/legal/privacy', function () {
-    return response()->json(['type' => 'privacy', 'url' => '/datenschutz']);
-});
-Route::get('/legal/impressum', function () {
-    return response()->json(['type' => 'impressum', 'url' => '/impressum']);
-});
+Route::get('/legal/privacy', [PublicController::class, 'legalPrivacy']);
+Route::get('/legal/impressum', [PublicController::class, 'legalImpressum']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -222,12 +214,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/team/today', [TeamController::class, 'today']);
 
     // Active announcements
-    Route::get('/announcements/active', function () {
-        return response()->json(Announcement::where('active', true)
-            ->where(function ($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })->orderBy('created_at', 'desc')->get());
-    });
+    Route::get('/announcements/active', [PublicController::class, 'activeAnnouncements']);
 
     // Waitlist
     Route::get('/waitlist', [WaitlistController::class, 'index']);
