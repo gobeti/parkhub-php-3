@@ -98,11 +98,17 @@ class AdminController extends Controller
         ]);
 
         $imported = 0;
+        $usersCollection = collect($request->users);
 
-        foreach ($request->users as $userData) {
-            if (User::where('username', $userData['username'])->orWhere('email', $userData['email'])->exists()) {
-                continue;
-            }
+        // Batch-check existing usernames + emails in 2 queries instead of N queries (closes #59)
+        $existingUsernames = User::whereIn('username', $usersCollection->pluck('username'))->pluck('username');
+        $existingEmails = User::whereIn('email', $usersCollection->pluck('email'))->pluck('email');
+
+        $toImport = $usersCollection->reject(fn ($u) =>
+            $existingUsernames->contains($u['username']) || $existingEmails->contains($u['email'])
+        );
+
+        foreach ($toImport as $userData) {
             $user = User::create([
                 'username' => $userData['username'],
                 'email' => $userData['email'],
