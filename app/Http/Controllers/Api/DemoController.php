@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class DemoController extends Controller
 {
@@ -135,7 +136,7 @@ class DemoController extends Controller
             Artisan::call('migrate:fresh', ['--force' => true]);
             Artisan::call('db:seed', ['--class' => 'ProductionSimulationSeeder', '--force' => true]);
         } catch (\Exception $e) {
-            \Log::error('Demo reset failed: '.$e->getMessage());
+            Log::error('Demo reset failed: '.$e->getMessage());
             Cache::forget(self::CACHE_PREFIX.'reset_in_progress');
 
             return response()->json([

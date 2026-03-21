@@ -7,12 +7,13 @@ use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MetricsController extends Controller
 {
     public function index(Request $request)
     {
-        $expectedToken = config('app.metrics_token') ?: env('METRICS_TOKEN');
+        $expectedToken = config('app.metrics_token');
         if ($expectedToken && $request->bearerToken() !== $expectedToken) {
             return response('Unauthorized', 401);
         }
@@ -62,7 +63,7 @@ class MetricsController extends Controller
 
         // Active sessions (approximation via Sanctum tokens)
         try {
-            $activeSessions = \DB::table('personal_access_tokens')
+            $activeSessions = DB::table('personal_access_tokens')
                 ->where('last_used_at', '>=', now()->subHour())
                 ->count();
             $lines[] = '# HELP active_sessions Approximate active sessions (tokens used in last hour)';

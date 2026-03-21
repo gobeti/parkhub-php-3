@@ -12,6 +12,7 @@ use App\Models\GuestBooking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -25,7 +26,7 @@ class AdminController extends Controller
         }
     }
 
-    public function users(Request $request)
+    public function users(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
         $perPage = min((int) request('per_page', 20), 100);
@@ -71,7 +72,7 @@ class AdminController extends Controller
         return UserResource::make($user->fresh());
     }
 
-    public function deleteUser(Request $request, string $id)
+    public function deleteUser(Request $request, string $id): JsonResponse
     {
         $this->requireAdmin($request);
         if ($id === $request->user()->id) {
@@ -82,7 +83,7 @@ class AdminController extends Controller
         return response()->json(['message' => 'User deleted']);
     }
 
-    public function importUsers(Request $request)
+    public function importUsers(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -119,7 +120,7 @@ class AdminController extends Controller
         return response()->json(['imported' => $imported]);
     }
 
-    public function bookings(Request $request)
+    public function bookings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -162,7 +163,7 @@ class AdminController extends Controller
 
     // ── Guest Bookings ────────────────────────────────────────────────────────
 
-    public function guestBookings(Request $request)
+    public function guestBookings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -214,7 +215,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function cancelGuestBooking(Request $request, string $id)
+    public function cancelGuestBooking(Request $request, string $id): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -243,7 +244,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function auditLog(Request $request)
+    public function auditLog(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
 
@@ -272,7 +273,7 @@ class AdminController extends Controller
         return ParkingSlotResource::make($slot->fresh());
     }
 
-    public function deleteLot(Request $request, string $id)
+    public function deleteLot(Request $request, string $id): JsonResponse
     {
         $this->requireAdmin($request);
         $lot = ParkingLot::findOrFail($id);

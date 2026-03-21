@@ -14,7 +14,10 @@ use App\Models\Notification;
 use App\Models\PushSubscription;
 use App\Models\Setting;
 use App\Models\Vehicle;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -22,12 +25,12 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
-    public function preferences(Request $request)
+    public function preferences(Request $request): JsonResponse
     {
         return response()->json($request->user()->preferences ?? []);
     }
 
-    public function updatePreferences(Request $request)
+    public function updatePreferences(Request $request): JsonResponse
     {
         $request->validate([
             'language' => 'sometimes|string|max:10',
@@ -54,7 +57,7 @@ class UserController extends Controller
         return response()->json($prefs);
     }
 
-    public function stats(Request $request)
+    public function stats(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
         $now = now();
@@ -91,7 +94,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function credits(Request $request)
+    public function credits(Request $request): JsonResponse
     {
         $user = $request->user();
         $creditsEnabled = Setting::get('credits_enabled', 'false') === 'true';
@@ -108,7 +111,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function favorites(Request $request)
+    public function favorites(Request $request): AnonymousResourceCollection
     {
         return FavoriteResource::collection(
             Favorite::where('user_id', $request->user()->id)->with('slot')->get()
@@ -126,14 +129,14 @@ class UserController extends Controller
         return FavoriteResource::make($fav)->response()->setStatusCode(201);
     }
 
-    public function removeFavorite(Request $request, string $slotId)
+    public function removeFavorite(Request $request, string $slotId): JsonResponse
     {
         Favorite::where('user_id', $request->user()->id)->where('slot_id', $slotId)->delete();
 
         return response()->json(['message' => 'Removed']);
     }
 
-    public function notifications(Request $request)
+    public function notifications(Request $request): AnonymousResourceCollection
     {
         return NotificationResource::collection(
             Notification::where('user_id', $request->user()->id)
@@ -152,7 +155,7 @@ class UserController extends Controller
     }
 
     // iCal export — bookings as calendar feed
-    public function calendarExport(Request $request)
+    public function calendarExport(Request $request): Response
     {
         $user = $request->user();
         $bookings = Booking::where('user_id', $user->id)
@@ -205,7 +208,7 @@ class UserController extends Controller
     }
 
     // GDPR data export — everything about this user
-    public function export(Request $request)
+    public function export(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -238,14 +241,14 @@ class UserController extends Controller
         ]);
     }
 
-    public function markAllNotificationsRead(Request $request)
+    public function markAllNotificationsRead(Request $request): JsonResponse
     {
         Notification::where('user_id', $request->user()->id)->update(['read' => true]);
 
         return response()->json(['message' => 'All notifications marked as read']);
     }
 
-    public function pushUnsubscribe(Request $request)
+    public function pushUnsubscribe(Request $request): JsonResponse
     {
         PushSubscription::where('user_id', $request->user()->id)->delete();
 
@@ -258,7 +261,7 @@ class UserController extends Controller
      * Unlike deleteAccount() which CASCADE-deletes everything, this keeps booking records
      * with PII replaced by placeholder values (required for German tax law — 7-year retention).
      */
-    public function anonymizeAccount(Request $request)
+    public function anonymizeAccount(Request $request): JsonResponse
     {
         $request->validate([
             'password' => 'required|string',

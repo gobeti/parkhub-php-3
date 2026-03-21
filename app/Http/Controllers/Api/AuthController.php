@@ -8,6 +8,7 @@ use App\Mail\WelcomeEmail;
 use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
         $request->validate([
             'username' => 'required|string',
@@ -61,7 +62,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         if (Setting::get('self_registration', 'true') !== 'true') {
             return response()->json(['message' => 'Registration is currently disabled'], 403);
@@ -109,7 +110,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function refresh(Request $request)
+    public function refresh(Request $request): JsonResponse
     {
         $user = $request->user();
         $user->tokens()->delete();
@@ -124,12 +125,12 @@ class AuthController extends Controller
         ]);
     }
 
-    public function me(Request $request)
+    public function me(Request $request): JsonResponse
     {
         return response()->json($this->userResponse($request->user()));
     }
 
-    public function updateMe(Request $request)
+    public function updateMe(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -147,7 +148,7 @@ class AuthController extends Controller
         return response()->json($this->userResponse($user->fresh()));
     }
 
-    public function deleteAccount(Request $request)
+    public function deleteAccount(Request $request): JsonResponse
     {
         $request->validate([
             'password' => 'required|string',
@@ -193,7 +194,7 @@ class AuthController extends Controller
         ];
     }
 
-    public function forgotPassword(Request $request)
+    public function forgotPassword(Request $request): JsonResponse
     {
         $request->validate(['email' => 'required|email']);
 
@@ -234,7 +235,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'If an account with that email exists, a reset link has been sent.']);
     }
 
-    public function resetPassword(Request $request)
+    public function resetPassword(Request $request): JsonResponse
     {
         $request->validate([
             'email' => 'required|email',
@@ -276,7 +277,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Passwort erfolgreich zurückgesetzt. Sie können sich nun anmelden.']);
     }
 
-    public function changePassword(Request $request)
+    public function changePassword(Request $request): JsonResponse
     {
         $request->validate([
             'current_password' => 'required|string',
@@ -301,7 +302,7 @@ class AuthController extends Controller
             'tokens' => [
                 'access_token' => $token->plainTextToken,
                 'token_type' => 'Bearer',
-                'expires_at' => (new \DateTime('+7 days'))->format('c'),
+                'expires_at' => now()->addDays(7)->toISOString(),
             ],
         ]);
     }
