@@ -60,6 +60,7 @@ export default {
       credits: 'Crediti',
       team: 'Team',
       calendar: 'Calendario',
+      map: 'Mappa',
       notifications: 'Notifiche',
       translations: 'Traduzioni',
       profile: 'Profilo',
@@ -148,6 +149,7 @@ export default {
       noTransactions: 'Nessuna transazione ancora',
       creditsPerBooking: '{{count}} credito per prenotazione',
     },
+    payments: { buyCredits: 'Acquista crediti', history: 'Storico pagamenti', success: 'Pagamento riuscito! I crediti sono stati aggiunti.', configureStripe: 'Configura Stripe', amount: 'Importo', status: 'Stato', date: 'Data', noPayments: 'Nessuno storico pagamenti', processing: 'Elaborazione...', selectCredits: 'Seleziona quantita di crediti' },
     absences: {
       title: 'Assenze',
       subtitle: 'Gestisci la tua disponibilità e i giorni di smart working',
@@ -569,6 +571,14 @@ export default {
       events: 'eventi',
       previousMonth: 'Mese precedente',
       nextMonth: 'Mese successivo',
+    },
+    map: {
+      title: 'Mappa parcheggi',
+      subtitle: 'Trova parcheggi disponibili vicino a te',
+      bookNow: 'Prenota ora',
+      available: 'Disponibile',
+      noLots: 'Nessun parcheggio con dati di posizione disponibile',
+      closed: 'Chiuso',
     },
     team: {
       title: 'Team',

@@ -7,6 +7,43 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.1.0] - 2026-03-22
+
+### Added
+- **Map View**: Interactive Leaflet parking lot map with color-coded availability markers
+  - `GET /api/v1/lots/map` — public endpoint returning lots with lat/lng and availability
+  - `PUT /api/v1/admin/lots/{id}/location` — admin endpoint to set lot coordinates
+  - `MODULE_MAP=true` toggle (31st module)
+  - MapView.tsx frontend with legend, auto-fit bounds, and styled markers
+  - 9 PHP tests + 6 vitest tests
+- **Web Push Notifications**: Full VAPID-based browser push subscription management
+  - `POST /api/v1/push/subscribe` — store push subscription (auth required)
+  - `DELETE /api/v1/push/unsubscribe` — remove subscriptions (auth required)
+  - `GET /api/v1/push/vapid-key` — return VAPID public key (public)
+  - PushController with upsert logic for subscriptions
+  - useNotifications hook with permission handling and subscribe/unsubscribe flow
+  - Enhanced service worker (sw.js) with push event handling and notification actions
+  - `MODULE_WEB_PUSH=true` toggle (32nd module)
+  - 8 PHP tests + 4 vitest tests
+- **Stripe Payments**: Checkout sessions, webhook handling, and payment history
+  - `POST /api/v1/payments/create-checkout` — create Stripe Checkout session (auth required)
+  - `POST /api/v1/payments/webhook` — handle Stripe events with signature verification
+  - `GET /api/v1/payments/history` — user payment history (auth required)
+  - `GET /api/v1/payments/config/status` — check if Stripe is configured (public)
+  - Stub mode when Stripe SDK not available, real Stripe when configured
+  - `MODULE_STRIPE=true` toggle (default: false, requires API keys)
+  - 11 PHP tests
+- **Frontend sync from parkhub-rust**: MapView, useNotifications, api client (map/push/stripe methods), App.tsx routes, Layout map nav link, sw.js, all 10 locale files updated
+- 498 vitest + 970 PHPUnit = **1468 tests** total
+
+### Changed
+- Module count: 32 modules (added `map`, `web_push`)
+- README badges updated to v3.1.0
+- Stripe module routes now override legacy payment webhook route
+- PushController replaces MiscController/PublicController for push endpoints
+
+---
+
 ## [3.0.0] - 2026-03-22
 
 ### Added
