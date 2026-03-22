@@ -50,6 +50,14 @@ vi.mock('@phosphor-icons/react', () => ({
   PresentationChart: (props: any) => <span data-testid="icon-presentation" {...props} />,
   Gauge: (props: any) => <span data-testid="icon-gauge" {...props} />,
   Buildings: (props: any) => <span data-testid="icon-buildings" {...props} />,
+  ClockCounterClockwise: (props: any) => <span data-testid="icon-clock" {...props} />,
+  Database: (props: any) => <span data-testid="icon-database" {...props} />,
+  Car: (props: any) => <span data-testid="icon-car" {...props} />,
+  Wheelchair: (props: any) => <span data-testid="icon-wheelchair" {...props} />,
+  Wrench: (props: any) => <span data-testid="icon-wrench" {...props} />,
+  CurrencyDollar: (props: any) => <span data-testid="icon-dollar" {...props} />,
+  UserPlus: (props: any) => <span data-testid="icon-user-plus" {...props} />,
+  Lightning: (props: any) => <span data-testid="icon-lightning" {...props} />,
 }));
 
 import { AdminPage } from './Admin';
@@ -77,6 +85,8 @@ describe('AdminPage', () => {
     expect(screen.getByText('Analytics')).toBeInTheDocument();
     expect(screen.getByText('Rate Limits')).toBeInTheDocument();
     expect(screen.getByText('Tenants')).toBeInTheDocument();
+    expect(screen.getByText('Visitors')).toBeInTheDocument();
+    expect(screen.getByText('EV Chargers')).toBeInTheDocument();
   });
 
   it('renders tab links with correct paths', () => {
@@ -91,6 +101,8 @@ describe('AdminPage', () => {
     expect(screen.getByText('Analytics').closest('a')).toHaveAttribute('href', '/admin/analytics');
     expect(screen.getByText('Rate Limits').closest('a')).toHaveAttribute('href', '/admin/rate-limits');
     expect(screen.getByText('Tenants').closest('a')).toHaveAttribute('href', '/admin/tenants');
+    expect(screen.getByText('Visitors').closest('a')).toHaveAttribute('href', '/admin/visitors');
+    expect(screen.getByText('EV Chargers').closest('a')).toHaveAttribute('href', '/admin/chargers');
   });
 
   it('renders the outlet for child routes', () => {

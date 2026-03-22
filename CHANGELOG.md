@@ -7,6 +7,44 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.5.0] - 2026-03-22
+
+### Added
+- **Visitor Pre-Registration**: Register visitors with QR code pass for easy check-in
+  - `POST /api/v1/visitors/register` -- register a visitor with name, email, vehicle plate, visit date
+  - `GET /api/v1/visitors` -- list current user's visitors
+  - `GET /api/v1/admin/visitors` -- admin view all visitors with search and status filter
+  - `PUT /api/v1/visitors/{id}/check-in` -- check in a pending visitor
+  - `DELETE /api/v1/visitors/{id}` -- cancel a visitor registration
+  - Visitors.tsx + AdminVisitorsPage frontend with search, QR modal, admin stats
+  - `MODULE_VISITORS=true` toggle (42nd module)
+  - 10 PHP tests + 6 vitest tests
+- **EV Charging Management**: Start/stop EV charging sessions with charger management
+  - `GET /api/v1/lots/{id}/chargers` -- list chargers for a lot
+  - `POST /api/v1/chargers/{id}/start` -- start a charging session
+  - `POST /api/v1/chargers/{id}/stop` -- stop a charging session with kWh calculation
+  - `GET /api/v1/chargers/sessions` -- list user's charging session history
+  - `GET /api/v1/admin/chargers` -- admin charger utilization stats
+  - `POST /api/v1/admin/chargers` -- admin create new charger
+  - EVCharging.tsx + AdminChargersPage frontend with connector types, session history
+  - `MODULE_EV_CHARGING=true` toggle (43rd module)
+  - 10 PHP tests + 5 vitest tests
+- **Smart Recommendations (Enhanced)**: Weighted scoring algorithm for parking slot suggestions
+  - Scoring: frequency 40%, availability 30%, price 20%, distance 10%
+  - `GET /api/v1/recommendations/stats` -- admin acceptance rate with algorithm weights
+  - Book.tsx updated with RecommendationsSection showing badge-based suggestions
+  - `MODULE_RECOMMENDATIONS=true` toggle (44th module)
+  - 8 PHP tests (extended)
+- **Frontend sync from parkhub-rust**: Visitors.tsx, EVCharging.tsx, updated Book.tsx (recommendations section), Admin.tsx (2 new tabs), App.tsx (4 new routes), all 10 i18n locale files with visitors/evCharging/recommendations translations
+- Migration creates `visitors`, `ev_chargers`, `charging_sessions` tables
+
+### Changed
+- Module count: 44 modules (added `visitors`, `ev_charging`, `recommendations`)
+- RecommendationController rewritten with weighted scoring algorithm and reason_badges
+- README badges updated to v3.5.0, test count 1580+
+
+---
+
 ## [3.4.0] - 2026-03-22
 
 ### Added
