@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminReportController extends Controller
 {
@@ -98,18 +99,55 @@ class AdminReportController extends Controller
     {
         $this->requireAdmin($request);
         $days = (int) $request->get('days', 30);
-        $bookings = Booking::where('created_at', '>=', now()->subDays($days))->get();
-        $byDay = $bookings->groupBy(fn ($b) => substr($b->start_time, 0, 10));
+        $since = now()->subDays($days);
+
+        $baseQuery = Booking::where('created_at', '>=', $since);
+
+        $totalBookings = (clone $baseQuery)->count();
+
+        // Aggregate by day using DB query instead of loading all bookings
+        $byDay = (clone $baseQuery)
+            ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date')
+            ->all();
+
+        $byStatus = (clone $baseQuery)
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->all();
+
+        $byBookingType = (clone $baseQuery)
+            ->selectRaw('booking_type, COUNT(*) as count')
+            ->groupBy('booking_type')
+            ->pluck('count', 'booking_type')
+            ->all();
+
+        // Compute average duration using DB aggregate
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlite') {
+            $avgDuration = (clone $baseQuery)
+                ->whereNotNull('start_time')
+                ->whereNotNull('end_time')
+                ->selectRaw('AVG((julianday(end_time) - julianday(start_time)) * 24) as avg_hours')
+                ->value('avg_hours');
+        } else {
+            $avgDuration = (clone $baseQuery)
+                ->whereNotNull('start_time')
+                ->whereNotNull('end_time')
+                ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, start_time, end_time) / 3600) as avg_hours')
+                ->value('avg_hours');
+        }
 
         return response()->json([
             'period_days' => $days,
-            'total_bookings' => $bookings->count(),
-            'by_day' => $byDay->map->count()->sortKeys()->all(),
-            'by_status' => $bookings->groupBy('status')->map->count()->all(),
-            'by_booking_type' => $bookings->groupBy('booking_type')->map->count()->all(),
-            'avg_duration_hours' => $bookings->avg(function ($b) {
-                return (strtotime($b->end_time) - strtotime($b->start_time)) / 3600;
-            }),
+            'total_bookings' => $totalBookings,
+            'by_day' => $byDay,
+            'by_status' => $byStatus,
+            'by_booking_type' => $byBookingType,
+            'avg_duration_hours' => $avgDuration ? round((float) $avgDuration, 2) : 0,
         ]);
     }
 
@@ -153,37 +191,34 @@ class AdminReportController extends Controller
         ]);
     }
 
-    public function exportBookingsCsv(Request $request): Response
+    public function exportBookingsCsv(Request $request): StreamedResponse
     {
         $this->requireAdmin($request);
 
-        $bookings = Booking::with('user')->orderBy('start_time', 'desc')->get();
-
         $headers = ['ID', 'User', 'Lot', 'Slot', 'Vehicle', 'Start', 'End', 'Status', 'Type'];
-        $rows = $bookings->map(fn ($b) => [
-            $b->id,
-            $this->csvSafe($b->user?->name ?? 'Guest'),
-            $this->csvSafe($b->lot_name),
-            $this->csvSafe($b->slot_number),
-            $this->csvSafe($b->vehicle_plate ?? ''),
-            $b->start_time?->format('Y-m-d H:i'),
-            $b->end_time?->format('Y-m-d H:i'),
-            $b->status,
-            $b->booking_type,
-        ]);
 
-        $output = fopen('php://output', 'w');
-        ob_start();
-        fputcsv($output, $headers);
-        foreach ($rows as $row) {
-            fputcsv($output, $row);
-        }
-        fclose($output);
-        $csv = ob_get_clean();
+        return response()->streamDownload(function () use ($headers) {
+            $output = fopen('php://output', 'w');
+            fputcsv($output, $headers);
 
-        return response($csv, 200, [
+            // Stream using cursor to avoid loading all bookings into memory
+            foreach (Booking::with('user')->orderBy('start_time', 'desc')->cursor() as $b) {
+                fputcsv($output, [
+                    $b->id,
+                    $this->csvSafe($b->user?->name ?? 'Guest'),
+                    $this->csvSafe($b->lot_name),
+                    $this->csvSafe($b->slot_number),
+                    $this->csvSafe($b->vehicle_plate ?? ''),
+                    $b->start_time?->format('Y-m-d H:i'),
+                    $b->end_time?->format('Y-m-d H:i'),
+                    $b->status,
+                    $b->booking_type,
+                ]);
+            }
+
+            fclose($output);
+        }, 'bookings-export.csv', [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="bookings-export.csv"',
         ]);
     }
 
