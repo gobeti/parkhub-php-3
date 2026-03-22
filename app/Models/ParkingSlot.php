@@ -9,7 +9,7 @@ class ParkingSlot extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['lot_id', 'slot_number', 'status', 'slot_type', 'features', 'reserved_for_department', 'zone_id'];
+    protected $fillable = ['lot_id', 'slot_number', 'status', 'slot_type', 'features', 'reserved_for_department', 'zone_id', 'is_accessible'];
 
     protected $appends = ['number'];
 
@@ -17,6 +17,7 @@ class ParkingSlot extends Model
     {
         return [
             'features' => 'array',
+            'is_accessible' => 'boolean',
         ];
     }
 

@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  ChartBar, GearSix, Users, Megaphone, ChartLine, MapPin, Translate,
+  ChartBar, GearSix, Users, Megaphone, ChartLine, MapPin, Translate, PresentationChart, Gauge, Buildings, ClockCounterClockwise, Database, Car, Wheelchair, Wrench, CurrencyDollar,
 } from '@phosphor-icons/react';
 
 function AdminNav() {
@@ -17,6 +17,15 @@ function AdminNav() {
     { name: t('admin.announcements'), path: '/admin/announcements', icon: Megaphone },
     { name: t('admin.reports'), path: '/admin/reports', icon: ChartLine },
     { name: t('admin.translations'), path: '/admin/translations', icon: Translate },
+    { name: 'Analytics', path: '/admin/analytics', icon: PresentationChart },
+    { name: t('admin.rateLimits', 'Rate Limits'), path: '/admin/rate-limits', icon: Gauge },
+    { name: t('admin.tenants', 'Tenants'), path: '/admin/tenants', icon: Buildings },
+    { name: t('admin.auditLog', 'Audit Log'), path: '/admin/audit-log', icon: ClockCounterClockwise },
+    { name: t('admin.dataManagement', 'Data'), path: '/admin/data', icon: Database },
+    { name: t('admin.fleet', 'Fleet'), path: '/admin/fleet', icon: Car },
+    { name: t('admin.accessible', 'Accessible'), path: '/admin/accessible', icon: Wheelchair },
+    { name: t('admin.maintenance', 'Maintenance'), path: '/admin/maintenance', icon: Wrench },
+    { name: t('admin.billing', 'Billing'), path: '/admin/billing', icon: CurrencyDollar },
   ];
 
   function isActive(path: string) {

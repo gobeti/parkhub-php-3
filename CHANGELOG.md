@@ -7,6 +7,42 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.4.0] - 2026-03-22
+
+### Added
+- **Accessible Parking**: Manage accessible slots and priority booking for users with disabilities
+  - `GET /api/v1/lots/{id}/slots/accessible` -- list accessible slots for a lot
+  - `PUT /api/v1/admin/lots/{id}/slots/{slot}/accessible` -- toggle slot accessibility
+  - `GET /api/v1/bookings/accessible-stats` -- accessible parking statistics
+  - `PUT /api/v1/users/me/accessibility-needs` -- update user accessibility needs
+  - AdminAccessible.tsx frontend with stats cards, lot selector, slot toggles
+  - Profile.tsx updated with accessibility needs selector
+  - `MODULE_ACCESSIBLE=true` toggle (39th module)
+  - 9 PHP tests + 6 vitest tests
+- **Maintenance Scheduling**: Schedule and manage maintenance windows for parking lots
+  - `POST/GET/PUT/DELETE /api/v1/admin/maintenance` -- full CRUD for maintenance windows
+  - `GET /api/v1/maintenance/active` -- public active maintenance list
+  - Booking overlap validation prevents conflicts
+  - AdminMaintenance.tsx frontend with form, calendar view, active banner
+  - `MODULE_MAINTENANCE=true` toggle (40th module)
+  - 9 PHP tests + 6 vitest tests
+- **Cost Center Billing**: Billing analytics by cost center and department
+  - `GET /api/v1/admin/billing/by-cost-center` -- breakdown by cost center
+  - `GET /api/v1/admin/billing/by-department` -- breakdown by department
+  - `GET /api/v1/admin/billing/export` -- CSV export
+  - `POST /api/v1/admin/billing/allocate` -- assign cost centers to users
+  - AdminBilling.tsx frontend with tab switcher, summary cards, table, CSV export
+  - `MODULE_COST_CENTER=true` toggle (41st module)
+  - 8 PHP tests + 6 vitest tests
+- **Frontend sync from parkhub-rust**: AdminAccessible, AdminMaintenance, AdminBilling views + tests, updated Book.tsx (wheelchair icons), Profile.tsx (accessibility needs), Admin.tsx (3 new tabs), App.tsx (3 new routes), Layout.tsx, api/client.ts, all 10 i18n locale files
+- Migration adds `is_accessible` to parking_slots, `accessibility_needs` + `cost_center` to users, creates `maintenance_windows` table
+
+### Changed
+- Module count: 41 modules (added `accessible`, `maintenance`, `cost_center`)
+- README badges updated to v3.4.0, test count 1553+
+
+---
+
 ## [3.3.0] - 2026-03-22
 
 ### Added

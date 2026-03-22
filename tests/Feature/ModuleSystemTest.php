@@ -335,10 +335,37 @@ class ModuleSystemTest extends TestCase
             ->assertOk();
     }
 
-    public function test_all_35_modules_in_config(): void
+    public function test_all_41_modules_in_config(): void
     {
         $modules = config('modules');
 
-        $this->assertCount(35, $modules);
+        $this->assertCount(41, $modules);
+    }
+
+    public function test_disabled_accessible_module_returns_404(): void
+    {
+        config(['modules.accessible' => false]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->getJson('/api/v1/bookings/accessible-stats')->assertNotFound();
+    }
+
+    public function test_disabled_maintenance_module_returns_404(): void
+    {
+        config(['modules.maintenance' => false]);
+
+        $user = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($user)->getJson('/api/v1/admin/maintenance')->assertNotFound();
+    }
+
+    public function test_disabled_cost_center_module_returns_404(): void
+    {
+        config(['modules.cost_center' => false]);
+
+        $user = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($user)->getJson('/api/v1/admin/billing/by-cost-center')->assertNotFound();
     }
 }

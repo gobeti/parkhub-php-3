@@ -18,7 +18,7 @@ class User extends Authenticatable
         'preferences', 'is_active', 'department', 'last_login',
         'credits_balance', 'credits_monthly_quota', 'credits_last_refilled',
         'two_factor_secret', 'two_factor_enabled', 'notification_preferences',
-        'ical_token', 'tenant_id',
+        'ical_token', 'tenant_id', 'accessibility_needs', 'cost_center',
     ];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret'];
