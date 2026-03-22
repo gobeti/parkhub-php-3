@@ -55,6 +55,9 @@ return [
     'waitlist_ext' => env('MODULE_WAITLIST_EXT', true),
     'parking_pass' => env('MODULE_PARKING_PASS', true),
     'api_docs' => env('MODULE_API_DOCS', true),
+    'absence_approval' => env('MODULE_ABSENCE_APPROVAL', true),
+    'calendar_drag' => env('MODULE_CALENDAR_DRAG', true),
+    'widgets' => env('MODULE_WIDGETS', true),
 
     // ── Integration (disabled by default — requires credentials) ───
     'stripe' => env('MODULE_STRIPE', false),
