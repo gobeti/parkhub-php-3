@@ -1,4 +1,4 @@
-const BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
+const BASE_URL = import.meta.env?.VITE_API_URL || '';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -6,20 +6,38 @@ export interface ApiResponse<T> {
   error?: { code: string; message: string };
 }
 
+// In-memory token storage (XSS-safe: not in localStorage).
+// Used as fallback when httpOnly cookie is not available (API/mobile clients).
+let _inMemoryToken: string | null = null;
+
+export function setInMemoryToken(token: string | null) {
+  _inMemoryToken = token;
+}
+
+export function getInMemoryToken(): string | null {
+  return _inMemoryToken;
+}
+
 async function request<T>(path: string, opts: RequestInit = {}): Promise<ApiResponse<T>> {
-  const token = localStorage.getItem('parkhub_token');
+  const token = _inMemoryToken;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    // CSRF protection: required by backend for cookie-based auth
+    'X-Requested-With': 'XMLHttpRequest',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(opts.headers as Record<string, string> || {}),
   };
 
   try {
-    const res = await fetch(`${BASE_URL}${path}`, { ...opts, headers });
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...opts,
+      headers,
+      credentials: 'include',  // Send httpOnly cookies automatically
+    });
 
     if (res.status === 401) {
-      localStorage.removeItem('parkhub_token');
+      _inMemoryToken = null;
       window.location.href = '/login';
       return { success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'Session expired' } };
     }
@@ -44,6 +62,17 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<ApiResp
   }
 }
 
+async function requestBlob(path: string): Promise<Blob> {
+  const token = _inMemoryToken;
+  const headers: Record<string, string> = {
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const res = await fetch(`${BASE_URL}${path}`, { headers, credentials: 'include' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.blob();
+}
+
 // ── Auth ──
 export const api = {
   login: (username: string, password: string) =>
@@ -60,6 +89,8 @@ export const api = {
   resetPassword: (token: string, password: string) =>
     request('/api/v1/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
 
+  logout: () => request('/api/v1/auth/logout', { method: 'POST' }),
+
   me: () => request<User>('/api/v1/users/me'),
 
   updateMe: (data: Partial<User>) =>
@@ -69,6 +100,11 @@ export const api = {
     request('/api/v1/users/me/password', {
       method: 'PUT', body: JSON.stringify({ current_password, password, password_confirmation }),
     }),
+
+  exportMyData: () => requestBlob('/api/v1/user/export'),
+
+  deleteMyAccount: () =>
+    request('/api/v1/users/me/delete', { method: 'DELETE' }),
 
   // ── Setup ──
   getSetupStatus: () => request<SetupStatus>('/api/v1/setup/status'),
@@ -84,6 +120,24 @@ export const api = {
     request<ParkingLot>(`/api/v1/lots/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteLot: (id: string) =>
     request<void>(`/api/v1/lots/${id}`, { method: 'DELETE' }),
+
+  // ── Dynamic Pricing ──
+  getDynamicPrice: (lotId: string) =>
+    request<DynamicPriceResult>(`/api/v1/lots/${lotId}/pricing/dynamic`),
+  getAdminDynamicPricing: (lotId: string) =>
+    request<DynamicPricingRules>(`/api/v1/admin/lots/${lotId}/pricing/dynamic`),
+  updateAdminDynamicPricing: (lotId: string, data: Partial<DynamicPricingRules>) =>
+    request<DynamicPricingRules>(`/api/v1/admin/lots/${lotId}/pricing/dynamic`, {
+      method: 'PUT', body: JSON.stringify(data),
+    }),
+
+  // ── Operating Hours ──
+  getLotHours: (lotId: string) =>
+    request<OperatingHoursResponse>(`/api/v1/lots/${lotId}/hours`),
+  updateAdminLotHours: (lotId: string, data: OperatingHoursData) =>
+    request<OperatingHoursResponse>(`/api/v1/admin/lots/${lotId}/hours`, {
+      method: 'PUT', body: JSON.stringify(data),
+    }),
 
   // ── Bookings ──
   getBookings: () => request<Booking[]>('/api/v1/bookings'),
@@ -107,10 +161,14 @@ export const api = {
   importAbsenceIcal: async (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
-    const token = localStorage.getItem('parkhub_token');
+    const token = _inMemoryToken;
     const res = await fetch(`${BASE_URL}/api/v1/absences/import`, {
       method: 'POST', body: fd,
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      credentials: 'include',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
     return res.json();
   },
@@ -153,6 +211,8 @@ export const api = {
   // ── Calendar ──
   calendarEvents: (start: string, end: string) =>
     request<CalendarEvent[]>(`/api/v1/calendar/events?start=${start}&end=${end}`),
+  generateCalendarToken: () =>
+    request<{ token: string; url: string }>('/api/v1/calendar/token', { method: 'POST' }),
 
   // ── Demo ──
   getDemoConfig: () => request<{ demo_mode: boolean }>('/api/v1/demo/config'),
@@ -196,6 +256,83 @@ export const api = {
     request<Favorite>('/api/v1/user/favorites', { method: 'POST', body: JSON.stringify({ slot_id, lot_id }) }),
   removeFavorite: (slotId: string) =>
     request<void>(`/api/v1/user/favorites/${slotId}`, { method: 'DELETE' }),
+
+  // ── 2FA ──
+  setup2FA: () => request<TwoFactorSetup>('/api/v1/auth/2fa/setup', { method: 'POST' }),
+  verify2FA: (code: string) => request<{ enabled: boolean }>('/api/v1/auth/2fa/verify', { method: 'POST', body: JSON.stringify({ code }) }),
+  disable2FA: (current_password: string) => request<{ enabled: boolean }>('/api/v1/auth/2fa/disable', { method: 'POST', body: JSON.stringify({ current_password }) }),
+  get2FAStatus: () => request<{ enabled: boolean }>('/api/v1/auth/2fa/status'),
+
+  // ── Login History ──
+  getLoginHistory: () => request<LoginHistoryEntry[]>('/api/v1/auth/login-history'),
+
+  // ── Sessions ──
+  getSessions: () => request<SessionInfo[]>('/api/v1/auth/sessions'),
+  revokeSession: (id: string) => request<void>(`/api/v1/auth/sessions/${id}`, { method: 'DELETE' }),
+
+  // ── Notification Preferences ──
+  getNotificationPreferences: () => request<NotificationPreferences>('/api/v1/preferences/notifications'),
+  updateNotificationPreferences: (prefs: NotificationPreferences) =>
+    request<NotificationPreferences>('/api/v1/preferences/notifications', { method: 'PUT', body: JSON.stringify(prefs) }),
+
+  // ── Design Theme Preferences ──
+  getDesignThemePreference: () => request<{ design_theme: string }>('/api/v1/preferences/theme'),
+  updateDesignThemePreference: (design_theme: string) =>
+    request<{ design_theme: string }>('/api/v1/preferences/theme', { method: 'PUT', body: JSON.stringify({ design_theme }) }),
+
+  // ── Bulk Admin ──
+  adminBulkUpdate: (user_ids: string[], action: string, role?: string) =>
+    request<BulkResult>('/api/v1/admin/users/bulk-update', { method: 'POST', body: JSON.stringify({ user_ids, action, role }) }),
+  adminBulkDelete: (user_ids: string[]) =>
+    request<BulkResult>('/api/v1/admin/users/bulk-delete', { method: 'POST', body: JSON.stringify({ user_ids }) }),
+
+  // ── Map ──
+  getMapMarkers: () => request<LotMarker[]>('/api/v1/lots/map'),
+  setLotLocation: (lotId: string, latitude: number, longitude: number) =>
+    request<void>(`/api/v1/admin/lots/${lotId}/location`, {
+      method: 'PUT', body: JSON.stringify({ latitude, longitude }),
+    }),
+
+  // ── Stripe ──
+  createCheckout: (credits: number, pricePerCredit?: number) =>
+    request<CheckoutResponse>('/api/v1/payments/create-checkout', {
+      method: 'POST', body: JSON.stringify({ credits, price_per_credit: pricePerCredit }),
+    }),
+  getPaymentHistory: () => request<PaymentHistoryEntry[]>('/api/v1/payments/history'),
+  getStripeConfig: () => request<StripeConfigResponse>('/api/v1/payments/config'),
+
+  // ── Rate Limits ──
+  getRateLimitStats: () => request<RateLimitStats>('/api/v1/admin/rate-limits'),
+  getRateLimitHistory: () => request<RateLimitHistory>('/api/v1/admin/rate-limits/history'),
+
+  // ── Audit Log ──
+  getAuditLog: (params?: { page?: number; per_page?: number; action?: string; user?: string; from?: string; to?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.per_page) qs.set('per_page', String(params.per_page));
+    if (params?.action) qs.set('action', params.action);
+    if (params?.user) qs.set('user', params.user);
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    const q = qs.toString();
+    return request<PaginatedAuditLog>(`/api/v1/admin/audit-log${q ? `?${q}` : ''}`);
+  },
+  exportAuditLog: (params?: { action?: string; user?: string; from?: string; to?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.action) qs.set('action', params.action);
+    if (params?.user) qs.set('user', params.user);
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    const q = qs.toString();
+    return `/api/v1/admin/audit-log/export${q ? `?${q}` : ''}`;
+  },
+
+  // ── Tenants ──
+  listTenants: () => request<TenantInfo[]>('/api/v1/admin/tenants'),
+  createTenant: (data: CreateTenantRequest) =>
+    request<TenantInfo>('/api/v1/admin/tenants', { method: 'POST', body: JSON.stringify(data) }),
+  updateTenant: (id: string, data: CreateTenantRequest) =>
+    request<TenantInfo>(`/api/v1/admin/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 // ── Types ──
@@ -233,6 +370,61 @@ export interface ParkingLot {
   daily_max?: number;
   monthly_pass?: number;
   currency?: string;
+  operating_hours?: OperatingHoursData;
+}
+
+export type MarkerColor = 'green' | 'yellow' | 'red' | 'gray';
+
+export interface LotMarker {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  available_slots: number;
+  total_slots: number;
+  status: string;
+  color: MarkerColor;
+}
+
+export interface DynamicPricingRules {
+  enabled: boolean;
+  base_price: number;
+  surge_multiplier: number;
+  discount_multiplier: number;
+  surge_threshold: number;
+  discount_threshold: number;
+}
+
+export interface DynamicPriceResult {
+  current_price: number;
+  base_price: number;
+  applied_multiplier: number;
+  occupancy_percent: number;
+  dynamic_pricing_active: boolean;
+  tier: 'surge' | 'discount' | 'normal';
+  currency: string;
+}
+
+export interface DayHoursData {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+export interface OperatingHoursData {
+  is_24h: boolean;
+  monday?: DayHoursData;
+  tuesday?: DayHoursData;
+  wednesday?: DayHoursData;
+  thursday?: DayHoursData;
+  friday?: DayHoursData;
+  saturday?: DayHoursData;
+  sunday?: DayHoursData;
+}
+
+export interface OperatingHoursResponse extends OperatingHoursData {
+  is_open_now: boolean;
 }
 
 export type SlotType = 'standard' | 'compact' | 'large' | 'handicap' | 'electric' | 'motorcycle' | 'reserved' | 'vip';
@@ -246,6 +438,7 @@ export interface ParkingSlot {
   slot_type?: SlotType;
   features?: SlotFeature[];
   zone_id?: string;
+  is_accessible?: boolean;
 }
 
 export interface Favorite {
@@ -323,6 +516,29 @@ export interface UserCredits {
   monthly_quota: number;
   last_refilled?: string;
   transactions: CreditTransaction[];
+}
+
+export interface CheckoutResponse {
+  id: string;
+  checkout_url: string;
+  amount: number;
+  credits: number;
+  currency: string;
+}
+
+export interface PaymentHistoryEntry {
+  id: string;
+  amount: number;
+  credits: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'expired' | 'failed';
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface StripeConfigResponse {
+  publishable_key?: string;
+  configured: boolean;
 }
 
 export interface UserStats {
@@ -511,4 +727,121 @@ export interface CreateProposalRequest {
 export interface ReviewProposalRequest {
   status: 'approved' | 'rejected';
   comment?: string;
+}
+
+// ── 2FA Types ──
+export interface TwoFactorSetup {
+  secret: string;
+  otpauth_uri: string;
+  qr_code_base64: string;
+}
+
+// ── Login History ──
+export interface LoginHistoryEntry {
+  timestamp: string;
+  ip_address: string;
+  user_agent: string;
+  success: boolean;
+}
+
+// ── Session Info ──
+export interface SessionInfo {
+  id: string;
+  username: string;
+  role: string;
+  created_at: string;
+  expires_at: string;
+  is_current: boolean;
+}
+
+// ── Notification Preferences ──
+export interface NotificationPreferences {
+  email_booking_confirm: boolean;
+  email_booking_reminder: boolean;
+  email_swap_request: boolean;
+  push_enabled: boolean;
+  sms_booking_confirm: boolean;
+  sms_booking_reminder: boolean;
+  sms_booking_cancelled: boolean;
+  whatsapp_booking_confirm: boolean;
+  whatsapp_booking_reminder: boolean;
+  whatsapp_booking_cancelled: boolean;
+  phone_number?: string;
+}
+
+// ── Bulk Result ──
+export interface BulkResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  errors: string[];
+}
+
+// ── Rate Limits ──
+export interface RateLimitGroup {
+  group: string;
+  limit_per_minute: number;
+  description: string;
+  current_count: number;
+  reset_seconds: number;
+  blocked_last_hour: number;
+}
+
+export interface RateLimitStats {
+  groups: RateLimitGroup[];
+  total_blocked_last_hour: number;
+}
+
+export interface RateLimitHistoryBin {
+  hour: string;
+  count: number;
+}
+
+export interface RateLimitHistory {
+  bins: RateLimitHistoryBin[];
+}
+
+// ── Tenants ──
+export interface TenantBranding {
+  primary_color?: string;
+  logo_url?: string;
+  company_name?: string;
+}
+
+export interface TenantInfo {
+  id: string;
+  name: string;
+  domain?: string;
+  branding?: TenantBranding;
+  created_at: string;
+  updated_at: string;
+  user_count: number;
+  lot_count: number;
+}
+
+export interface CreateTenantRequest {
+  name: string;
+  domain?: string;
+  branding?: TenantBranding;
+}
+
+// ── Audit Log ──
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  event_type: string;
+  user_id?: string;
+  username?: string;
+  target_type?: string;
+  target_id?: string;
+  ip_address?: string;
+  details?: string;
+}
+
+export interface PaginatedAuditLog {
+  entries: AuditLogEntry[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
 }
