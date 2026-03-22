@@ -18,6 +18,7 @@ class User extends Authenticatable
         'preferences', 'is_active', 'department', 'last_login',
         'credits_balance', 'credits_monthly_quota', 'credits_last_refilled',
         'two_factor_secret', 'two_factor_enabled', 'notification_preferences',
+        'ical_token', 'tenant_id',
     ];
 
     protected $hidden = ['password', 'remember_token', 'two_factor_secret'];
@@ -75,6 +76,11 @@ class User extends Authenticatable
     public function creditTransactions()
     {
         return $this->hasMany(CreditTransaction::class);
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 
     public function isAdmin(): bool

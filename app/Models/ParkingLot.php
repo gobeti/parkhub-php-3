@@ -9,7 +9,7 @@ class ParkingLot extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['name', 'address', 'latitude', 'longitude', 'total_slots', 'available_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency', 'operating_hours', 'dynamic_pricing_rules'];
+    protected $fillable = ['name', 'address', 'latitude', 'longitude', 'total_slots', 'available_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency', 'operating_hours', 'dynamic_pricing_rules', 'tenant_id'];
 
     protected function casts(): array
     {
@@ -40,6 +40,11 @@ class ParkingLot extends Model
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'lot_id');
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 
     /**
