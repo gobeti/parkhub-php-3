@@ -44,6 +44,7 @@ class PaymentController extends Controller
     /**
      * POST /api/v1/payments/confirm
      * Confirms a payment intent stub.
+     * Returns proper status based on whether payment_method was provided.
      */
     public function confirm(Request $request): JsonResponse
     {
@@ -52,12 +53,15 @@ class PaymentController extends Controller
             'payment_method' => 'nullable|string',
         ]);
 
+        // Without a payment method, the intent cannot succeed
+        $status = $request->filled('payment_method') ? 'succeeded' : 'requires_payment_method';
+
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $request->payment_intent_id,
-                'status' => 'succeeded',
-                'amount_received' => null,
+                'status' => $status,
+                'amount_received' => $status === 'succeeded' ? null : 0,
             ],
             'error' => null,
             'meta' => null,
@@ -67,6 +71,7 @@ class PaymentController extends Controller
     /**
      * GET /api/v1/payments/{id}/status
      * Returns the status of a payment intent.
+     * Stub returns 'requires_confirmation' since no real payment processor is configured.
      */
     public function status(Request $request, string $id): JsonResponse
     {
@@ -74,7 +79,7 @@ class PaymentController extends Controller
             'success' => true,
             'data' => [
                 'id' => $id,
-                'status' => 'succeeded',
+                'status' => 'requires_confirmation',
                 'amount' => null,
                 'currency' => 'eur',
             ],
@@ -85,13 +90,24 @@ class PaymentController extends Controller
 
     /**
      * POST /api/v1/payments/webhook
-     * Handles Stripe webhook events (stub - logs and returns 200).
+     * Handles Stripe webhook events with signature verification.
      */
     public function webhook(Request $request): JsonResponse
     {
-        // In production: verify Stripe-Signature header
-        // $payload = $request->getContent();
-        // $sigHeader = $request->header('Stripe-Signature');
+        $webhookSecret = config('services.stripe.webhook_secret');
+
+        if ($webhookSecret) {
+            $payload = $request->getContent();
+            $sigHeader = $request->header('Stripe-Signature', '');
+
+            if (! $this->verifyStripeSignature($payload, $sigHeader, $webhookSecret)) {
+                Log::warning('Stripe webhook signature verification failed', [
+                    'ip' => $request->ip(),
+                ]);
+
+                return response()->json(['error' => 'Invalid signature'], 403);
+            }
+        }
 
         Log::info('Stripe webhook received', [
             'type' => $request->input('type'),
@@ -99,5 +115,37 @@ class PaymentController extends Controller
         ]);
 
         return response()->json(['received' => true]);
+    }
+
+    /**
+     * Verify Stripe webhook signature (v1 scheme).
+     */
+    private function verifyStripeSignature(string $payload, string $sigHeader, string $secret): bool
+    {
+        if (empty($sigHeader)) {
+            return false;
+        }
+
+        $parts = collect(explode(',', $sigHeader))->mapWithKeys(function ($part) {
+            $pair = explode('=', trim($part), 2);
+
+            return count($pair) === 2 ? [$pair[0] => $pair[1]] : [];
+        });
+
+        $timestamp = $parts->get('t');
+        $signature = $parts->get('v1');
+
+        if (! $timestamp || ! $signature) {
+            return false;
+        }
+
+        // Reject timestamps older than 5 minutes to prevent replay attacks
+        if (abs(time() - (int) $timestamp) > 300) {
+            return false;
+        }
+
+        $expectedSignature = hash_hmac('sha256', "{$timestamp}.{$payload}", $secret);
+
+        return hash_equals($expectedSignature, $signature);
     }
 }
