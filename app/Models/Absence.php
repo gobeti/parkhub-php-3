@@ -15,7 +15,7 @@ class Absence extends Model
 
     const STATUS_REJECTED = 'rejected';
 
-    protected $fillable = ['user_id', 'absence_type', 'start_date', 'end_date', 'note', 'source', 'status', 'reviewed_by', 'reviewed_at'];
+    protected $fillable = ['user_id', 'absence_type', 'start_date', 'end_date', 'note', 'source', 'status', 'reviewed_by', 'reviewed_at', 'reviewer_comment'];
 
     protected function casts(): array
     {
