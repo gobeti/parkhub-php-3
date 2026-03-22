@@ -6,8 +6,9 @@ import type { TFunction } from 'react-i18next';
 import {
   ArrowLeft, MapPin, Clock, Car, SpinnerGap, Check,
   Lightning, Wheelchair, Motorcycle, Star,
+  TrendUp, TrendDown,
 } from '@phosphor-icons/react';
-import { api, type ParkingLot, type ParkingSlot, type Vehicle, type CreateBookingPayload } from '../api/client';
+import { api, type ParkingLot, type ParkingSlot, type Vehicle, type CreateBookingPayload, type DynamicPriceResult, type OperatingHoursData } from '../api/client';
 import { SkeletonCard } from '../components/Skeleton';
 import toast from 'react-hot-toast';
 
@@ -35,6 +36,7 @@ export function BookPage() {
 
   const [selectedLot, setSelectedLot] = useState<ParkingLot | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<ParkingSlot | null>(null);
+  const [dynamicPrice, setDynamicPrice] = useState<DynamicPriceResult | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [startDate, setStartDate] = useState(() => {
     const now = new Date();
@@ -58,11 +60,16 @@ export function BookPage() {
   async function selectLot(lot: ParkingLot) {
     setSelectedLot(lot);
     setSelectedSlot(null);
+    setDynamicPrice(null);
     setLoadingSlots(true);
     setStep(2);
-    const res = await api.getLotSlots(lot.id);
-    if (res.success && res.data) setSlots(res.data);
+    const [slotsRes, priceRes] = await Promise.all([
+      api.getLotSlots(lot.id),
+      api.getDynamicPrice(lot.id),
+    ]);
+    if (slotsRes.success && slotsRes.data) setSlots(slotsRes.data);
     else { toast.error(t('common.error')); setSlots([]); }
+    if (priceRes.success && priceRes.data) setDynamicPrice(priceRes.data);
     setLoadingSlots(false);
   }
 
@@ -98,7 +105,8 @@ export function BookPage() {
 
   const start = new Date(startDate);
   const end = new Date(start.getTime() + duration * 60 * 60 * 1000);
-  const estimatedCost = selectedLot?.hourly_rate ? (selectedLot.hourly_rate * duration).toFixed(2) : null;
+  const effectiveRate = dynamicPrice?.dynamic_pricing_active ? dynamicPrice.current_price : selectedLot?.hourly_rate;
+  const estimatedCost = effectiveRate ? (effectiveRate * duration).toFixed(2) : null;
 
   const slideVariants = {
     enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
@@ -179,7 +187,8 @@ export function BookPage() {
             <StepSelectSlot lot={selectedLot!} slots={slots} loading={loadingSlots} selectedSlot={selectedSlot}
               onSelectSlot={setSelectedSlot} startDate={startDate} onStartDateChange={setStartDate}
               duration={duration} onDurationChange={setDuration} vehicles={vehicles}
-              selectedVehicle={selectedVehicle} onVehicleChange={setSelectedVehicle} onContinue={goToConfirm} t={t} />
+              selectedVehicle={selectedVehicle} onVehicleChange={setSelectedVehicle} onContinue={goToConfirm}
+              dynamicPrice={dynamicPrice} t={t} />
           </motion.div>
         )}
         {step === 3 && (
@@ -192,6 +201,23 @@ export function BookPage() {
       </AnimatePresence>
     </div>
   );
+}
+
+/** Check if a lot is currently open based on operating_hours. */
+function isLotOpenNow(hours?: OperatingHoursData): boolean {
+  if (!hours || hours.is_24h) return true;
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+  const now = new Date();
+  const dayKey = days[now.getDay()];
+  const dayHours = hours[dayKey as keyof OperatingHoursData] as { open: string; close: string; closed: boolean } | undefined;
+  if (!dayHours || dayHours.closed) return false;
+  const [oh, om] = dayHours.open.split(':').map(Number);
+  const [ch, cm] = dayHours.close.split(':').map(Number);
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const openMin = oh * 60 + om;
+  const closeMin = ch * 60 + cm;
+  if (closeMin > openMin) return nowMin >= openMin && nowMin < closeMin;
+  return nowMin >= openMin || nowMin < closeMin; // overnight
 }
 
 function StepSelectLot({ lots, loading, onSelect, t }: {
@@ -215,7 +241,18 @@ function StepSelectLot({ lots, loading, onSelect, t }: {
           onClick={() => onSelect(lot)}
           className="text-left glass-card p-5 group transition-all hover:shadow-md hover:border-primary-400/50 dark:hover:border-primary-600/50"
         >
-          <p className="font-semibold text-surface-900 dark:text-white">{lot.name}</p>
+          <div className="flex items-center justify-between">
+            <p className="font-semibold text-surface-900 dark:text-white">{lot.name}</p>
+            {lot.operating_hours && !lot.operating_hours.is_24h && (
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                isLotOpenNow(lot.operating_hours)
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+              }`}>
+                {isLotOpenNow(lot.operating_hours) ? t('book.openNow') : t('book.closedNow')}
+              </span>
+            )}
+          </div>
           {lot.address && (
             <p className="text-sm text-surface-500 dark:text-surface-400 mt-1 flex items-center gap-1">
               <MapPin weight="regular" className="w-3.5 h-3.5 shrink-0" />{lot.address}
@@ -242,20 +279,39 @@ const SLOT_TYPE_ICON: Record<string, React.ComponentType<{ weight?: string; clas
 
 function StepSelectSlot({ lot, slots, loading, selectedSlot, onSelectSlot,
   startDate, onStartDateChange, duration, onDurationChange,
-  vehicles, selectedVehicle, onVehicleChange, onContinue, t }: {
+  vehicles, selectedVehicle, onVehicleChange, onContinue, dynamicPrice, t }: {
   lot: ParkingLot; slots: ParkingSlot[]; loading: boolean; selectedSlot: ParkingSlot | null;
   onSelectSlot: (s: ParkingSlot) => void; startDate: string; onStartDateChange: (v: string) => void;
   duration: number; onDurationChange: (v: number) => void; vehicles: Vehicle[];
-  selectedVehicle: string; onVehicleChange: (v: string) => void; onContinue: () => void; t: TFunction;
+  selectedVehicle: string; onVehicleChange: (v: string) => void; onContinue: () => void;
+  dynamicPrice: DynamicPriceResult | null; t: TFunction;
 }) {
   const available = slots.filter(s => s.status === 'available');
   return (
     <div className="space-y-6">
       <div className="glass-card p-4">
-        <p className="font-semibold text-surface-900 dark:text-white">{lot.name}</p>
-        <p className="text-sm text-surface-500 dark:text-surface-400 mt-0.5">
-          {t('book.availableSlots', { count: available.length, total: slots.length })}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-surface-900 dark:text-white">{lot.name}</p>
+            <p className="text-sm text-surface-500 dark:text-surface-400 mt-0.5">
+              {t('book.availableSlots', { count: available.length, total: slots.length })}
+            </p>
+          </div>
+          {dynamicPrice?.dynamic_pricing_active && (
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+              dynamicPrice.tier === 'surge'
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                : dynamicPrice.tier === 'discount'
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
+            }`}>
+              {dynamicPrice.tier === 'surge' && <TrendUp weight="bold" className="w-3.5 h-3.5" />}
+              {dynamicPrice.tier === 'discount' && <TrendDown weight="bold" className="w-3.5 h-3.5" />}
+              {dynamicPrice.tier === 'surge' ? t('book.surgePricing') : dynamicPrice.tier === 'discount' ? t('book.discountPricing') : ''}
+              <span className="ml-1">{dynamicPrice.currency}{dynamicPrice.current_price.toFixed(2)}/h</span>
+            </div>
+          )}
+        </div>
       </div>
       <div>
         <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">{t('book.selectSlot')}</h3>

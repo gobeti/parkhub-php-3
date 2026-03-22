@@ -28,7 +28,7 @@ export function DashboardPage() {
         toast.success(t('dashboard.wsBookingCreated', 'New booking created'));
         break;
       case 'booking_cancelled':
-        toast(t('dashboard.wsBookingCancelled', 'A booking was cancelled'), { icon: '\uD83D\uDCCB' });
+        toast(t('dashboard.wsBookingCancelled', 'A booking was cancelled'), { icon: '📋' });
         break;
       case 'occupancy_changed':
         break; // Occupancy updates handled via hook state
@@ -133,7 +133,7 @@ export function DashboardPage() {
         {/* Next Booking — highlighted */}
         <NextBookingCard
           label={t('dashboard.nextBooking')}
-          value={activeBookings.length > 0 ? formatTime(activeBookings[0].start_time) : '\u2014'}
+          value={activeBookings.length > 0 ? formatTime(activeBookings[0].start_time) : '—'}
         />
       </motion.div>
 
@@ -186,7 +186,7 @@ export function DashboardPage() {
                     <div className="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
                       <MapPin weight="regular" className="w-3.5 h-3.5" />
                       {t('dashboard.slot')} {b.slot_number}
-                      {b.vehicle_plate && <><span className="mx-1">&middot;</span><Car weight="regular" className="w-3.5 h-3.5" />{b.vehicle_plate}</>}
+                      {b.vehicle_plate && <><span className="mx-1">·</span><Car weight="regular" className="w-3.5 h-3.5" />{b.vehicle_plate}</>}
                     </div>
                   </div>
                   <div className="text-right">
@@ -305,7 +305,7 @@ function NextBookingCard({ label, value }: {
       <div className="relative">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-medium text-surface-500 dark:text-surface-400">{label}</p>
-          {value !== '\u2014' && <Clock weight="bold" className="w-3 h-3 text-primary-500" />}
+          {value !== '—' && <Clock weight="bold" className="w-3 h-3 text-primary-500" />}
         </div>
         <p
           className="mt-2 text-2xl font-bold text-surface-900 dark:text-white"

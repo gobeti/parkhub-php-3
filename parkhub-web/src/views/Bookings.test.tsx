@@ -36,10 +36,6 @@ vi.mock('react-router-dom', () => ({
   Link: ({ to, children, ...props }: any) => <a href={to} {...props}>{children}</a>,
 }));
 
-vi.mock('../hooks/useWebSocket', () => ({
-  useWebSocket: () => ({ connected: false, lastMessage: null, occupancy: {} }),
-}));
-
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: any) => {
@@ -114,6 +110,10 @@ vi.mock('@phosphor-icons/react', () => ({
 
 vi.mock('../components/Skeleton', () => ({
   BookingsSkeleton: () => <div data-testid="bookings-skeleton">Loading...</div>,
+}));
+
+vi.mock('../hooks/useWebSocket', () => ({
+  useWebSocket: () => ({ connected: false, lastMessage: null, occupancy: {} }),
 }));
 
 vi.mock('../components/ParkingPass', () => ({
