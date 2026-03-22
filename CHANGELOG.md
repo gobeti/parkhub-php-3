@@ -7,6 +7,53 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.0] - 2026-03-22
+
+### Added
+- **Glass morphism UI**: Bento grid dashboard with frosted-glass cards, animated counters, and modern gradients
+- **2FA/TOTP authentication**: QR code enrollment, backup codes, per-account enable/disable
+- **Security improvements**: Login history, session management, API key management, notification preferences
+- **CI badges and GitOps polish**: README overhaul, SECURITY.md, issue/PR templates
+
+### Changed
+- Bumped version to 2.2.0
+- README badges switched to flat-square style with CI status badge
+- Added Security link to README navigation
+
+---
+
+## [2.1.0] - 2026-03-22
+
+### Added
+- **22 controller modules**: Full module system documentation with controller mapping
+- **Bulk admin operations**: Bulk user actions, advanced reports, booking policies
+- **Health monitoring**: Enhanced health checks and system status endpoints
+
+### Changed
+- Frontend synced with parkhub-rust v2.2.0 (glass morphism, bento grid)
+
+---
+
+## [2.0.0] - 2026-03-22
+
+### Added
+- **Full module system**: 22 controller modules documented and organized
+- **Smart slot recommendations**: Heuristic scoring engine — top 5 returned
+- **Community translation management**: Proposal submission, up/down voting, admin review
+- **Runtime translation overrides**: Approved translations hot-loaded at startup
+- **Favorites UI**: Pinned parking slots with live availability
+- **Dashboard analytics**: 7-day booking activity bar chart
+- **DataTable CSV export**: CSV download with proper escaping
+- **Demo reset tracking**: Cache-based status tracking with 9 tests
+
+### Changed
+- Major version bump to align with Rust edition versioning
+
+### Tests
+- **484 PHP (1094 assertions) + 401 Frontend** = 885 total tests
+
+---
+
 ## [1.9.0] - 2026-03-21
 
 ### Added
