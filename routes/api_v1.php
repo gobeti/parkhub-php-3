@@ -228,3 +228,6 @@ module_routes('setup_wizard', 'setup_wizard.php');
 module_routes('gdpr', 'gdpr.php');
 module_routes('push_notifications', 'push_notifications.php');
 module_routes('themes', 'themes.php');
+
+// OAuth — always load routes (module disabled by default, middleware gates access)
+require base_path('routes/modules/oauth.php');
