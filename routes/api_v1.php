@@ -231,6 +231,7 @@ module_routes('themes', 'themes.php');
 module_routes('dynamic_pricing', 'dynamic-pricing.php');
 module_routes('operating_hours', 'operating-hours.php');
 module_routes('realtime', 'realtime.php');
+module_routes('lobby_display', 'lobby.php');
 
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');

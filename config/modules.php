@@ -39,4 +39,5 @@ return [
     'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', true),
     'operating_hours' => env('MODULE_OPERATING_HOURS', true),
     'realtime' => env('MODULE_REALTIME', true),
+    'lobby_display' => env('MODULE_LOBBY_DISPLAY', true),
 ];
