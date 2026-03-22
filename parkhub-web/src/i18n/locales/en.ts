@@ -47,6 +47,9 @@ export default {
       ruleLower: 'Lowercase',
       ruleUpper: 'Uppercase',
       ruleDigit: 'Number',
+      continueWithGoogle: 'Continue with Google',
+      continueWithGitHub: 'Continue with GitHub',
+      orContinueWith: 'or',
     },
     nav: {
       dashboard: 'Dashboard',
@@ -483,6 +486,7 @@ export default {
         team_view: { name: 'Team View', desc: 'See who is in the office or working remotely', help: 'Shows team presence overview based on absence entries and booking data.' },
         booking_types: { name: 'Booking Types', desc: 'Support single-day, multi-day, and recurring bookings', help: 'Enable different booking types beyond simple single-slot reservations.' },
         invoices: { name: 'Invoices', desc: 'Generate PDF invoices for bookings', help: 'Automatically generate and download invoices for completed bookings.' },
+        oauth: { name: 'OAuth / Social Login', desc: 'Sign in with Google or GitHub', help: 'Enable social login buttons on the login and registration pages. Requires OAuth credentials.' },
         self_registration: { name: 'Self Registration', desc: 'Allow users to create accounts without admin approval', help: 'New users can register themselves. Disable for invite-only setups.' },
         generative_bg: { name: 'Generative Background', desc: 'Animated generative art backgrounds on public pages', help: 'Adds subtle animated patterns to login, welcome, and onboarding screens.' },
         micro_animations: { name: 'Micro Animations', desc: 'Smooth transitions and hover effects throughout the UI', help: 'Enables spring physics animations, staggered lists, and hover feedback.' },
