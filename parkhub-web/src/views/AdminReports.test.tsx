@@ -54,11 +54,11 @@ describe('AdminReportsPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows loading spinner initially', () => {
+  it('shows loading skeleton initially', () => {
     mockAdminStats.mockReturnValue(new Promise(() => {}));
     mockGetBookings.mockReturnValue(new Promise(() => {}));
     render(<AdminReportsPage />);
-    expect(screen.getByTestId('icon-spinner')).toBeInTheDocument();
+    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('renders Reports heading after loading', async () => {

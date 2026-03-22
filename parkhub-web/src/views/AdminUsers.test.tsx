@@ -155,10 +155,10 @@ describe('AdminUsersPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders loading spinner initially', () => {
+  it('renders loading skeleton initially', () => {
     mockAdminUsers.mockReturnValue(new Promise(() => {}));
     render(<AdminUsersPage />);
-    expect(screen.getByTestId('icon-spinner')).toBeInTheDocument();
+    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('renders user list after load', async () => {
