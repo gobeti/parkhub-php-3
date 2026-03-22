@@ -26,6 +26,7 @@ const RegisterPage = lazy(() => import('./views/Register'), 'RegisterPage');
 const ForgotPasswordPage = lazy(() => import('./views/ForgotPassword'), 'ForgotPasswordPage');
 const UseCaseSelectorPage = lazy(() => import('./views/UseCaseSelector'), 'UseCaseSelectorPage');
 const LobbyDisplayPage = lazy(() => import('./views/LobbyDisplay'), 'LobbyDisplayPage');
+const SetupWizardPage = lazy(() => import('./views/SetupWizard'), 'SetupWizardPage');
 const NotFoundPage = lazy(() => import('./views/NotFound'), 'NotFoundPage');
 
 // Main app pages
@@ -113,6 +114,7 @@ function AnimatedRoutes() {
         <Route path="/forgot-password" element={<SuspenseRoute><ForgotPasswordPage /></SuspenseRoute>} />
         <Route path="/choose" element={<SuspenseRoute><UseCaseSelectorPage /></SuspenseRoute>} />
         <Route path="/lobby/:lotId" element={<SuspenseRoute><LobbyDisplayPage /></SuspenseRoute>} />
+        <Route path="/setup" element={<SuspenseRoute><SetupWizardPage /></SuspenseRoute>} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<SuspenseRoute><DashboardPage /></SuspenseRoute>} />
           <Route path="book" element={<SuspenseRoute><BookPage /></SuspenseRoute>} />
