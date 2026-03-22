@@ -7,6 +7,30 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.9.0] - 2026-03-22
+
+### Added
+- **Lobby Display / Kiosk Mode**: Public `GET /api/v1/lots/{id}/display` endpoint (no auth) for full-screen parking monitors
+  - Real-time occupancy with color status (green/yellow/red), floor breakdown, 10 req/min throttle
+  - `MODULE_LOBBY_DISPLAY` toggle, `LobbyDisplayController`, route at `/lobby/:lotId`
+  - Frontend `LobbyDisplayPage` synced from Rust edition with full-screen dark UI
+  - 8 PHP tests, 6 frontend tests, i18n (en/de)
+- **Onboarding Wizard**: 4-step guided setup flow via `SetupWizardController`
+  - Step 1: Company info + timezone + logo
+  - Step 2: Lot creation with auto-generated floors (zones) and slots
+  - Step 3: User invitations via email
+  - Step 4: Theme selection from 12 themes, marks wizard complete
+  - `GET /api/v1/setup/wizard/status` + `POST /api/v1/setup/wizard`
+  - Frontend `SetupWizardPage` synced from Rust with progress bar and validation
+  - 9 PHP tests, 6 frontend tests, i18n (en/de)
+
+### Changed
+- Module count: 29 modules (added `lobby_display`)
+- Rate limiter `lobby-display`: 10 requests/min per IP
+- App.tsx: Added `/lobby/:lotId` and `/setup` public routes
+
+---
+
 ## [2.8.0] - 2026-03-22
 
 ### Added
