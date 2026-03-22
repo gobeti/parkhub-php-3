@@ -345,7 +345,7 @@ class ModuleSystemTest extends TestCase
     {
         $modules = config('modules');
 
-        $this->assertCount(41, $modules);
+        $this->assertCount(44, $modules);
     }
 
     public function test_disabled_accessible_module_returns_404(): void
