@@ -41,6 +41,9 @@ return [
     'import' => env('MODULE_IMPORT', true),
     'metrics' => env('MODULE_METRICS', true),
     'rate_dashboard' => env('MODULE_RATE_DASHBOARD', true),
+    'audit_log' => env('MODULE_AUDIT_LOG', true),
+    'data_import' => env('MODULE_DATA_IMPORT', true),
+    'fleet' => env('MODULE_FLEET', true),
 
     // ── Integration (disabled by default — requires credentials) ───
     'stripe' => env('MODULE_STRIPE', false),

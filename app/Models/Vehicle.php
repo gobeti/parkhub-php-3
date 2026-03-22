@@ -9,11 +9,14 @@ class Vehicle extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['user_id', 'plate', 'make', 'model', 'color', 'is_default', 'photo_url'];
+    protected $fillable = ['user_id', 'plate', 'license_plate', 'make', 'model', 'color', 'vehicle_type', 'is_default', 'photo_url', 'flagged', 'flag_reason'];
 
     protected function casts(): array
     {
-        return ['is_default' => 'boolean'];
+        return [
+            'is_default' => 'boolean',
+            'flagged' => 'boolean',
+        ];
     }
 
     public function user()
