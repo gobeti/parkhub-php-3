@@ -39,3 +39,8 @@ resources/js/src.bak/
 
 # Claude Code
 /.claude/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
