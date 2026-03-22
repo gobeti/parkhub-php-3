@@ -192,6 +192,34 @@ export const api = {
     request<TranslationProposal>(`/api/v1/translations/proposals/${id}/review`, {
       method: 'PUT', body: JSON.stringify(data),
     }),
+
+  // ── 2FA ──
+  setup2fa: () => request<TwoFactorSetup>('/api/v1/auth/2fa/setup', { method: 'POST' }),
+  verify2fa: (code: string) => request('/api/v1/auth/2fa/verify', { method: 'POST', body: JSON.stringify({ code }) }),
+  disable2fa: (password: string) => request('/api/v1/auth/2fa/disable', { method: 'POST', body: JSON.stringify({ password }) }),
+
+  // ── Login History ──
+  getLoginHistory: () => request<LoginHistoryEntry[]>('/api/v1/auth/login-history'),
+
+  // ── Sessions ──
+  getSessions: () => request<Session[]>('/api/v1/auth/sessions'),
+  revokeSession: (id: string) => request('/api/v1/auth/sessions/' + id, { method: 'DELETE' }),
+  revokeAllSessions: () => request('/api/v1/auth/sessions', { method: 'DELETE' }),
+
+  // ── Notification Preferences ──
+  getNotificationPreferences: () => request<NotificationPreferences>('/api/v1/preferences/notifications'),
+  updateNotificationPreferences: (data: Partial<NotificationPreferences>) =>
+    request<NotificationPreferences>('/api/v1/preferences/notifications', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // ── Admin Bulk ──
+  adminBulkAction: (action: string, userIds: string[], role?: string) =>
+    request('/api/v1/admin/users/bulk', { method: 'POST', body: JSON.stringify({ action, user_ids: userIds, role }) }),
+
+  // ── Login (2FA-aware) ──
+  login2fa: (username: string, password: string, twoFactorCode?: string) =>
+    request<{ user: User; tokens: { access_token: string }; requires_2fa?: boolean }>('/api/v1/auth/login', {
+      method: 'POST', body: JSON.stringify({ username, password, ...(twoFactorCode ? { two_factor_code: twoFactorCode } : {}) }),
+    }),
 };
 
 // ── Types ──
@@ -470,4 +498,37 @@ export interface CreateProposalRequest {
 export interface ReviewProposalRequest {
   status: 'approved' | 'rejected';
   comment?: string;
+}
+
+// ── Security Types ──
+
+export interface TwoFactorSetup {
+  secret: string;
+  qr_uri: string;
+}
+
+export interface LoginHistoryEntry {
+  id: string;
+  ip_address: string;
+  user_agent: string;
+  logged_in_at: string;
+}
+
+export interface Session {
+  id: string;
+  name: string;
+  abilities: string[];
+  last_used_at?: string;
+  created_at: string;
+  expires_at?: string;
+  is_current: boolean;
+}
+
+export interface NotificationPreferences {
+  email_booking_confirm: boolean;
+  email_reminder: boolean;
+  email_swap: boolean;
+  push_enabled: boolean;
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
 }

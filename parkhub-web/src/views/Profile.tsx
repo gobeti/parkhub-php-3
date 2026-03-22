@@ -10,6 +10,9 @@ import { api, type UserStats } from '../api/client';
 import { useTranslation } from 'react-i18next';
 import { staggerSlow, fadeUp } from '../constants/animations';
 import toast from 'react-hot-toast';
+import { TwoFactorSetup } from '../components/TwoFactorSetup';
+import { LoginHistoryPanel } from '../components/LoginHistory';
+import { NotificationPreferencesPanel } from '../components/NotificationPreferences';
 
 export function ProfilePage() {
   const { t } = useTranslation();
@@ -223,6 +226,21 @@ export function ProfilePage() {
             </button>
           </div>
         )}
+      </motion.div>
+
+      {/* 2FA */}
+      <motion.div variants={item}>
+        <TwoFactorSetup />
+      </motion.div>
+
+      {/* Notification Preferences */}
+      <motion.div variants={item}>
+        <NotificationPreferencesPanel />
+      </motion.div>
+
+      {/* Login History & Sessions */}
+      <motion.div variants={item}>
+        <LoginHistoryPanel />
       </motion.div>
 
       {/* GDPR */}

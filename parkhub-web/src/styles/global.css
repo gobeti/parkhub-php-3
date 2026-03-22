@@ -428,3 +428,24 @@ p { line-height: 1.6; }
 @view-transition {
   navigation: auto;
 }
+
+/* Print styles */
+@media print {
+  nav, aside, .print\:hidden, [data-print-hidden] {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .dark {
+    background: white !important;
+    color: black !important;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}
