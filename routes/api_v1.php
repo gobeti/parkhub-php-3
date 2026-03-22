@@ -210,7 +210,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
 // ── Module routes (conditionally loaded) ────────────────────────────────────
 
-// Accessible must load before bookings (bookings/{id} catch-all would swallow bookings/accessible-stats)
+// History + Accessible must load before bookings (bookings/{id} catch-all would swallow bookings/history, bookings/stats, bookings/accessible-stats)
+module_routes('history', 'history.php');
+module_routes('geofence', 'geofence.php');
 module_routes('accessible', 'accessible.php');
 module_routes('bookings', 'bookings.php');
 module_routes('vehicles', 'vehicles.php');
