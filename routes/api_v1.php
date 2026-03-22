@@ -64,6 +64,7 @@ Route::prefix('demo')->group(function () {
 Route::get('/health', [PublicController::class, 'healthCheck']);
 Route::get('/health/live', [HealthController::class, 'live']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
+Route::get('/health/info', [HealthController::class, 'info']);
 
 // System (public)
 Route::get('/system/version', [SystemController::class, 'version']);

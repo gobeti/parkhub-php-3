@@ -212,6 +212,113 @@ class AdminReportController extends Controller
         ]);
     }
 
+    /**
+     * Revenue report grouped by day/week/month.
+     */
+    public function revenue(Request $request): JsonResponse
+    {
+        $request->validate([
+            'start' => 'required|date',
+            'end' => 'required|date|after_or_equal:start',
+            'group_by' => 'sometimes|string|in:day,week,month',
+        ]);
+
+        $groupBy = $request->get('group_by', 'day');
+        $driver = DB::getDriverName();
+
+        $dateExpr = match ($groupBy) {
+            'day' => $driver === 'sqlite'
+                ? 'DATE(start_time)'
+                : 'DATE(start_time)',
+            'week' => $driver === 'sqlite'
+                ? "strftime('%Y-W%W', start_time)"
+                : 'YEARWEEK(start_time, 3)',
+            'month' => $driver === 'sqlite'
+                ? "strftime('%Y-%m', start_time)"
+                : "DATE_FORMAT(start_time, '%Y-%m')",
+        };
+
+        $data = Booking::whereBetween('start_time', [$request->start, $request->end.' 23:59:59'])
+            ->whereNotNull('total_price')
+            ->where('status', '!=', 'cancelled')
+            ->selectRaw("{$dateExpr} as period, SUM(total_price) as total_revenue, COUNT(*) as booking_count")
+            ->groupBy('period')
+            ->orderBy('period')
+            ->get();
+
+        $totalRevenue = $data->sum('total_revenue');
+
+        return response()->json([
+            'period' => ['start' => $request->start, 'end' => $request->end, 'group_by' => $groupBy],
+            'data' => $data,
+            'total_revenue' => round($totalRevenue, 2),
+            'total_bookings' => $data->sum('booking_count'),
+        ]);
+    }
+
+    /**
+     * Occupancy percentage over time.
+     */
+    public function occupancy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'start' => 'required|date',
+            'end' => 'required|date|after_or_equal:start',
+        ]);
+
+        $totalSlots = ParkingSlot::count();
+        if ($totalSlots === 0) {
+            return response()->json(['data' => [], 'total_slots' => 0]);
+        }
+
+        $data = Booking::whereBetween('start_time', [$request->start, $request->end.' 23:59:59'])
+            ->whereIn('status', ['confirmed', 'active', 'completed'])
+            ->selectRaw('DATE(start_time) as date, COUNT(DISTINCT slot_id) as occupied_slots')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(fn ($row) => [
+                'date' => $row->date,
+                'occupied_slots' => $row->occupied_slots,
+                'total_slots' => $totalSlots,
+                'occupancy_percent' => round(($row->occupied_slots / $totalSlots) * 100, 1),
+            ]);
+
+        return response()->json([
+            'data' => $data,
+            'total_slots' => $totalSlots,
+        ]);
+    }
+
+    /**
+     * User activity report — registrations and active users trend.
+     */
+    public function usersReport(Request $request): JsonResponse
+    {
+        $days = (int) $request->get('days', 30);
+        $since = now()->subDays($days);
+
+        $registrations = User::where('created_at', '>=', $since)
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date');
+
+        $activeUsers = Booking::where('start_time', '>=', $since)
+            ->selectRaw('DATE(start_time) as date, COUNT(DISTINCT user_id) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date');
+
+        return response()->json([
+            'period_days' => $days,
+            'total_users' => User::count(),
+            'new_users' => User::where('created_at', '>=', $since)->count(),
+            'registrations_by_day' => $registrations,
+            'active_users_by_day' => $activeUsers,
+        ]);
+    }
+
     public function exportUsersCsv(Request $request): Response
     {
 
