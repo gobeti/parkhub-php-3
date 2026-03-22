@@ -138,6 +138,10 @@ vi.mock('../constants/animations', () => ({
   fadeUp: { hidden: {}, show: {} },
 }));
 
+vi.mock('../components/ProfileThemeSection', () => ({
+  ProfileThemeSection: () => <div data-testid="profile-theme-section">Theme Section</div>,
+}));
+
 import { ProfilePage } from './Profile';
 
 describe('ProfilePage', () => {

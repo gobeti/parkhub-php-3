@@ -111,6 +111,13 @@ vi.mock('@phosphor-icons/react', () => ({
   CalendarPlus: (props: any) => <span data-testid="icon-calendar-plus" {...props} />,
   Translate: (props: any) => <span data-testid="icon-translate" {...props} />,
   Star: (props: any) => <span data-testid="icon-star" {...props} />,
+  Palette: (props: any) => <span data-testid="icon-palette" {...props} />,
+  Check: (props: any) => <span data-testid="icon-check" {...props} />,
+}));
+
+vi.mock('./ThemeSwitcher', () => ({
+  ThemeSwitcher: ({ open, onClose }: any) => open ? <div data-testid="theme-switcher">Theme Switcher</div> : null,
+  ThemeSwitcherFab: ({ onClick }: any) => <button data-testid="theme-fab" onClick={onClick}>Theme FAB</button>,
 }));
 
 import { Layout } from './Layout';
