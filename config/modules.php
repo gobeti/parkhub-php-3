@@ -47,6 +47,9 @@ return [
     'accessible' => env('MODULE_ACCESSIBLE', true),
     'maintenance' => env('MODULE_MAINTENANCE', true),
     'cost_center' => env('MODULE_COST_CENTER', true),
+    'visitors' => env('MODULE_VISITORS', true),
+    'ev_charging' => env('MODULE_EV_CHARGING', true),
+    'recommendations' => env('MODULE_RECOMMENDATIONS', true),
 
     // ── Integration (disabled by default — requires credentials) ───
     'stripe' => env('MODULE_STRIPE', false),
