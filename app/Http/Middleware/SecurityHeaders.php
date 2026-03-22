@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -19,12 +20,16 @@ use Symfony\Component\HttpFoundation\Response;
  * - Referrer-Policy:        Controls how much referrer info is sent
  * - Permissions-Policy:     Restricts browser feature access
  * - Strict-Transport-Security: Forces HTTPS for configured duration
- * - Content-Security-Policy: Controls resource loading for the SPA
+ * - Content-Security-Policy: Controls resource loading for the SPA (nonce-based)
  */
 class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Generate a per-request CSP nonce for inline styles
+        $nonce = Str::random(32);
+        $request->attributes->set('csp-nonce', $nonce);
+
         /** @var Response $response */
         $response = $next($request);
 
@@ -59,7 +64,7 @@ class SecurityHeaders
         // Only apply CSP to HTML responses (not API JSON or static assets)
         $contentType = $response->headers->get('Content-Type', '');
         if (str_contains($contentType, 'text/html')) {
-            $csp = $this->buildCsp($request);
+            $csp = $this->buildCsp($request, $nonce);
             $response->headers->set('Content-Security-Policy', $csp);
         }
 
@@ -74,8 +79,9 @@ class SecurityHeaders
 
     /**
      * Build CSP directives for the SPA frontend.
+     * Uses nonce-based style-src instead of 'unsafe-inline'.
      */
-    private function buildCsp(Request $request): string
+    private function buildCsp(Request $request, string $nonce): string
     {
         $appUrl = config('app.url', 'http://localhost');
 
@@ -84,8 +90,8 @@ class SecurityHeaders
             "default-src 'self'",
             // Scripts: self only (no inline — the SPA is bundled)
             "script-src 'self'",
-            // Styles: self + inline (Vite injects critical CSS)
-            "style-src 'self' 'unsafe-inline'",
+            // Styles: self + nonce for Vite-injected critical CSS (no unsafe-inline)
+            "style-src 'self' 'nonce-{$nonce}'",
             // Images: self, data URIs (base64 avatars), and HTTPS sources
             "img-src 'self' data: https:",
             // Fonts: self + Bunny Fonts CDN
