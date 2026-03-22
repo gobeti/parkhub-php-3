@@ -229,6 +229,7 @@ module_routes('gdpr', 'gdpr.php');
 module_routes('push_notifications', 'push_notifications.php');
 module_routes('themes', 'themes.php');
 module_routes('dynamic_pricing', 'dynamic-pricing.php');
+module_routes('operating_hours', 'operating-hours.php');
 
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');
