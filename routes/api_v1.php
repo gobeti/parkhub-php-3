@@ -242,6 +242,9 @@ module_routes('analytics', 'analytics.php');
 module_routes('ical', 'ical.php');
 module_routes('rate_dashboard', 'rate_dashboard.php');
 module_routes('multi_tenant', 'multi_tenant.php');
+module_routes('audit_log', 'audit_log.php');
+module_routes('data_import', 'data_import.php');
+module_routes('fleet', 'fleet.php');
 
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');

@@ -7,6 +7,40 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.3.0] - 2026-03-22
+
+### Added
+- **Audit Log**: Full paginated audit trail with filters and CSV export
+  - `GET /api/v1/admin/audit-log` -- paginated, filterable by action/user/date
+  - `GET /api/v1/admin/audit-log/export` -- CSV export with same filters
+  - AdminAuditLog.tsx frontend with color-coded action badges, pagination
+  - `MODULE_AUDIT_LOG=true` toggle (36th module)
+  - 8 PHP tests + 6 vitest tests
+- **Data Import/Export**: Bulk data management for users, lots, and bookings
+  - `POST /api/v1/admin/import/users` -- import users from CSV/JSON
+  - `POST /api/v1/admin/import/lots` -- import parking lots from CSV/JSON
+  - `GET /api/v1/admin/data/export/users` -- CSV export of all users
+  - `GET /api/v1/admin/data/export/lots` -- CSV export of all lots
+  - `GET /api/v1/admin/data/export/bookings` -- CSV export with date range filter
+  - AdminDataManagement.tsx frontend with drag-drop import, preview, export cards
+  - `MODULE_DATA_IMPORT=true` toggle (37th module)
+  - 9 PHP tests + 6 vitest tests
+- **Fleet Management**: Cross-user vehicle overview with stats and flagging
+  - `GET /api/v1/admin/fleet` -- list all vehicles with search/type filter
+  - `GET /api/v1/admin/fleet/stats` -- fleet statistics (types, electric ratio, flagged)
+  - `PUT /api/v1/admin/fleet/{id}/flag` -- flag/unflag vehicles
+  - AdminFleet.tsx frontend with stats cards, type distribution, flag controls
+  - `MODULE_FLEET=true` toggle (38th module)
+  - 9 PHP tests + 6 vitest tests
+- **Frontend sync from parkhub-rust**: AdminAuditLog, AdminDataManagement, AdminFleet views + tests, Admin.tsx (3 new tabs), App.tsx (3 new routes), api client (audit/import/export/fleet methods), all 10 locale files updated
+- Migration adds `event_type`, `target_type`, `target_id` to audit_log; `vehicle_type`, `license_plate`, `flagged`, `flag_reason` to vehicles
+
+### Changed
+- Module count: 38 modules (added `audit_log`, `data_import`, `fleet`)
+- README badges updated to v3.3.0
+
+---
+
 ## [3.2.0] - 2026-03-22
 
 ### Added
