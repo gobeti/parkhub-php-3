@@ -7,6 +7,30 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.8.0] - 2026-03-22
+
+### Added
+- **SSE Real-Time module**: Server-Sent Events endpoint (`GET /api/v1/sse`) for streaming booking and occupancy events
+- **SSE status endpoint**: `GET /api/v1/sse/status` with module info and pending event count
+- **PushSseBookingEvent listener**: Automatic cache-queue push on BookingCreated/BookingCancelled events
+- **OccupancyChanged event**: Broadcast event for lot availability changes
+- **MODULE_REALTIME**: New module toggle (28 modules total)
+- **WebSocket hook sync from Rust**: Occupancy map, token auth, maxReconnectDelay, 5 event types
+- **Live indicator**: Green dot + "Live" text on Dashboard when WebSocket connected
+- **Bookings real-time toasts**: Toast notifications for booking_created/booking_cancelled events
+- **Dynamic pricing API**: Client methods for lot pricing endpoints
+- **Operating hours API**: Client methods for lot hours endpoints
+- 13 new PHP tests (SseRealtimeTest), 14 frontend WebSocket tests, 2 WS indicator tests
+
+### Changed
+- Frontend fully synced with parkhub-rust v28 (9 files)
+- Dashboard.tsx: occupancy destructuring, live connection indicator
+- Bookings.tsx: WebSocket event handler integration
+- client.ts: DynamicPricing + OperatingHours types and methods
+- AdminLots.tsx, Book.tsx, Profile.tsx, NotificationPreferences.tsx synced
+
+---
+
 ## [2.2.0] - 2026-03-22
 
 ### Added
