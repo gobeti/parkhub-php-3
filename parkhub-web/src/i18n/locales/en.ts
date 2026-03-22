@@ -701,6 +701,7 @@ export default {
       success: 'Success',
       noData: 'No data available',
       back: 'Go back',
+      next: 'Next',
       dismiss: 'Dismiss',
     },
     confirm: {
