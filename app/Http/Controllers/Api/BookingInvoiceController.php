@@ -96,7 +96,8 @@ class BookingInvoiceController extends Controller
         $dateNow = date('d.m.Y');
 
         $shortId = strtoupper(substr(str_replace('-', '', $booking->id), 0, 8));
-        $invoiceNo = 'INV-'.date('Ym').'-'.$shortId;
+        $year = $booking->created_at ? $booking->created_at->format('Y') : date('Y');
+        $invoiceNo = 'INV-'.$year.'-'.$shortId;
 
         return compact(
             'company', 'vatId', 'street', 'zipCity', 'email',
