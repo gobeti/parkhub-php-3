@@ -42,5 +42,7 @@
         <env name="MODULE_REALTIME" value="true"/>
         <env name="MODULE_MULTI_TENANT" value="true"/>
         <env name="MODULE_DYNAMIC_PRICING" value="true"/>
+        <env name="MODULE_HISTORY" value="true"/>
+        <env name="MODULE_GEOFENCE" value="true"/>
     </php>
 </phpunit>
