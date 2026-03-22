@@ -262,4 +262,64 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Lot deleted']);
     }
+
+    /**
+     * Bulk admin operations on users.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => 'required|string|in:activate,deactivate,change_role,delete',
+            'user_ids' => 'required|array|min:1|max:100',
+            'user_ids.*' => 'uuid|exists:users,id',
+            'role' => 'required_if:action,change_role|nullable|string|in:user,admin,premium',
+        ]);
+
+        $action = $request->action;
+        $userIds = $request->user_ids;
+        $currentUserId = $request->user()->id;
+        $results = [];
+
+        foreach ($userIds as $userId) {
+            if ($userId === $currentUserId && in_array($action, ['deactivate', 'delete'])) {
+                $results[] = ['user_id' => $userId, 'status' => 'skipped', 'reason' => 'Cannot perform this action on yourself'];
+
+                continue;
+            }
+
+            $user = User::find($userId);
+            if (! $user) {
+                $results[] = ['user_id' => $userId, 'status' => 'failed', 'reason' => 'User not found'];
+
+                continue;
+            }
+
+            match ($action) {
+                'activate' => $user->update(['is_active' => true]),
+                'deactivate' => $user->update(['is_active' => false]),
+                'change_role' => (function () use ($user, $request) {
+                    $user->role = $request->role;
+                    $user->save();
+                })(),
+                'delete' => $user->delete(),
+            };
+
+            $results[] = ['user_id' => $userId, 'status' => 'success'];
+        }
+
+        AuditLog::log([
+            'user_id' => $currentUserId,
+            'username' => $request->user()->username,
+            'action' => 'admin_bulk_'.$action,
+            'details' => ['count' => count($userIds)],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'action' => $action,
+            'results' => $results,
+            'total' => count($results),
+            'successful' => count(array_filter($results, fn ($r) => $r['status'] === 'success')),
+        ]);
+    }
 }
