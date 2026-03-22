@@ -68,6 +68,11 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Lobby display: 10 per minute per IP (public kiosk polling)
+        RateLimiter::for('lobby-display', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
         // Authenticated API: 120 per minute per user (or IP if unauthenticated)
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
