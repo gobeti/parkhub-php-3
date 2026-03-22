@@ -62,18 +62,20 @@ class UserController extends Controller
         $userId = $request->user()->id;
         $now = now();
 
-        // Calculate average booking duration in minutes
-        $bookingsWithDuration = Booking::where('user_id', $userId)
-            ->whereNotNull('start_time')
-            ->whereNotNull('end_time')
-            ->get(['start_time', 'end_time']);
-
-        $avgMinutes = 0;
-        if ($bookingsWithDuration->count() > 0) {
-            $totalMinutes = $bookingsWithDuration->sum(function ($b) {
-                return (strtotime($b->end_time) - strtotime($b->start_time)) / 60;
-            });
-            $avgMinutes = (int) round($totalMinutes / $bookingsWithDuration->count());
+        // Use DB aggregate query instead of loading all bookings into memory
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlite') {
+            $avgMinutes = (int) round((float) Booking::where('user_id', $userId)
+                ->whereNotNull('start_time')
+                ->whereNotNull('end_time')
+                ->selectRaw('AVG((julianday(end_time) - julianday(start_time)) * 1440) as avg_min')
+                ->value('avg_min') ?? 0);
+        } else {
+            $avgMinutes = (int) round((float) Booking::where('user_id', $userId)
+                ->whereNotNull('start_time')
+                ->whereNotNull('end_time')
+                ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as avg_min')
+                ->value('avg_min') ?? 0);
         }
 
         return response()->json([
