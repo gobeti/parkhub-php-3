@@ -6,10 +6,12 @@ import userEvent from '@testing-library/user-event';
 // ── Mocks ──
 
 const mockCalendarEvents = vi.fn();
+const mockGenerateCalendarToken = vi.fn();
 
 vi.mock('../api/client', () => ({
   api: {
     calendarEvents: (...args: any[]) => mockCalendarEvents(...args),
+    generateCalendarToken: (...args: any[]) => mockGenerateCalendarToken(...args),
   },
 }));
 
@@ -39,6 +41,10 @@ vi.mock('@phosphor-icons/react', () => ({
   CaretLeft: (props: any) => <span data-testid="icon-caret-left" {...props} />,
   CaretRight: (props: any) => <span data-testid="icon-caret-right" {...props} />,
   CalendarBlank: (props: any) => <span data-testid="icon-calendar-blank" {...props} />,
+  LinkSimple: (props: any) => <span data-testid="icon-link" {...props} />,
+  X: (props: any) => <span data-testid="icon-x" {...props} />,
+  Copy: (props: any) => <span data-testid="icon-copy" {...props} />,
+  Check: (props: any) => <span data-testid="icon-check" {...props} />,
 }));
 
 import { CalendarPage } from './Calendar';

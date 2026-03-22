@@ -43,4 +43,7 @@ return [
     'analytics' => env('MODULE_ANALYTICS', true),
     'map' => env('MODULE_MAP', true),
     'web_push' => env('MODULE_WEB_PUSH', true),
+    'ical' => env('MODULE_ICAL', true),
+    'rate_dashboard' => env('MODULE_RATE_DASHBOARD', true),
+    'multi_tenant' => env('MODULE_MULTI_TENANT', true),
 ];

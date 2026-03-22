@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Booking;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Str;
+
+class ICalController extends Controller
+{
+    /**
+     * GET /api/v1/calendar/ical — authenticated iCal feed for the current user.
+     */
+    public function feed(Request $request): Response
+    {
+        $user = $request->user();
+        $bookings = Booking::where('user_id', $user->id)
+            ->where('start_time', '>=', now()->subMonths(3))
+            ->orderBy('start_time')
+            ->get();
+
+        return $this->buildIcal($bookings, $user->name ?? $user->username);
+    }
+
+    /**
+     * GET /api/v1/calendar/ical/{token} — public iCal feed via token (no auth).
+     */
+    public function publicFeed(string $token): Response
+    {
+        $user = User::where('ical_token', $token)->first();
+
+        if (! $user) {
+            return response('Not Found', 404);
+        }
+
+        $bookings = Booking::where('user_id', $user->id)
+            ->where('start_time', '>=', now()->subMonths(3))
+            ->orderBy('start_time')
+            ->get();
+
+        return $this->buildIcal($bookings, $user->name ?? $user->username);
+    }
+
+    /**
+     * POST /api/v1/calendar/token — generate or regenerate the user's iCal token.
+     */
+    public function generateToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $token = Str::random(48);
+
+        $user->update(['ical_token' => $token]);
+
+        $url = url("/api/v1/calendar/ical/{$token}");
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'token' => $token,
+                'url' => $url,
+            ],
+        ]);
+    }
+
+    /**
+     * Build an iCalendar response from bookings.
+     */
+    private function buildIcal($bookings, string $calName): Response
+    {
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//ParkHub//ParkHub Calendar//EN',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'X-WR-CALNAME:'.$this->escapeIcal($calName.' - ParkHub'),
+        ];
+
+        foreach ($bookings as $booking) {
+            $uid = $booking->id.'@parkhub';
+            $start = $this->formatIcalDate($booking->start_time);
+            $end = $this->formatIcalDate($booking->end_time);
+            $summary = 'Parking: '.($booking->lot_name ?? 'Lot');
+            $description = 'Slot: '.($booking->slot_number ?? '-').', Status: '.($booking->status ?? 'confirmed');
+
+            $lines[] = 'BEGIN:VEVENT';
+            $lines[] = 'UID:'.$uid;
+            $lines[] = 'DTSTART:'.$start;
+            $lines[] = 'DTEND:'.$end;
+            $lines[] = 'SUMMARY:'.$this->escapeIcal($summary);
+            $lines[] = 'DESCRIPTION:'.$this->escapeIcal($description);
+            $lines[] = 'STATUS:'.strtoupper($booking->status ?? 'CONFIRMED');
+            $lines[] = 'END:VEVENT';
+        }
+
+        $lines[] = 'END:VCALENDAR';
+
+        $content = implode("\r\n", $lines);
+
+        return response($content, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="parkhub.ics"',
+        ]);
+    }
+
+    private function formatIcalDate($date): string
+    {
+        return Carbon::parse($date)->utc()->format('Ymd\THis\Z');
+    }
+
+    private function escapeIcal(string $text): string
+    {
+        return str_replace(["\n", "\r", ',', ';'], ['\\n', '', '\\,', '\\;'], $text);
+    }
+}
