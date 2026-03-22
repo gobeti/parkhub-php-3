@@ -41,4 +41,6 @@ return [
     'realtime' => env('MODULE_REALTIME', true),
     'lobby_display' => env('MODULE_LOBBY_DISPLAY', true),
     'analytics' => env('MODULE_ANALYTICS', true),
+    'map' => env('MODULE_MAP', true),
+    'web_push' => env('MODULE_WEB_PUSH', true),
 ];
