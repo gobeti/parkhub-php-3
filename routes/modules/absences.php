@@ -40,4 +40,12 @@ Route::middleware(['module:absences', 'auth:sanctum', 'throttle:api'])->group(fu
     Route::get('/absences/pattern', [AbsenceController::class, 'getPattern']);
     Route::post('/absences/pattern', [AbsenceController::class, 'setPattern']);
     Route::get('/absences/team', [AbsenceController::class, 'teamAbsences']);
+
+    // Admin absence approval
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('/absences', [AbsenceController::class, 'adminIndex']);
+        Route::get('/absences/pending', [AbsenceController::class, 'pending']);
+        Route::patch('/absences/{id}/approve', [AbsenceController::class, 'approve']);
+        Route::patch('/absences/{id}/reject', [AbsenceController::class, 'reject']);
+    });
 });

@@ -36,7 +36,7 @@ export function QuickActionsFab() {
   ];
 
   return (
-    <div className="fixed bottom-6 right-4 z-40 lg:hidden safe-bottom" role="region" aria-label={t('commandPalette.quickActions') || 'Quick actions'}>
+    <div className="fixed bottom-6 right-4 z-40 lg:hidden safe-bottom">
       {/* Action items */}
       <AnimatePresence>
         {open && (
@@ -48,11 +48,10 @@ export function QuickActionsFab() {
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/20 backdrop-blur-[2px] -z-10"
               onClick={() => setOpen(false)}
-              role="presentation"
             />
 
             {/* Action buttons */}
-            <nav className="flex flex-col-reverse items-end gap-3 mb-3" role="menu" aria-label={t('commandPalette.quickActions') || 'Quick actions'}>
+            <div className="flex flex-col-reverse items-end gap-3 mb-3">
               {actions.map((action, i) => (
                 <motion.div
                   key={action.to}
@@ -69,14 +68,13 @@ export function QuickActionsFab() {
                     to={action.to}
                     onClick={() => setOpen(false)}
                     aria-label={action.label}
-                    role="menuitem"
                     className={`w-11 h-11 rounded-full ${action.color} text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform cursor-pointer`}
                   >
                     <action.icon weight="bold" className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 </motion.div>
               ))}
-            </nav>
+            </div>
           </>
         )}
       </AnimatePresence>

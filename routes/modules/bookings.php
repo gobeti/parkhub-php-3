@@ -30,6 +30,10 @@ Route::middleware(['module:bookings', 'auth:sanctum', 'throttle:api'])->group(fu
 
     // Invoice
     Route::get('/bookings/{id}/invoice', [BookingInvoiceController::class, 'show']);
+    Route::get('/bookings/{id}/invoice.pdf', [BookingInvoiceController::class, 'pdf']);
+
+    // iCal feed
+    Route::get('/bookings/ical', [BookingController::class, 'ical']);
 
     // Admin bookings
     Route::middleware('admin')->prefix('admin')->group(function () {
@@ -38,5 +42,6 @@ Route::middleware(['module:bookings', 'auth:sanctum', 'throttle:api'])->group(fu
         Route::get('/guest-bookings', [AdminController::class, 'guestBookings']);
         Route::patch('/guest-bookings/{id}/cancel', [AdminController::class, 'cancelGuestBooking']);
         Route::get('/bookings/export', [AdminReportController::class, 'exportBookingsCsv']);
+        Route::post('/invoices/bulk', [BookingInvoiceController::class, 'bulkExport']);
     });
 });

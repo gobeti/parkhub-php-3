@@ -41,8 +41,9 @@ export function NotificationsPage() {
     try {
       const res = await api.getNotifications();
       if (res.success && res.data) setNotifications(res.data);
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
+    } catch {
+      toast.error(t('common.error'));
+    } finally { setLoading(false); }
   }
 
   async function markAsRead(id: string) {
@@ -130,7 +131,7 @@ export function NotificationsPage() {
                         {n.title}
                       </p>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs text-surface-400 whitespace-nowrap">{timeAgoFn(n.created_at, t)}</span>
+                        <span className="text-xs text-surface-500 dark:text-surface-400 whitespace-nowrap">{timeAgoFn(n.created_at, t)}</span>
                         {!n.read && <span className="w-2.5 h-2.5 bg-primary-500 rounded-full flex-shrink-0" />}
                       </div>
                     </div>
