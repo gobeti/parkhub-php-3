@@ -15,6 +15,7 @@ use App\Models\Vehicle;
 use App\Models\Webhook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class AdminSettingsController extends Controller
 {
@@ -95,6 +96,12 @@ class AdminSettingsController extends Controller
     public function updateBranding(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
+        $request->validate([
+            'company_name' => 'sometimes|string|max:255',
+            'primary_color' => ['sometimes', 'string', 'max:7', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'logo_url' => 'sometimes|nullable|string|max:2048',
+            'use_case' => 'sometimes|string|in:company,residential,shared,rental,personal',
+        ]);
         foreach (['company_name', 'primary_color', 'logo_url', 'use_case'] as $key) {
             if ($request->has($key)) {
                 Setting::set('brand_'.$key, $request->input($key));
@@ -113,7 +120,7 @@ class AdminSettingsController extends Controller
     public function uploadBrandingLogo(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
-        $request->validate(['logo' => 'required|image|max:2048']);
+        $request->validate(['logo' => 'required|image|mimes:jpeg,png,gif,svg,webp|max:2048']);
         $path = $request->file('logo')->store('branding', 'public');
         Setting::set('logo_url', '/storage/'.$path);
 
@@ -211,10 +218,14 @@ class AdminSettingsController extends Controller
     public function updateEmailSettings(Request $request): JsonResponse
     {
         $this->requireAdmin($request);
-        foreach (['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'from_email', 'from_name'] as $key) {
+        foreach (['smtp_host', 'smtp_port', 'smtp_user', 'from_email', 'from_name'] as $key) {
             if ($request->has($key)) {
                 Setting::set($key, $request->input($key));
             }
+        }
+        // Encrypt SMTP password at rest
+        if ($request->has('smtp_pass')) {
+            Setting::set('smtp_pass', Crypt::encryptString($request->input('smtp_pass')));
         }
         if ($request->has('enabled')) {
             Setting::set('email_enabled', $request->boolean('enabled') ? 'true' : 'false');

@@ -10,5 +10,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['module:zones', 'auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/lots/{lotId}/zones', [ZoneController::class, 'index']);
-    Route::post('/lots/{lotId}/zones', [ZoneController::class, 'store']);
+
+    // Zone mutations require admin privileges
+    Route::middleware('admin')->group(function () {
+        Route::post('/lots/{lotId}/zones', [ZoneController::class, 'store']);
+        Route::put('/lots/{lotId}/zones/{id}', [ZoneController::class, 'update']);
+        Route::delete('/lots/{lotId}/zones/{id}', [ZoneController::class, 'destroy']);
+    });
 });

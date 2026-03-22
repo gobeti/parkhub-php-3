@@ -50,7 +50,7 @@ return [
     |
     */
 
-    'expiration' => 10080, // 7 days in minutes (null = never expires)
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 10080), // 7 days default, configurable
 
     /*
     |--------------------------------------------------------------------------
