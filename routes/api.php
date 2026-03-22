@@ -38,8 +38,10 @@ Route::middleware('throttle:password-reset')->group(function () {
     Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-Route::get('/setup/status', [SetupController::class, 'status']);
-Route::post('/setup/init', [SetupController::class, 'init']);
+Route::middleware('throttle:setup')->group(function () {
+    Route::get('/setup/status', [SetupController::class, 'status']);
+    Route::post('/setup/init', [SetupController::class, 'init']);
+});
 Route::get('/public/occupancy', [PublicController::class, 'occupancy']);
 Route::get('/public/display', [PublicController::class, 'display']);
 
@@ -73,11 +75,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/lots/{lotId}/slots/{slotId}', [SlotController::class, 'update']);
     Route::delete('/lots/{lotId}/slots/{slotId}', [SlotController::class, 'destroy']);
 
-    // Zones
+    // Zones (read: any user, mutations: admin only)
     Route::get('/lots/{lotId}/zones', [ZoneController::class, 'index']);
-    Route::post('/lots/{lotId}/zones', [ZoneController::class, 'store']);
-    Route::put('/lots/{lotId}/zones/{id}', [ZoneController::class, 'update']);
-    Route::delete('/lots/{lotId}/zones/{id}', [ZoneController::class, 'destroy']);
+    Route::middleware('admin')->group(function () {
+        Route::post('/lots/{lotId}/zones', [ZoneController::class, 'store']);
+        Route::put('/lots/{lotId}/zones/{id}', [ZoneController::class, 'update']);
+        Route::delete('/lots/{lotId}/zones/{id}', [ZoneController::class, 'destroy']);
+    });
 
     // Bookings
     Route::get('/bookings', [BookingController::class, 'index']);

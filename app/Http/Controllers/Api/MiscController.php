@@ -9,6 +9,7 @@ use App\Models\PushSubscription;
 use App\Models\Setting;
 use App\Models\Webhook;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 
 class MiscController extends Controller
@@ -57,10 +58,14 @@ class MiscController extends Controller
             'smtp_from' => 'sometimes|email|max:255',
             'smtp_enabled' => 'sometimes|boolean',
         ]);
-        foreach (['smtp_host', 'smtp_port', 'smtp_user', 'smtp_password', 'smtp_from', 'smtp_enabled'] as $key) {
+        foreach (['smtp_host', 'smtp_port', 'smtp_user', 'smtp_from', 'smtp_enabled'] as $key) {
             if ($request->has($key)) {
                 Setting::set($key, $request->$key);
             }
+        }
+        // Encrypt SMTP password at rest
+        if ($request->has('smtp_password')) {
+            Setting::set('smtp_password', Crypt::encryptString($request->smtp_password));
         }
 
         return response()->json(['message' => 'Email settings updated']);

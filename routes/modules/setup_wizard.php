@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('module:setup_wizard')->group(function () {
+Route::middleware(['module:setup_wizard', 'throttle:setup'])->group(function () {
     Route::get('/setup/status', [SetupController::class, 'status']);
     Route::post('/setup', [SetupController::class, 'init']);
     Route::middleware('throttle:setup')->group(function () {

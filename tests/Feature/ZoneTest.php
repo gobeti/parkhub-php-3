@@ -50,7 +50,7 @@ class ZoneTest extends TestCase
 
     public function test_user_can_create_zone(): void
     {
-        [$user, $lot] = $this->createUserAndLot('user');
+        [$user, $lot] = $this->createUserAndLot('admin');
         $token = $user->createToken('test')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
