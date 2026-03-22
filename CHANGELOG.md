@@ -7,6 +7,36 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.7.0] - 2026-03-23
+
+### Added
+- **Enhanced Waitlist with Notifications**: Priority-based waitlist with offer/accept/decline workflow
+  - `POST /api/v1/lots/{id}/waitlist/subscribe` -- join with priority (1-5)
+  - `GET /api/v1/lots/{id}/waitlist` -- view position + estimated wait time
+  - `DELETE /api/v1/lots/{id}/waitlist` -- leave waitlist
+  - `POST /api/v1/lots/{id}/waitlist/{entry}/accept` -- accept offered slot (auto-creates booking)
+  - `POST /api/v1/lots/{id}/waitlist/{entry}/decline` -- decline, auto-promotes next in queue
+  - Waitlist.tsx frontend with status badges, position tracking, accept/decline actions
+  - `MODULE_WAITLIST_EXT=true` toggle (47th module)
+  - 10 PHP tests + 7 vitest tests
+- **Digital Parking Pass / QR Badge**: Generate and verify digital parking passes
+  - `GET /api/v1/bookings/{id}/pass` -- generate digital pass with QR data
+  - `GET /api/v1/pass/verify/{code}` -- public verification endpoint
+  - `GET /api/v1/me/passes` -- list all active passes
+  - ParkingPassView.tsx frontend with full-screen pass display and QR code
+  - `MODULE_PARKING_PASS=true` toggle (48th module)
+  - 8 PHP tests + 7 vitest tests
+- **Interactive API Documentation**: Scramble-powered /docs/api endpoint
+  - Admin sidebar link to API docs
+  - `MODULE_API_DOCS=true` toggle (49th module)
+  - 3 PHP tests + 3 vitest tests
+- **Frontend sync from parkhub-rust v3.7.0**: Waitlist.tsx, ParkingPassView.tsx, ApiDocs.test.tsx, updated App.tsx (waitlist/passes routes), Layout.tsx (waitlist/passes nav), Admin.tsx (API docs tab), api/client.ts (waitlist + pass endpoints + types), all 10 i18n locale files with waitlist/pass/apiDocs translations
+
+### Changed
+- Module count: 49 modules (added `waitlist_ext`, `parking_pass`, `api_docs`)
+
+---
+
 ## [3.6.0] - 2026-03-22
 
 ### Added
