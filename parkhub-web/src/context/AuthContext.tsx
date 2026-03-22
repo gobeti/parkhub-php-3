@@ -4,7 +4,7 @@ import { api, type User } from '../api/client';
 interface AuthState {
   user: User | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string, twoFactorCode?: string) => Promise<{ success: boolean; error?: string; requires2fa?: boolean }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -27,14 +27,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  async function login(username: string, password: string) {
-    const res = await api.login(username, password);
-    if (res.success && res.data?.tokens?.access_token) {
-      localStorage.setItem('parkhub_token', res.data.tokens.access_token);
-      const me = await api.me();
-      if (me.success && me.data) {
-        setUser(me.data);
-        return { success: true };
+  async function login(username: string, password: string, twoFactorCode?: string) {
+    const res = await api.login2fa(username, password, twoFactorCode);
+    if (res.success && res.data) {
+      // Check if 2FA is required
+      if ((res.data as any).requires_2fa) {
+        return { success: false, requires2fa: true };
+      }
+      if (res.data.tokens?.access_token) {
+        localStorage.setItem('parkhub_token', res.data.tokens.access_token);
+        const me = await api.me();
+        if (me.success && me.data) {
+          setUser(me.data);
+          return { success: true };
+        }
       }
     }
     return { success: false, error: res.error?.message || 'Login failed' };
