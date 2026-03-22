@@ -250,5 +250,9 @@ module_routes('fleet', 'fleet.php');
 module_routes('maintenance', 'maintenance.php');
 module_routes('cost_center', 'cost_center.php');
 
+module_routes('visitors', 'visitors.php');
+module_routes('ev_charging', 'ev_charging.php');
+module_routes('recommendations', 'recommendations.php');
+
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');
