@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class HealthController extends Controller
 {
     public function live()
     {
-        return response()->json(['status' => 'ok']);
+        return response()->json([
+            'status' => 'ok',
+            'uptime' => $this->getUptime(),
+        ]);
     }
 
     public function ready()
@@ -21,14 +25,62 @@ class HealthController extends Controller
             $dbStatus = 'error';
         }
 
+        $cacheStatus = 'ok';
+        try {
+            Cache::store()->put('health_check', true, 5);
+            if (! Cache::store()->get('health_check')) {
+                $cacheStatus = 'error';
+            }
+            Cache::store()->forget('health_check');
+        } catch (\Exception $e) {
+            $cacheStatus = 'error';
+        }
+
         $version = is_file(base_path('VERSION')) ? trim(file_get_contents(base_path('VERSION'))) : '1.0.0-php';
 
-        $status = $dbStatus === 'ok' ? 200 : 503;
+        $allOk = $dbStatus === 'ok' && $cacheStatus === 'ok';
+        $status = $allOk ? 200 : 503;
 
         return response()->json([
-            'status' => $dbStatus === 'ok' ? 'ok' : 'degraded',
+            'status' => $allOk ? 'ok' : 'degraded',
             'database' => $dbStatus,
+            'cache' => $cacheStatus,
             'version' => $version,
         ], $status);
+    }
+
+    public function info()
+    {
+        $version = is_file(base_path('VERSION')) ? trim(file_get_contents(base_path('VERSION'))) : '1.0.0-php';
+
+        $modules = [];
+        foreach (config('modules', []) as $key => $enabled) {
+            $modules[$key] = (bool) $enabled;
+        }
+
+        return response()->json([
+            'version' => $version,
+            'php_version' => PHP_VERSION,
+            'laravel_version' => app()->version(),
+            'environment' => config('app.env'),
+            'debug' => config('app.debug'),
+            'modules' => $modules,
+            'uptime' => $this->getUptime(),
+        ]);
+    }
+
+    private function getUptime(): string
+    {
+        $startTime = defined('LARAVEL_START') ? LARAVEL_START : $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
+        $uptime = microtime(true) - $startTime;
+
+        if ($uptime < 60) {
+            return round($uptime, 2).'s';
+        }
+        if ($uptime < 3600) {
+            return round($uptime / 60, 1).'m';
+        }
+
+        return round($uptime / 3600, 1).'h';
     }
 }
