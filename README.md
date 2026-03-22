@@ -6,12 +6,12 @@
 
 <p align="center">
   <a href="https://github.com/nash87/parkhub-php/actions/workflows/ci.yml"><img src="https://github.com/nash87/parkhub-php/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v2.2.0-brightgreen.svg?style=flat-square" alt="v2.2.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v2.5.0-brightgreen.svg?style=flat-square" alt="v2.5.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT License"></a>
   <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg?style=flat-square&logo=php&logoColor=white" alt="PHP 8.4"></a>
   <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-12-FF2D20.svg?style=flat-square&logo=laravel&logoColor=white" alt="Laravel 12"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB.svg?style=flat-square&logo=react&logoColor=black" alt="React 19"></a>
-  <img src="https://img.shields.io/badge/Tests-885%2B-success.svg?style=flat-square" alt="885+ tests">
+  <img src="https://img.shields.io/badge/Tests-1300%2B-success.svg?style=flat-square" alt="1300+ tests">
   <a href="docs/GDPR.md"><img src="https://img.shields.io/badge/DSGVO-konform-green.svg?style=flat-square" alt="GDPR Compliant"></a>
   <a href="COMPLIANCE-REPORT.md"><img src="https://img.shields.io/badge/Compliance-Audited-brightgreen.svg?style=flat-square" alt="Compliance Audited"></a>
   <a href="docker-compose.yml"><img src="https://img.shields.io/badge/Docker-ready-2496ED.svg?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready"></a>
@@ -66,7 +66,7 @@ ParkHub PHP runs on any 3 EUR/month shared hosting with PHP 8.2+ and MySQL. Uplo
 
 ```bash
 php artisan serve                      # Dev server
-php artisan test                       # Run 484 PHPUnit tests
+php artisan test                       # Run 868 PHPUnit tests
 php artisan migrate --seed             # Setup database
 php artisan sanctum:prune-expired      # Clean expired tokens
 php artisan schedule:run               # Run scheduled jobs
@@ -79,11 +79,14 @@ php artisan queue:work                 # Process background jobs
 
 ## Features
 
-### v2.2.0 Highlights
+### v2.5.0 Highlights
 
+- **6 switchable themes** -- Classic, Glass, Bento, Brutalist, Neon, Warm with instant CSS-variable switching
+- **httpOnly cookie auth** -- XSS-proof authentication with SameSite=Lax and CSRF protection
 - **Glass morphism UI** -- Bento grid dashboard with animated counters and frosted-glass cards
 - **2FA/TOTP authentication** -- QR code enrollment, backup codes, per-account enable/disable
-- **22 Laravel modules** -- Bookings, vehicles, absences, zones, waitlist, webhooks, and more
+- **23 Laravel modules** -- Runtime-toggleable via `MODULE_*` env vars (see [Module System](#module-system))
+- **Lighthouse CI** -- Automated accessibility (>= 95), performance (>= 90), SEO (>= 95) gates
 - **Smart recommendations** -- Heuristic scoring engine that learns from usage patterns
 - **Community translations** -- 10 languages with proposal voting and admin review
 
@@ -103,13 +106,20 @@ php artisan queue:work                 # Process background jobs
 
 ### Security
 
+- **httpOnly cookie auth** with SameSite=Lax (XSS-proof, Bearer fallback for APIs)
 - bcrypt password hashing (12 rounds)
-- Laravel Sanctum Bearer token authentication
-- Per-endpoint rate limiting
+- Laravel Sanctum Bearer token authentication with real expiry enforcement
+- Configurable password policies (length, uppercase, numbers, special chars)
+- Per-endpoint rate limiting (login, register, payments)
+- Nonce-based CSP (no unsafe-inline)
+- Session management (list/revoke active tokens)
+- Login history tracking with IP/user-agent
+- API key authentication support
+- SMTP password encryption in settings
 - Full audit log with IP tracking
 - Input validation on every endpoint
 - Vehicle photo content validation via GD (prevents polyglot attacks)
-- Admin role checks independent of middleware
+- Admin middleware layer for `/api/v1/admin/*` routes
 
 ---
 
@@ -131,7 +141,7 @@ php artisan queue:work                 # Process background jobs
                     │     React 19 + Astro 6 SPA      │
                     │   TypeScript · Tailwind CSS 4    │
                     └───────────────┬─────────────────┘
-                                    │ Bearer Token (Sanctum)
+                                    │ httpOnly Cookie + Bearer (Sanctum)
                     ┌───────────────▼─────────────────┐
                     │     Laravel 12 + PHP 8.4         │
                     │   /api/v1/*  · /api/metrics      │
@@ -150,7 +160,7 @@ The same React 19 + Astro 6 frontend is shared with the [Rust edition](https://g
 
 ## Module System
 
-ParkHub PHP organizes functionality into 22 controller modules. All modules are included by default.
+ParkHub PHP organizes functionality into 23 runtime-toggleable modules. All modules are enabled by default. Disable any module via `MODULE_*=false` environment variables.
 
 | Module | Controller | Description |
 |--------|-----------|-------------|
@@ -176,6 +186,7 @@ ParkHub PHP organizes functionality into 22 controller modules. All modules are 
 | Setup | `SetupController` | Installation wizard |
 | GDPR | `UserController` | Data export and erasure |
 | Demo | `DemoController` | Demo mode with auto-reset |
+| Themes | `ThemeController` | 6 switchable design themes |
 
 ---
 
@@ -193,11 +204,11 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md) for step-by-step guides.
 
 ## Testing
 
-**885+ tests** -- 484 PHPUnit (backend) + 401 Vitest (frontend) + Playwright E2E. CI runs on every push via GitHub Actions.
+**1,300+ tests** -- 868 PHPUnit (backend) + 433 Vitest (frontend) + Playwright E2E. CI runs on every push via GitHub Actions. Lighthouse CI enforces accessibility >= 95, performance >= 90.
 
 ```bash
-composer test                        # PHPUnit (484 tests)
-cd parkhub-web && npx vitest run     # Frontend (401 tests)
+composer test                        # PHPUnit (868 tests)
+cd parkhub-web && npx vitest run     # Frontend (433 tests)
 npx playwright test                  # E2E
 ```
 
