@@ -33,7 +33,7 @@ export function BookingsPage() {
     if (event.event === 'booking_created') {
       toast.success(t('bookings.wsNewBooking', 'Someone booked a spot in this lot'));
     } else if (event.event === 'booking_cancelled') {
-      toast(t('bookings.wsCancelledBooking', 'A booking was cancelled'), { icon: '\uD83D\uDCCB' });
+      toast(t('bookings.wsCancelledBooking', 'A booking was cancelled'), { icon: '📋' });
     }
   }, [t]);
 
@@ -256,7 +256,7 @@ function BookingCard({ booking, now, vehicles, onCancel, cancelling, onShowPass,
         )}
         <span className="flex items-center gap-1">
           <Clock weight="regular" className="w-3.5 h-3.5" />
-          {format(new Date(booking.start_time), 'HH:mm')} &mdash; {format(new Date(booking.end_time), 'HH:mm')}
+          {format(new Date(booking.start_time), 'HH:mm')} — {format(new Date(booking.end_time), 'HH:mm')}
         </span>
       </div>
 
