@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ParkingLot;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -133,7 +134,7 @@ class SseController extends Controller
     /**
      * Get current SSE connection status info.
      */
-    public function status(Request $request): \Illuminate\Http\JsonResponse
+    public function status(Request $request): JsonResponse
     {
         $user = $request->user();
 
