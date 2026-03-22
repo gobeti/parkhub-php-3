@@ -44,6 +44,9 @@ return [
     'audit_log' => env('MODULE_AUDIT_LOG', true),
     'data_import' => env('MODULE_DATA_IMPORT', true),
     'fleet' => env('MODULE_FLEET', true),
+    'accessible' => env('MODULE_ACCESSIBLE', true),
+    'maintenance' => env('MODULE_MAINTENANCE', true),
+    'cost_center' => env('MODULE_COST_CENTER', true),
 
     // ── Integration (disabled by default — requires credentials) ───
     'stripe' => env('MODULE_STRIPE', false),

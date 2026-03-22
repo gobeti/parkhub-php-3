@@ -26,6 +26,8 @@ const RegisterPage = lazy(() => import('./views/Register'), 'RegisterPage');
 const ForgotPasswordPage = lazy(() => import('./views/ForgotPassword'), 'ForgotPasswordPage');
 const UseCaseSelectorPage = lazy(() => import('./views/UseCaseSelector'), 'UseCaseSelectorPage');
 const NotFoundPage = lazy(() => import('./views/NotFound'), 'NotFoundPage');
+const LobbyDisplayPage = lazy(() => import('./views/LobbyDisplay'), 'LobbyDisplayPage');
+const SetupWizardPage = lazy(() => import('./views/SetupWizard'), 'SetupWizardPage');
 
 // Main app pages
 const DashboardPage = lazy(() => import('./views/Dashboard'), 'DashboardPage');
@@ -42,6 +44,7 @@ const DemoOverlay = lazy(() => import('./components/DemoOverlay'), 'DemoOverlay'
 const InstallPrompt = lazy(() => import('./components/InstallPrompt'), 'InstallPrompt');
 
 // Admin pages
+const MapViewPage = lazy(() => import('./views/MapView'), 'MapViewPage');
 const AdminPage = lazy(() => import('./views/Admin'), 'AdminPage');
 const AdminSettingsPage = lazy(() => import('./views/AdminSettings'), 'AdminSettingsPage');
 const AdminUsersPage = lazy(() => import('./views/AdminUsers'), 'AdminUsersPage');
@@ -51,6 +54,15 @@ const AdminReportsPage = lazy(() => import('./views/AdminReports'), 'AdminReport
 const FavoritesPage = lazy(() => import('./views/Favorites'), 'FavoritesPage');
 const TranslationsPage = lazy(() => import('./views/Translations'), 'TranslationsPage');
 const AdminTranslationsPage = lazy(() => import('./views/AdminTranslations'), 'AdminTranslationsPage');
+const AdminAnalyticsPage = lazy(() => import('./views/AdminAnalytics'), 'AdminAnalyticsPage');
+const AdminRateLimitsPage = lazy(() => import('./views/AdminRateLimits'), 'AdminRateLimitsPage');
+const AdminTenantsPage = lazy(() => import('./views/AdminTenants'), 'AdminTenantsPage');
+const AdminAuditLogPage = lazy(() => import('./views/AdminAuditLog'), 'AdminAuditLogPage');
+const AdminDataManagementPage = lazy(() => import('./views/AdminDataManagement'), 'AdminDataManagementPage');
+const AdminFleetPage = lazy(() => import('./views/AdminFleet'), 'AdminFleetPage');
+const AdminAccessiblePage = lazy(() => import('./views/AdminAccessible'), 'AdminAccessiblePage');
+const AdminMaintenancePage = lazy(() => import('./views/AdminMaintenance'), 'AdminMaintenancePage');
+const AdminBillingPage = lazy(() => import('./views/AdminBilling'), 'AdminBillingPage');
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -111,6 +123,8 @@ function AnimatedRoutes() {
         <Route path="/register" element={<SuspenseRoute><RegisterPage /></SuspenseRoute>} />
         <Route path="/forgot-password" element={<SuspenseRoute><ForgotPasswordPage /></SuspenseRoute>} />
         <Route path="/choose" element={<SuspenseRoute><UseCaseSelectorPage /></SuspenseRoute>} />
+        <Route path="/lobby/:lotId" element={<SuspenseRoute><LobbyDisplayPage /></SuspenseRoute>} />
+        <Route path="/setup" element={<SuspenseRoute><SetupWizardPage /></SuspenseRoute>} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<SuspenseRoute><DashboardPage /></SuspenseRoute>} />
           <Route path="book" element={<SuspenseRoute><BookPage /></SuspenseRoute>} />
@@ -123,6 +137,7 @@ function AnimatedRoutes() {
           <Route path="team" element={<SuspenseRoute><TeamPage /></SuspenseRoute>} />
           <Route path="notifications" element={<SuspenseRoute><NotificationsPage /></SuspenseRoute>} />
           <Route path="calendar" element={<SuspenseRoute><CalendarPage /></SuspenseRoute>} />
+          <Route path="map" element={<SuspenseRoute><MapViewPage /></SuspenseRoute>} />
           <Route path="translations" element={<SuspenseRoute><TranslationsPage /></SuspenseRoute>} />
           <Route path="admin" element={<AdminRoute><SuspenseRoute><AdminPage /></SuspenseRoute></AdminRoute>}>
             <Route index element={<SuspenseRoute><AdminReportsPage /></SuspenseRoute>} />
@@ -132,6 +147,15 @@ function AnimatedRoutes() {
             <Route path="announcements" element={<SuspenseRoute><AdminAnnouncementsPage /></SuspenseRoute>} />
             <Route path="reports" element={<SuspenseRoute><AdminReportsPage /></SuspenseRoute>} />
             <Route path="translations" element={<SuspenseRoute><AdminTranslationsPage /></SuspenseRoute>} />
+            <Route path="analytics" element={<SuspenseRoute><AdminAnalyticsPage /></SuspenseRoute>} />
+            <Route path="rate-limits" element={<SuspenseRoute><AdminRateLimitsPage /></SuspenseRoute>} />
+            <Route path="tenants" element={<SuspenseRoute><AdminTenantsPage /></SuspenseRoute>} />
+            <Route path="audit-log" element={<SuspenseRoute><AdminAuditLogPage /></SuspenseRoute>} />
+            <Route path="data" element={<SuspenseRoute><AdminDataManagementPage /></SuspenseRoute>} />
+            <Route path="fleet" element={<SuspenseRoute><AdminFleetPage /></SuspenseRoute>} />
+            <Route path="accessible" element={<SuspenseRoute><AdminAccessiblePage /></SuspenseRoute>} />
+            <Route path="maintenance" element={<SuspenseRoute><AdminMaintenancePage /></SuspenseRoute>} />
+            <Route path="billing" element={<SuspenseRoute><AdminBillingPage /></SuspenseRoute>} />
           </Route>
         </Route>
         <Route path="*" element={<SuspenseRoute><NotFoundPage /></SuspenseRoute>} />

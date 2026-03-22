@@ -210,6 +210,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
 // ── Module routes (conditionally loaded) ────────────────────────────────────
 
+// Accessible must load before bookings (bookings/{id} catch-all would swallow bookings/accessible-stats)
+module_routes('accessible', 'accessible.php');
 module_routes('bookings', 'bookings.php');
 module_routes('vehicles', 'vehicles.php');
 module_routes('absences', 'absences.php');
@@ -245,6 +247,8 @@ module_routes('multi_tenant', 'multi_tenant.php');
 module_routes('audit_log', 'audit_log.php');
 module_routes('data_import', 'data_import.php');
 module_routes('fleet', 'fleet.php');
+module_routes('maintenance', 'maintenance.php');
+module_routes('cost_center', 'cost_center.php');
 
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');

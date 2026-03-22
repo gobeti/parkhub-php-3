@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   UserCircle, Envelope, PencilSimple, FloppyDisk, SpinnerGap, Lock,
@@ -11,6 +11,10 @@ import { useTranslation } from 'react-i18next';
 import { staggerSlow, fadeUp } from '../constants/animations';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { TwoFactorSetupComponent } from '../components/TwoFactorSetup';
+import { NotificationPreferencesComponent } from '../components/NotificationPreferences';
+import { LoginHistoryComponent } from '../components/LoginHistory';
+import { ProfileThemeSection } from '../components/ProfileThemeSection';
 
 export function ProfilePage() {
   const { t } = useTranslation();
@@ -64,18 +68,12 @@ export function ProfilePage() {
   async function handleExportData() {
     setExporting(true);
     try {
-      const base = (import.meta as any).env?.VITE_API_URL || '';
-      const token = localStorage.getItem('parkhub_token');
-      const res = await fetch(`${base}/api/v1/user/export`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Export failed');
-      const blob = await res.blob();
+      const blob = await api.exportMyData();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = 'my-parkhub-data.json'; a.click();
       URL.revokeObjectURL(url);
-      toast.success(t('gdpr.exported', 'Daten exportiert'));
+      toast.success(t('gdpr.exported'));
     } catch { toast.error(t('gdpr.exportFailed')); }
     finally { setExporting(false); }
   }
@@ -86,15 +84,13 @@ export function ProfilePage() {
       action: async () => {
         setConfirmState({open: false, action: () => {}});
         try {
-          const base = (import.meta as any).env?.VITE_API_URL || '';
-          const token = localStorage.getItem('parkhub_token');
-          const res = await fetch(`${base}/api/v1/users/me/delete`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          });
-          if (!res.ok) throw new Error('Delete failed');
-          toast.success(t('gdpr.deleted', 'Konto gel\u00f6scht'));
-          logout();
+          const res = await api.deleteMyAccount();
+          if (res.success) {
+            toast.success(t('gdpr.deleted'));
+            logout();
+          } else {
+            toast.error(res.error?.message || t('gdpr.deleteFailed'));
+          }
         } catch { toast.error(t('gdpr.deleteFailed')); }
       },
     });
@@ -200,6 +196,37 @@ export function ProfilePage() {
         />
       </motion.div>
 
+      {/* Accessibility needs */}
+      <motion.div variants={item} className="bg-white dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-800 p-5" data-testid="accessibility-section">
+        <h3 className="text-base font-semibold text-surface-900 dark:text-white mb-3">
+          {t('accessible.needs', 'Accessibility Needs')}
+        </h3>
+        <p className="text-xs text-surface-500 dark:text-surface-400 mb-3">{t('accessible.needsDesc', 'Select your accessibility requirements for priority parking access.')}</p>
+        <select
+          data-testid="accessibility-selector"
+          className="input"
+          defaultValue=""
+          onChange={async (e) => {
+            try {
+              const res = await fetch('/api/v1/users/me/accessibility-needs', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessibility_needs: e.target.value || 'none' }),
+              });
+              const data = await res.json();
+              if (data.success) toast.success(t('accessible.updated', 'Accessibility needs updated'));
+              else toast.error(data.error?.message || t('common.error'));
+            } catch { toast.error(t('common.error')); }
+          }}
+        >
+          <option value="none">{t('accessible.none', 'No accessibility needs')}</option>
+          <option value="wheelchair">{t('accessible.wheelchair', 'Wheelchair')}</option>
+          <option value="reduced_mobility">{t('accessible.reducedMobility', 'Reduced Mobility')}</option>
+          <option value="visual">{t('accessible.visual', 'Visual impairment')}</option>
+          <option value="hearing">{t('accessible.hearing', 'Hearing impairment')}</option>
+        </select>
+      </motion.div>
+
       {/* Password change */}
       <motion.div variants={item} className="bg-white dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-800 p-5">
         <button onClick={() => setPwOpen(!pwOpen)} className="w-full flex items-center justify-between" aria-expanded={pwOpen}>
@@ -255,6 +282,26 @@ export function ProfilePage() {
           </button>
         </div>
       </motion.div>
+      {/* Design Theme */}
+      <motion.div variants={fadeUp} className="card p-6">
+        <ProfileThemeSection />
+      </motion.div>
+
+      {/* Security: 2FA */}
+      <motion.div variants={fadeUp} className="card p-6">
+        <TwoFactorSetupComponent />
+      </motion.div>
+
+      {/* Notification Preferences */}
+      <motion.div variants={fadeUp} className="card p-6">
+        <NotificationPreferencesComponent />
+      </motion.div>
+
+      {/* Login History & Sessions */}
+      <motion.div variants={fadeUp} className="card p-6">
+        <LoginHistoryComponent />
+      </motion.div>
+
       <ConfirmDialog
         open={confirmState.open}
         title={t('gdpr.deleteAccount')}
