@@ -169,4 +169,39 @@ class PublicController extends Controller
             'meta' => null,
         ]);
     }
+
+    /**
+     * GET /api/v1/discover
+     * Handshake/discovery endpoint — returns API version, capabilities, and available modules.
+     */
+    public function discover(): JsonResponse
+    {
+        $modules = collect(config('modules', []))
+            ->filter(fn ($enabled) => $enabled)
+            ->keys()
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'name' => Setting::get('company_name', 'ParkHub'),
+                'version' => SystemController::appVersion(),
+                'api_version' => 'v1',
+                'modules' => $modules,
+                'capabilities' => [
+                    'auth' => 'sanctum',
+                    'realtime' => config('broadcasting.default') !== 'log',
+                    'push_notifications' => ! empty(Setting::get('vapid_public_key')),
+                    'demo_mode' => (bool) config('parkhub.demo_mode'),
+                ],
+                'endpoints' => [
+                    'auth' => '/api/v1/auth/login',
+                    'health' => '/api/v1/health',
+                    'docs' => '/docs/api',
+                ],
+            ],
+            'error' => null,
+            'meta' => null,
+        ]);
+    }
 }

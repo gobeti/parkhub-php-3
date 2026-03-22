@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Absence;
 use App\Models\AuditLog;
 use App\Models\Booking;
+use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\Setting;
 use App\Models\User;
@@ -358,6 +359,57 @@ class AdminSettingsController extends Controller
         ]);
 
         return response()->json(['message' => 'Database reset. All user data deleted.']);
+    }
+
+    /**
+     * GET /api/v1/admin/backup
+     * Export all settings, users, lots, slots, and bookings as JSON.
+     */
+    public function exportBackup(Request $request): JsonResponse
+    {
+        $data = [
+            'exported_at' => now()->toISOString(),
+            'version' => SystemController::appVersion(),
+            'settings' => Setting::all()->pluck('value', 'key'),
+            'users' => User::all()->makeHidden(['password', 'remember_token']),
+            'lots' => ParkingLot::with('slots')->get(),
+            'bookings' => Booking::limit(10000)->get(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
+    /**
+     * POST /api/v1/admin/restore
+     * Restore settings from a backup JSON payload.
+     */
+    public function importBackup(Request $request): JsonResponse
+    {
+        $request->validate([
+            'settings' => 'required|array',
+        ]);
+
+        $imported = 0;
+        foreach ($request->settings as $key => $value) {
+            Setting::set($key, $value);
+            $imported++;
+        }
+
+        AuditLog::log([
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->username,
+            'action' => 'settings_restored',
+            'details' => ['settings_count' => $imported],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => ['settings_imported' => $imported],
+        ]);
     }
 
     private static function useCaseTheme(string $key): array
