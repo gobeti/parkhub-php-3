@@ -35,20 +35,39 @@ class MetricsController extends Controller
     private function buildMetrics(): array
     {
         $lines = [];
+        $now = now();
+
+        // ── Batch scalar counts in fewer queries ────────────────────────────
+        $usersTotal = User::count();
+        $lotsTotal = ParkingLot::count();
+
+        // Single query for booking counts by status
+        $bookingsByStatus = Booking::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->all();
+
+        // Active bookings in current time window
+        $activeBookings = Booking::whereIn('status', ['confirmed', 'active'])
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->count();
+
+        // Single query for slot counts by status
+        $slotsByStatus = ParkingSlot::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+        $slotsTotal = $slotsByStatus->sum();
+        $slotsAvailable = (int) ($slotsByStatus['available'] ?? 0);
+        $slotsActive = (int) ($slotsByStatus['active'] ?? 0);
 
         // ── parkhub_users_total ────────────────────────────────────────────
-        $usersTotal = User::count();
         $lines[] = '# HELP parkhub_users_total Total registered users';
         $lines[] = '# TYPE parkhub_users_total gauge';
         $lines[] = "parkhub_users_total {$usersTotal}";
         $lines[] = '';
 
         // ── parkhub_bookings_total (by status) ────────────────────────────
-        $bookingsByStatus = Booking::select('status', DB::raw('count(*) as total'))
-            ->groupBy('status')
-            ->pluck('total', 'status')
-            ->all();
-
         $lines[] = '# HELP parkhub_bookings_total Total bookings by status';
         $lines[] = '# TYPE parkhub_bookings_total gauge';
         foreach ($bookingsByStatus as $status => $count) {
@@ -57,26 +76,16 @@ class MetricsController extends Controller
         $lines[] = '';
 
         // ── parkhub_bookings_active ────────────────────────────────────────
-        $activeBookings = Booking::whereIn('status', ['confirmed', 'active'])
-            ->where('start_time', '<=', now())
-            ->where('end_time', '>=', now())
-            ->count();
         $lines[] = '# HELP parkhub_bookings_active Number of currently active/confirmed bookings in window';
         $lines[] = '# TYPE parkhub_bookings_active gauge';
         $lines[] = "parkhub_bookings_active {$activeBookings}";
         $lines[] = '';
 
         // ── parkhub_lots_total ─────────────────────────────────────────────
-        $lotsTotal = ParkingLot::count();
         $lines[] = '# HELP parkhub_lots_total Total parking lots';
         $lines[] = '# TYPE parkhub_lots_total gauge';
         $lines[] = "parkhub_lots_total {$lotsTotal}";
         $lines[] = '';
-
-        // ── parkhub_slots_total / parkhub_slots_available ─────────────────
-        $slotsTotal = ParkingSlot::count();
-        $slotsAvailable = ParkingSlot::where('status', 'available')->count();
-        $slotsActive = ParkingSlot::where('status', 'active')->count();
 
         $lines[] = '# HELP parkhub_slots_total Total parking slots';
         $lines[] = '# TYPE parkhub_slots_total gauge';
@@ -96,7 +105,6 @@ class MetricsController extends Controller
         // ── parkhub_lot_occupancy_percent (per lot) ────────────────────────
         // Compute occupancy dynamically from active bookings instead of stale available_slots column
         $lots = ParkingLot::all(['id', 'name', 'total_slots']);
-        $now = now();
         $activeByLot = Booking::whereIn('status', ['confirmed', 'active'])
             ->where('start_time', '<=', $now)
             ->where('end_time', '>=', $now)
