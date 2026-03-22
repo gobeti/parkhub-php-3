@@ -5,6 +5,7 @@ import { api, type AdminStats, type Booking } from '../api/client';
 import { useTranslation } from 'react-i18next';
 import { BarChart, DonutChart, type DonutSlice } from '../components/SimpleChart';
 import { OccupancyHeatmap } from '../components/OccupancyHeatmap';
+import { SkeletonCard, SkeletonTable, SkeletonText, SkeletonContainer } from '../components/Skeleton';
 
 function StatCard({ icon: Icon, label, value }: {
   icon: any;
@@ -91,8 +92,14 @@ export function AdminReportsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <SpinnerGap weight="bold" className="w-8 h-8 text-primary-600 animate-spin" />
+      <div className="space-y-8">
+        <SkeletonText width="w-48" className="h-7" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <SkeletonCard key={i} height="h-24" />)}
+        </div>
+        <SkeletonCard height="h-48" />
+        <SkeletonCard height="h-64" />
+        <SkeletonTable rows={5} />
       </div>
     );
   }
