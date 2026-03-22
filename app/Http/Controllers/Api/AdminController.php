@@ -21,16 +21,8 @@ use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
-    private function requireAdmin($request): void
-    {
-        if (! $request->user() || ! $request->user()->isAdmin()) {
-            abort(403, 'Admin access required');
-        }
-    }
-
     public function users(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
         $perPage = min((int) request('per_page', 20), 100);
         $users = User::paginate($perPage);
 
@@ -49,7 +41,7 @@ class AdminController extends Controller
 
     public function updateUser(UpdateUserRequest $request, string $id)
     {
-        $this->requireAdmin($request);
+
         $user = User::findOrFail($id);
         $data = $request->only(['name', 'email', 'is_active', 'department']);
         if ($request->filled('password')) {
@@ -68,7 +60,7 @@ class AdminController extends Controller
 
     public function deleteUser(Request $request, string $id): JsonResponse
     {
-        $this->requireAdmin($request);
+
         if ($id === $request->user()->id) {
             return response()->json(['error' => 'Cannot delete your own account'], 400);
         }
@@ -79,7 +71,6 @@ class AdminController extends Controller
 
     public function importUsers(ImportUsersRequest $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $imported = 0;
         $usersCollection = collect($request->users);
@@ -111,7 +102,6 @@ class AdminController extends Controller
 
     public function bookings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $query = Booking::with('user')->orderBy('start_time', 'desc');
 
@@ -135,7 +125,6 @@ class AdminController extends Controller
 
     public function cancelBooking(Request $request, string $id)
     {
-        $this->requireAdmin($request);
 
         $booking = Booking::findOrFail($id);
         $booking->update(['status' => Booking::STATUS_CANCELLED]);
@@ -154,7 +143,6 @@ class AdminController extends Controller
 
     public function guestBookings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $query = GuestBooking::with(['lot', 'slot', 'creator'])
             ->orderBy('start_time', 'desc');
@@ -206,7 +194,6 @@ class AdminController extends Controller
 
     public function cancelGuestBooking(Request $request, string $id): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $guest = GuestBooking::findOrFail($id);
         $guest->update(['status' => 'cancelled']);
@@ -235,7 +222,6 @@ class AdminController extends Controller
 
     public function auditLog(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $query = AuditLog::orderBy('created_at', 'desc');
 
@@ -255,7 +241,7 @@ class AdminController extends Controller
 
     public function updateSlot(Request $request, string $id)
     {
-        $this->requireAdmin($request);
+
         $request->validate([
             'slot_number' => 'sometimes|string|max:20',
             'status' => 'sometimes|in:available,occupied,reserved,maintenance',
@@ -270,7 +256,7 @@ class AdminController extends Controller
 
     public function deleteLot(Request $request, string $id): JsonResponse
     {
-        $this->requireAdmin($request);
+
         $lot = ParkingLot::findOrFail($id);
         $lot->delete();
 
