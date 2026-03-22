@@ -158,7 +158,7 @@ describe('AdminUsersPage', () => {
   it('renders loading skeleton initially', () => {
     mockAdminUsers.mockReturnValue(new Promise(() => {}));
     render(<AdminUsersPage />);
-    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
+    expect(document.querySelector('.skeleton')).toBeInTheDocument();
   });
 
   it('renders user list after load', async () => {
