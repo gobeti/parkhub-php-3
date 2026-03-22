@@ -6,6 +6,7 @@
  */
 
 use App\Http\Controllers\Api\SetupController;
+use App\Http\Controllers\Api\SetupWizardController;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['module:setup_wizard', 'throttle:setup'])->group(function () {
     Route::get('/setup/status', [SetupController::class, 'status']);
     Route::post('/setup', [SetupController::class, 'init']);
+
+    // Onboarding wizard (step-by-step)
+    Route::get('/setup/wizard/status', [SetupWizardController::class, 'status']);
+    Route::post('/setup/wizard', [SetupWizardController::class, 'store']);
     Route::middleware('throttle:setup')->group(function () {
         Route::post('/setup/change-password', function (Request $request) {
             if (Setting::get('setup_completed') === 'true') {
