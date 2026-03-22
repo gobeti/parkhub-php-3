@@ -9,11 +9,18 @@ class WaitlistEntry extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['user_id', 'lot_id', 'slot_id', 'notified_at'];
+    protected $fillable = [
+        'user_id', 'lot_id', 'slot_id', 'priority',
+        'status', 'notified_at', 'offer_expires_at', 'accepted_booking_id',
+    ];
 
     protected function casts(): array
     {
-        return ['notified_at' => 'datetime'];
+        return [
+            'notified_at' => 'datetime',
+            'offer_expires_at' => 'datetime',
+            'priority' => 'integer',
+        ];
     }
 
     public function user()
