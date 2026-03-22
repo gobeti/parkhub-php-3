@@ -335,10 +335,10 @@ class ModuleSystemTest extends TestCase
             ->assertOk();
     }
 
-    public function test_all_30_modules_in_config(): void
+    public function test_all_32_modules_in_config(): void
     {
         $modules = config('modules');
 
-        $this->assertCount(30, $modules);
+        $this->assertCount(32, $modules);
     }
 }
