@@ -103,24 +103,29 @@ class AdminCreditController extends Controller
         ]);
 
         $amount = $validated['amount'] ?? null;
-        $users = User::where('role', 'user')->where('is_active', true)->get();
+        $adminId = $request->user()->id;
         $count = 0;
 
-        foreach ($users as $user) {
-            $refillAmount = $amount ?? $user->credits_monthly_quota;
-            $user->update([
-                'credits_balance' => $refillAmount,
-                'credits_last_refilled' => now(),
-            ]);
-            CreditTransaction::create([
-                'user_id' => $user->id,
-                'amount' => $refillAmount,
-                'type' => 'monthly_refill',
-                'description' => 'Monthly credit refill',
-                'granted_by' => $request->user()->id,
-            ]);
-            $count++;
-        }
+        // Process in chunks of 100 to avoid loading all users into memory
+        User::where('role', 'user')
+            ->where('is_active', true)
+            ->chunkById(100, function ($users) use ($amount, $adminId, &$count) {
+                foreach ($users as $user) {
+                    $refillAmount = $amount ?? $user->credits_monthly_quota;
+                    $user->update([
+                        'credits_balance' => $refillAmount,
+                        'credits_last_refilled' => now(),
+                    ]);
+                    CreditTransaction::create([
+                        'user_id' => $user->id,
+                        'amount' => $refillAmount,
+                        'type' => 'monthly_refill',
+                        'description' => 'Monthly credit refill',
+                        'granted_by' => $adminId,
+                    ]);
+                    $count++;
+                }
+            });
 
         return response()->json([
             'success' => true,
