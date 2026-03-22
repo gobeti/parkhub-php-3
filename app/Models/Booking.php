@@ -24,6 +24,7 @@ class Booking extends Model
         'vehicle_plate', 'start_time', 'end_time', 'status', 'notes',
         'recurrence', 'checked_in_at',
         'base_price', 'tax_amount', 'total_price', 'currency',
+        'tenant_id',
     ];
 
     protected function casts(): array

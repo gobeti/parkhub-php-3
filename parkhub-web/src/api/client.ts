@@ -211,6 +211,8 @@ export const api = {
   // ── Calendar ──
   calendarEvents: (start: string, end: string) =>
     request<CalendarEvent[]>(`/api/v1/calendar/events?start=${start}&end=${end}`),
+  generateCalendarToken: () =>
+    request<{ token: string; url: string }>('/api/v1/calendar/token', { method: 'POST' }),
 
   // ── Demo ──
   getDemoConfig: () => request<{ demo_mode: boolean }>('/api/v1/demo/config'),
@@ -298,6 +300,17 @@ export const api = {
     }),
   getPaymentHistory: () => request<PaymentHistoryEntry[]>('/api/v1/payments/history'),
   getStripeConfig: () => request<StripeConfigResponse>('/api/v1/payments/config'),
+
+  // ── Rate Limits ──
+  getRateLimitStats: () => request<RateLimitStats>('/api/v1/admin/rate-limits'),
+  getRateLimitHistory: () => request<RateLimitHistory>('/api/v1/admin/rate-limits/history'),
+
+  // ── Tenants ──
+  listTenants: () => request<TenantInfo[]>('/api/v1/admin/tenants'),
+  createTenant: (data: CreateTenantRequest) =>
+    request<TenantInfo>('/api/v1/admin/tenants', { method: 'POST', body: JSON.stringify(data) }),
+  updateTenant: (id: string, data: CreateTenantRequest) =>
+    request<TenantInfo>(`/api/v1/admin/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 // ── Types ──
@@ -739,4 +752,52 @@ export interface BulkResult {
   succeeded: number;
   failed: number;
   errors: string[];
+}
+
+// ── Rate Limits ──
+export interface RateLimitGroup {
+  group: string;
+  limit_per_minute: number;
+  description: string;
+  current_count: number;
+  reset_seconds: number;
+  blocked_last_hour: number;
+}
+
+export interface RateLimitStats {
+  groups: RateLimitGroup[];
+  total_blocked_last_hour: number;
+}
+
+export interface RateLimitHistoryBin {
+  hour: string;
+  count: number;
+}
+
+export interface RateLimitHistory {
+  bins: RateLimitHistoryBin[];
+}
+
+// ── Tenants ──
+export interface TenantBranding {
+  primary_color?: string;
+  logo_url?: string;
+  company_name?: string;
+}
+
+export interface TenantInfo {
+  id: string;
+  name: string;
+  domain?: string;
+  branding?: TenantBranding;
+  created_at: string;
+  updated_at: string;
+  user_count: number;
+  lot_count: number;
+}
+
+export interface CreateTenantRequest {
+  name: string;
+  domain?: string;
+  branding?: TenantBranding;
 }
