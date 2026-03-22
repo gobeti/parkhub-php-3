@@ -10,16 +10,8 @@ use Illuminate\Http\Request;
 
 class AdminCreditController extends Controller
 {
-    private function requireAdmin($request): void
-    {
-        if (! $request->user() || ! $request->user()->isAdmin()) {
-            abort(403, 'Admin access required');
-        }
-    }
-
     public function updateUserQuota(Request $request, string $id)
     {
-        $this->requireAdmin($request);
 
         $validated = $request->validate([
             'monthly_quota' => 'required|integer|min:0|max:999',
@@ -56,7 +48,6 @@ class AdminCreditController extends Controller
 
     public function grantCredits(Request $request, string $id)
     {
-        $this->requireAdmin($request);
 
         $validated = $request->validate([
             'amount' => 'required|integer|min:1|max:1000',
