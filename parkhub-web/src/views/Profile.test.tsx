@@ -160,6 +160,8 @@ vi.mock('@phosphor-icons/react', () => ({
   Check: (props: any) => <span data-testid="icon-check" {...props} />,
   X: (props: any) => <span data-testid="icon-x" {...props} />,
   Palette: (props: any) => <span data-testid="icon-palette" {...props} />,
+  MapPin: (props: any) => <span data-testid="icon-map-pin" {...props} />,
+  Question: (props: any) => <span data-testid="icon-question" {...props} />,
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -311,5 +313,22 @@ describe('ProfilePage', () => {
     expect(screen.getByText('DSGVO / GDPR')).toBeInTheDocument();
     expect(screen.getByText('Daten exportieren')).toBeInTheDocument();
     expect(screen.getByText('Konto löschen')).toBeInTheDocument();
+  });
+
+  it('renders accessibility needs section', () => {
+    render(<ProfilePage />);
+    expect(screen.getByTestId('accessibility-section')).toBeInTheDocument();
+    expect(screen.getByTestId('accessibility-selector')).toBeInTheDocument();
+  });
+
+  it('accessibility selector has correct options', () => {
+    render(<ProfilePage />);
+    const selector = screen.getByTestId('accessibility-selector') as HTMLSelectElement;
+    const options = Array.from(selector.options).map(o => o.value);
+    expect(options).toContain('none');
+    expect(options).toContain('wheelchair');
+    expect(options).toContain('reduced_mobility');
+    expect(options).toContain('visual');
+    expect(options).toContain('hearing');
   });
 });
