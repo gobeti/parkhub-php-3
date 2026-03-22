@@ -347,6 +347,28 @@ export const api = {
   },
   getBookingStats: () => request<PersonalParkingStats>('/api/v1/bookings/stats'),
 
+  // ── Enhanced Waitlist ──
+  subscribeWaitlist: (lotId: string, priority?: number) =>
+    request('/api/v1/lots/' + lotId + '/waitlist/subscribe', {
+      method: 'POST', body: JSON.stringify({ priority: priority ?? 3 }),
+    }),
+  getLotWaitlist: (lotId: string) =>
+    request<WaitlistResponse>(`/api/v1/lots/${lotId}/waitlist`),
+  leaveWaitlist: (lotId: string) =>
+    request(`/api/v1/lots/${lotId}/waitlist`, { method: 'DELETE' }),
+  acceptWaitlistOffer: (lotId: string, entryId: string) =>
+    request(`/api/v1/lots/${lotId}/waitlist/${entryId}/accept`, { method: 'POST' }),
+  declineWaitlistOffer: (lotId: string, entryId: string) =>
+    request(`/api/v1/lots/${lotId}/waitlist/${entryId}/decline`, { method: 'POST' }),
+
+  // ── Parking Pass ──
+  getBookingPass: (bookingId: string) =>
+    request<ParkingPassData>(`/api/v1/bookings/${bookingId}/pass`),
+  verifyPass: (code: string) =>
+    request<PassVerification>(`/api/v1/pass/verify/${code}`),
+  getMyPasses: () =>
+    request<ParkingPassData[]>('/api/v1/me/passes'),
+
   // ── Geofencing ──
   geofenceCheckIn: (latitude: number, longitude: number) =>
     request<GeofenceCheckInResponse>('/api/v1/geofence/check-in', {
@@ -908,4 +930,53 @@ export interface GeofenceConfig {
   center_lng: number;
   radius_meters: number;
   enabled: boolean;
+}
+
+// ── Enhanced Waitlist ──
+export interface WaitlistEntryData {
+  id: string;
+  user_id: string;
+  lot_id: string;
+  created_at: string;
+  notified_at: string | null;
+  status: 'waiting' | 'offered' | 'accepted' | 'declined' | 'expired';
+  offer_expires_at: string | null;
+  accepted_booking_id: string | null;
+}
+
+export interface WaitlistPosition {
+  entry: WaitlistEntryData;
+  position: number;
+  total_ahead: number;
+  estimated_wait_minutes: number | null;
+}
+
+export interface WaitlistResponse {
+  total: number;
+  entries: WaitlistPosition[];
+}
+
+// ── Parking Pass ──
+export interface ParkingPassData {
+  id: string;
+  booking_id: string;
+  user_id: string;
+  user_name: string;
+  lot_name: string;
+  slot_number: string;
+  valid_from: string;
+  valid_until: string;
+  verification_code: string;
+  qr_data: string;
+  status: 'active' | 'expired' | 'revoked' | 'used';
+  created_at: string;
+}
+
+export interface PassVerification {
+  valid: boolean;
+  status: string;
+  lot_name: string | null;
+  slot_number: string | null;
+  valid_from: string | null;
+  valid_until: string | null;
 }
