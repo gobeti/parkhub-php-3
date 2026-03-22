@@ -11,16 +11,20 @@
 use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminSettingsController;
+use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\ModuleController;
+use App\Http\Controllers\Api\NotificationPreferencesController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SlotController;
 use App\Http\Controllers\Api\SystemController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\TranslationController;
+use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WaitlistController;
 use Illuminate\Support\Facades\Route;
@@ -80,6 +84,28 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Auth (protected)
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::patch('/users/me/password', [AuthController::class, 'changePassword']);
+
+    // 2FA
+    Route::post('/auth/2fa/setup', [TwoFactorController::class, 'setup']);
+    Route::post('/auth/2fa/verify', [TwoFactorController::class, 'verify']);
+    Route::post('/auth/2fa/disable', [TwoFactorController::class, 'disable']);
+
+    // Login history
+    Route::get('/auth/login-history', [AuthController::class, 'loginHistory']);
+
+    // Session management
+    Route::get('/auth/sessions', [SessionController::class, 'index']);
+    Route::delete('/auth/sessions/{id}', [SessionController::class, 'destroy']);
+    Route::delete('/auth/sessions', [SessionController::class, 'destroyAll']);
+
+    // API keys
+    Route::post('/auth/api-keys', [ApiKeyController::class, 'store']);
+    Route::get('/auth/api-keys', [ApiKeyController::class, 'index']);
+    Route::delete('/auth/api-keys/{id}', [ApiKeyController::class, 'destroy']);
+
+    // Notification preferences
+    Route::get('/preferences/notifications', [NotificationPreferencesController::class, 'show']);
+    Route::put('/preferences/notifications', [NotificationPreferencesController::class, 'update']);
 
     // Users — /me aliases for frontend compatibility
     Route::get('/me', [AuthController::class, 'me']);
@@ -149,6 +175,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('/users', [AdminController::class, 'users']);
         Route::put('/users/{id}', [AdminController::class, 'updateUser']);
         Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+        Route::get('/users/{id}/login-history', [AuthController::class, 'adminLoginHistory']);
+
+        // Bulk operations
+        Route::post('/users/bulk', [AdminController::class, 'bulkAction']);
 
         // Announcements
         Route::get('/announcements', [AdminAnnouncementController::class, 'announcements']);
