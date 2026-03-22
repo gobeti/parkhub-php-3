@@ -24,6 +24,9 @@ export function LoginPage() {
   const { login, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [needs2fa, setNeeds2fa] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [pendingCreds, setPendingCreds] = useState<{ username: string; password: string } | null>(null);
 
   const {
     register,
@@ -45,8 +48,22 @@ export function LoginPage() {
     const result = await login(data.username, data.password);
     if (result.success) {
       navigate('/', { replace: true });
+    } else if (result.requires2fa) {
+      setNeeds2fa(true);
+      setPendingCreds({ username: data.username, password: data.password });
     } else {
       setServerError(result.error || t('auth.loginError'));
+    }
+  }
+
+  async function onSubmit2fa() {
+    if (!pendingCreds || twoFactorCode.length !== 6) return;
+    setServerError(null);
+    const result = await login(pendingCreds.username, pendingCreds.password, twoFactorCode);
+    if (result.success) {
+      navigate('/', { replace: true });
+    } else {
+      setServerError(result.error || t('auth.invalid2faCode', 'Invalid 2FA code'));
     }
   }
 
@@ -119,6 +136,57 @@ export function LoginPage() {
             {t('auth.demoHint')}
           </button>
 
+          {needs2fa ? (
+            /* 2FA Code Step */
+            <div className="space-y-5">
+              <div className="text-center mb-4">
+                <div className="w-12 h-12 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mx-auto mb-3">
+                  <Eye weight="bold" className="w-6 h-6 text-brand-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                  {t('auth.2faTitle', 'Two-Factor Authentication')}
+                </h2>
+                <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+                  {t('auth.2faPrompt', 'Enter the 6-digit code from your authenticator app.')}
+                </p>
+              </div>
+
+              <input
+                type="text"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                className="input text-center font-mono text-2xl tracking-[0.5em] py-3"
+                maxLength={6}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter' && twoFactorCode.length === 6) onSubmit2fa(); }}
+              />
+
+              {serverError && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                  className="text-sm text-red-600 dark:text-red-400 text-center" role="alert"
+                >
+                  {serverError}
+                </motion.p>
+              )}
+
+              <button
+                onClick={onSubmit2fa}
+                disabled={isSubmitting || twoFactorCode.length !== 6}
+                className="btn btn-primary w-full py-2.5 disabled:opacity-50"
+              >
+                {isSubmitting ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : null}
+                {t('auth.verify', 'Verify')}
+              </button>
+
+              <button
+                onClick={() => { setNeeds2fa(false); setPendingCreds(null); setTwoFactorCode(''); setServerError(null); }}
+                className="text-sm text-surface-500 hover:text-surface-700 w-full text-center"
+              >
+                {t('auth.backToLogin', 'Back to login')}
+              </button>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             <FormField label={t('auth.email')} htmlFor="username" error={errors.username}>
               <FormInput
@@ -185,6 +253,7 @@ export function LoginPage() {
               )}
             </button>
           </form>
+          )}
 
           <p className="text-center text-sm text-surface-500 dark:text-surface-400 mt-6">
             {t('auth.noAccount')}{' '}
