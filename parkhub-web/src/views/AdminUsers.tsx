@@ -9,6 +9,7 @@ import { api, type User } from '../api/client';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { DataTable } from '../components/ui/DataTable';
+import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/Skeleton';
 
 const columnHelper = createColumnHelper<User>();
 
@@ -262,8 +263,12 @@ export function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64" role="status" aria-label={t('common.loading')}>
-        <SpinnerGap weight="bold" className="w-8 h-8 text-primary-600 animate-spin" />
+      <div className="space-y-6" role="status" aria-label={t('common.loading')}>
+        <div className="flex items-center justify-between">
+          <SkeletonText width="w-40" className="h-7" />
+          <SkeletonCard height="h-10" className="w-64" />
+        </div>
+        <SkeletonTable rows={6} />
       </div>
     );
   }
