@@ -50,6 +50,8 @@ return [
     'visitors' => env('MODULE_VISITORS', true),
     'ev_charging' => env('MODULE_EV_CHARGING', true),
     'recommendations' => env('MODULE_RECOMMENDATIONS', true),
+    'history' => env('MODULE_HISTORY', true),
+    'geofence' => env('MODULE_GEOFENCE', true),
 
     // ── Integration (disabled by default — requires credentials) ───
     'stripe' => env('MODULE_STRIPE', false),

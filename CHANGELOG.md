@@ -7,6 +7,31 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.6.0] - 2026-03-22
+
+### Added
+- **Parking History**: Paginated booking history with statistics dashboard
+  - `GET /api/v1/bookings/history` -- paginated past bookings with lot/date filters
+  - `GET /api/v1/bookings/stats` -- personal stats: total bookings, favorite lot, avg duration, monthly trend, busiest day, credits spent
+  - ParkingHistory.tsx frontend with stats cards, monthly trend chart, filters, timeline, pagination
+  - `MODULE_HISTORY=true` toggle (45th module)
+  - 10 PHP tests + 6 vitest tests
+- **Geofencing**: GPS-based auto check-in with haversine distance calculation
+  - `POST /api/v1/geofence/check-in` -- auto check-in when within lot geofence radius
+  - `GET /api/v1/lots/{id}/geofence` -- get geofence config (center coords, radius, enabled)
+  - `PUT /api/v1/admin/lots/{id}/geofence` -- admin set geofence center and radius
+  - Profile.tsx updated with geofence auto check-in toggle
+  - `MODULE_GEOFENCE=true` toggle (46th module)
+  - 10 PHP tests + 4 vitest tests
+- **Frontend sync from parkhub-rust**: ParkingHistory.tsx, Geofence.test.tsx, updated Profile.tsx (geofence toggle), App.tsx (history route), Layout.tsx (history nav item), Admin.tsx (unchanged), api/client.ts (history + geofence endpoints), all 10 i18n locale files with history/geofence translations
+- Migration adds `center_lat`, `center_lng`, `geofence_radius_m` to parking_lots table
+
+### Changed
+- Module count: 46 modules (added `history`, `geofence`)
+- README badges updated to v3.6.0, test count 1670+
+
+---
+
 ## [3.5.0] - 2026-03-22
 
 ### Added
