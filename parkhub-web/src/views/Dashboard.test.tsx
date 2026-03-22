@@ -89,7 +89,7 @@ vi.mock('../constants/animations', () => ({
 }));
 
 vi.mock('../hooks/useWebSocket', () => ({
-  useWebSocket: () => ({ connected: false, lastEvent: null }),
+  useWebSocket: () => ({ connected: false, lastMessage: null, occupancy: {} }),
 }));
 
 vi.mock('../components/SimpleChart', () => ({

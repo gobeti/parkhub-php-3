@@ -36,6 +36,10 @@ vi.mock('react-router-dom', () => ({
   Link: ({ to, children, ...props }: any) => <a href={to} {...props}>{children}</a>,
 }));
 
+vi.mock('../hooks/useWebSocket', () => ({
+  useWebSocket: () => ({ connected: false, lastMessage: null, occupancy: {} }),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: any) => {

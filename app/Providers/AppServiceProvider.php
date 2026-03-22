@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Events\BookingCancelled;
+use App\Events\BookingCreated;
+use App\Listeners\PushSseBookingEvent;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,6 +30,10 @@ class AppServiceProvider extends ServiceProvider
         // Disable the default {data: ...} wrapping on JsonResource — the ApiResponseWrapper
         // middleware already wraps all API responses in {success, data, error, meta}.
         JsonResource::withoutWrapping();
+
+        // SSE real-time event listeners — push booking events to cache queue
+        Event::listen(BookingCreated::class, [PushSseBookingEvent::class, 'handleCreated']);
+        Event::listen(BookingCancelled::class, [PushSseBookingEvent::class, 'handleCancelled']);
 
         $this->configureRateLimiting();
     }
