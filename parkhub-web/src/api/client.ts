@@ -121,6 +121,24 @@ export const api = {
   deleteLot: (id: string) =>
     request<void>(`/api/v1/lots/${id}`, { method: 'DELETE' }),
 
+  // ── Dynamic Pricing ──
+  getDynamicPrice: (lotId: string) =>
+    request<DynamicPriceResult>(`/api/v1/lots/${lotId}/pricing/dynamic`),
+  getAdminDynamicPricing: (lotId: string) =>
+    request<DynamicPricingRules>(`/api/v1/admin/lots/${lotId}/pricing/dynamic`),
+  updateAdminDynamicPricing: (lotId: string, data: Partial<DynamicPricingRules>) =>
+    request<DynamicPricingRules>(`/api/v1/admin/lots/${lotId}/pricing/dynamic`, {
+      method: 'PUT', body: JSON.stringify(data),
+    }),
+
+  // ── Operating Hours ──
+  getLotHours: (lotId: string) =>
+    request<OperatingHoursResponse>(`/api/v1/lots/${lotId}/hours`),
+  updateAdminLotHours: (lotId: string, data: OperatingHoursData) =>
+    request<OperatingHoursResponse>(`/api/v1/admin/lots/${lotId}/hours`, {
+      method: 'PUT', body: JSON.stringify(data),
+    }),
+
   // ── Bookings ──
   getBookings: () => request<Booking[]>('/api/v1/bookings'),
   createBooking: (data: CreateBookingPayload) => request<Booking>('/api/v1/bookings', { method: 'POST', body: JSON.stringify(data) }),
@@ -302,6 +320,47 @@ export interface ParkingLot {
   daily_max?: number;
   monthly_pass?: number;
   currency?: string;
+  operating_hours?: OperatingHoursData;
+}
+
+export interface DynamicPricingRules {
+  enabled: boolean;
+  base_price: number;
+  surge_multiplier: number;
+  discount_multiplier: number;
+  surge_threshold: number;
+  discount_threshold: number;
+}
+
+export interface DynamicPriceResult {
+  current_price: number;
+  base_price: number;
+  applied_multiplier: number;
+  occupancy_percent: number;
+  dynamic_pricing_active: boolean;
+  tier: 'surge' | 'discount' | 'normal';
+  currency: string;
+}
+
+export interface DayHoursData {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+export interface OperatingHoursData {
+  is_24h: boolean;
+  monday?: DayHoursData;
+  tuesday?: DayHoursData;
+  wednesday?: DayHoursData;
+  thursday?: DayHoursData;
+  friday?: DayHoursData;
+  saturday?: DayHoursData;
+  sunday?: DayHoursData;
+}
+
+export interface OperatingHoursResponse extends OperatingHoursData {
+  is_open_now: boolean;
 }
 
 export type SlotType = 'standard' | 'compact' | 'large' | 'handicap' | 'electric' | 'motorcycle' | 'reserved' | 'vip';
@@ -613,6 +672,13 @@ export interface NotificationPreferences {
   email_booking_reminder: boolean;
   email_swap_request: boolean;
   push_enabled: boolean;
+  sms_booking_confirm: boolean;
+  sms_booking_reminder: boolean;
+  sms_booking_cancelled: boolean;
+  whatsapp_booking_confirm: boolean;
+  whatsapp_booking_reminder: boolean;
+  whatsapp_booking_cancelled: boolean;
+  phone_number?: string;
 }
 
 // ── Bulk Result ──

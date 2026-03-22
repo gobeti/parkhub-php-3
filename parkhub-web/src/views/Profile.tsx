@@ -251,7 +251,7 @@ export function ProfilePage() {
           </button>
         </div>
       </motion.div>
-      {/* Design Themes */}
+      {/* Design Theme */}
       <motion.div variants={fadeUp} className="card p-6">
         <ProfileThemeSection />
       </motion.div>
