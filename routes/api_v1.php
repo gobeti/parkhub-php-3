@@ -79,6 +79,9 @@ Route::get('/modules', [ModuleController::class, 'index']);
 // Discovery / handshake endpoint (public)
 Route::get('/discover', [PublicController::class, 'discover']);
 
+// ── Map module (public — must be before /lots/{id} catch-all) ────────────────
+module_routes('map', 'map.php');
+
 // ── Core protected routes ───────────────────────────────────────────────────
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
@@ -210,6 +213,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 module_routes('bookings', 'bookings.php');
 module_routes('vehicles', 'vehicles.php');
 module_routes('absences', 'absences.php');
+// Stripe — always load routes before payments (module disabled by default, middleware gates access)
+// Must register before payments.php so /payments/config/status matches before /payments/{id}/status
+require base_path('routes/modules/stripe.php');
 module_routes('payments', 'payments.php');
 module_routes('webhooks', 'webhooks.php');
 module_routes('notifications', 'notifications.php');

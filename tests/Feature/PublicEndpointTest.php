@@ -78,6 +78,7 @@ class PublicEndpointTest extends TestCase
 
     public function test_v1_vapid_key(): void
     {
+        config(['services.webpush.vapid_public_key' => 'BTestVapidKey123']);
         $this->getJson('/api/v1/push/vapid-key')
             ->assertStatus(200);
     }

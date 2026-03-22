@@ -9,7 +9,7 @@ class ParkingLot extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['name', 'address', 'total_slots', 'available_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency', 'operating_hours', 'dynamic_pricing_rules'];
+    protected $fillable = ['name', 'address', 'latitude', 'longitude', 'total_slots', 'available_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency', 'operating_hours', 'dynamic_pricing_rules'];
 
     protected function casts(): array
     {
@@ -17,6 +17,8 @@ class ParkingLot extends Model
             'layout' => 'array',
             'total_slots' => 'integer',
             'available_slots' => 'integer',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
             'hourly_rate' => 'decimal:2',
             'daily_max' => 'decimal:2',
             'monthly_pass' => 'decimal:2',
