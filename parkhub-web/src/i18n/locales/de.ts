@@ -47,6 +47,9 @@ export default {
       ruleLower: 'Kleinbuchstabe',
       ruleUpper: 'Großbuchstabe',
       ruleDigit: 'Zahl',
+      continueWithGoogle: 'Weiter mit Google',
+      continueWithGitHub: 'Weiter mit GitHub',
+      orContinueWith: 'oder',
     },
     nav: {
       dashboard: 'Dashboard',
@@ -483,6 +486,7 @@ export default {
         team_view: { name: 'Team-Ansicht', desc: 'Sehen wer im Buro oder remote arbeitet', help: 'Zeigt Team-Prasenz basierend auf Abwesenheiten und Buchungsdaten.' },
         booking_types: { name: 'Buchungstypen', desc: 'Ein- und mehrtägige sowie wiederkehrende Buchungen', help: 'Verschiedene Buchungstypen uber einfache Reservierungen hinaus.' },
         invoices: { name: 'Rechnungen', desc: 'PDF-Rechnungen fur Buchungen erstellen', help: 'Automatisch Rechnungen fur abgeschlossene Buchungen generieren.' },
+        oauth: { name: 'OAuth / Social Login', desc: 'Mit Google oder GitHub anmelden', help: 'Social-Login-Buttons auf Login- und Registrierungsseiten. Erfordert OAuth-Zugangsdaten.' },
         self_registration: { name: 'Selbstregistrierung', desc: 'Benutzer konnen Konten ohne Admin-Genehmigung erstellen', help: 'Neue Benutzer konnen sich selbst registrieren.' },
         generative_bg: { name: 'Generativer Hintergrund', desc: 'Animierte Hintergrunde auf offentlichen Seiten', help: 'Dezente animierte Muster auf Login- und Willkommensseiten.' },
         micro_animations: { name: 'Mikro-Animationen', desc: 'Sanfte Ubergange und Hover-Effekte', help: 'Spring-Physik-Animationen und gestaffelte Listen.' },
