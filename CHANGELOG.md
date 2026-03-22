@@ -7,6 +7,40 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.2.0] - 2026-03-22
+
+### Added
+- **iCal Calendar Subscriptions**: Subscribe to parking calendar from any calendar app
+  - `GET /api/v1/calendar/ical` — authenticated iCal feed
+  - `GET /api/v1/calendar/ical/{token}` — public feed via token (no auth)
+  - `POST /api/v1/calendar/token` — generate/regenerate subscription token
+  - Subscribe button and modal in Calendar.tsx with copy-to-clipboard
+  - `MODULE_ICAL=true` toggle (33rd module)
+  - 8 PHP tests
+- **Rate Limit Dashboard**: Real-time rate limit monitoring for admins
+  - `GET /api/v1/admin/rate-limits` — per-group stats (auth/api/public/webhook)
+  - `GET /api/v1/admin/rate-limits/history` — 24h hourly blocked request bins
+  - AdminRateLimits.tsx frontend with group cards and blocked chart
+  - `MODULE_RATE_DASHBOARD=true` toggle (34th module)
+  - 9 PHP tests + 5 vitest tests
+- **Multi-Tenant**: Tenant isolation with scoping middleware
+  - `GET /api/v1/admin/tenants` — list tenants with user/lot counts
+  - `POST /api/v1/admin/tenants` — create tenant with branding
+  - `PUT /api/v1/admin/tenants/{id}` — update tenant
+  - Tenant model with relationships, `tenant_id` on users/lots/bookings
+  - AdminTenants.tsx frontend with create/edit modal
+  - `MODULE_MULTI_TENANT=true` toggle (35th module)
+  - 10 PHP tests + 5 vitest tests
+- **Frontend sync from parkhub-rust**: AdminRateLimits, AdminTenants, Calendar (subscribe), Admin (new tabs), App.tsx (new routes), Layout, api client (rate-limits/tenants/calendar-token), all 10 locale files updated
+- 508 vitest + 998 PHPUnit = **1506 tests** total
+
+### Changed
+- Module count: 35 modules (added `ical`, `rate_dashboard`, `multi_tenant`)
+- README badges updated to v3.2.0
+- Migration adds `tenants` table, `ical_token` and `tenant_id` to users, `tenant_id` to parking_lots and bookings
+
+---
+
 ## [3.1.0] - 2026-03-22
 
 ### Added
