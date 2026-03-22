@@ -107,11 +107,15 @@ class DemoController extends Controller
             return response()->json(['error' => 'Demo mode is not enabled'], 403);
         }
 
+        // If an authenticated admin is making the request, allow it directly
+        // Otherwise, enforce the solo viewer check for anonymous demo users
+        $isAdmin = $request->user() && $request->user()->isAdmin();
+
         // Only allow solo reset when 1 or fewer active viewers
         $viewers = Cache::get(self::CACHE_PREFIX.'viewers', []);
         $viewers = array_filter($viewers, fn ($ts) => now()->timestamp - $ts < 300);
 
-        if (count($viewers) > 1) {
+        if (! $isAdmin && count($viewers) > 1) {
             return response()->json([
                 'error' => 'Solo reset not available with multiple viewers. Use voting instead.',
                 'viewers' => count($viewers),
