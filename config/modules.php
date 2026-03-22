@@ -40,4 +40,5 @@ return [
     'operating_hours' => env('MODULE_OPERATING_HOURS', true),
     'realtime' => env('MODULE_REALTIME', true),
     'lobby_display' => env('MODULE_LOBBY_DISPLAY', true),
+    'analytics' => env('MODULE_ANALYTICS', true),
 ];
