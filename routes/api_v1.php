@@ -259,5 +259,9 @@ module_routes('recommendations', 'recommendations.php');
 module_routes('waitlist_ext', 'waitlist.php');
 module_routes('parking_pass', 'parking_pass.php');
 
+module_routes('absence_approval', 'absence_approval.php');
+module_routes('calendar_drag', 'calendar_drag.php');
+module_routes('widgets', 'widgets.php');
+
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');
