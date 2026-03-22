@@ -21,16 +21,8 @@ class AdminSettingsController extends Controller
 {
     use ValidatesExternalUrls;
 
-    private function requireAdmin($request): void
-    {
-        if (! $request->user() || ! $request->user()->isAdmin()) {
-            abort(403, 'Admin access required');
-        }
-    }
-
     public function getSettings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $settings = Setting::all()->pluck('value', 'key')->toArray();
         $defaults = [
@@ -57,7 +49,6 @@ class AdminSettingsController extends Controller
 
     public function updateSettings(UpdateSettingsRequest $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         // Allowlist of keys that can be set via this endpoint.
         // Prevents injection of arbitrary/internal settings keys.
@@ -83,7 +74,6 @@ class AdminSettingsController extends Controller
 
     public function getBranding(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         return response()->json([
             'company_name' => Setting::get('company_name', 'ParkHub'),
@@ -95,7 +85,7 @@ class AdminSettingsController extends Controller
 
     public function updateBranding(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         $request->validate([
             'company_name' => 'sometimes|string|max:255',
             'primary_color' => ['sometimes', 'string', 'max:7', 'regex:/^#[0-9a-fA-F]{6}$/'],
@@ -119,7 +109,7 @@ class AdminSettingsController extends Controller
 
     public function uploadBrandingLogo(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         $request->validate(['logo' => 'required|image|mimes:jpeg,png,gif,svg,webp|max:2048']);
         $path = $request->file('logo')->store('branding', 'public');
         Setting::set('logo_url', '/storage/'.$path);
@@ -148,7 +138,6 @@ class AdminSettingsController extends Controller
 
     public function getPrivacy(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         return response()->json([
             'policy_text' => Setting::get('privacy_policy', ''),
@@ -159,7 +148,7 @@ class AdminSettingsController extends Controller
 
     public function updatePrivacy(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         foreach (['policy_text', 'data_retention_days', 'gdpr_enabled'] as $key) {
             if ($request->has($key)) {
                 Setting::set('privacy_'.str_replace('_text', '_policy', $key), (string) $request->input($key));
@@ -180,7 +169,6 @@ class AdminSettingsController extends Controller
 
     public function getAutoReleaseSettings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         return response()->json([
             'enabled' => Setting::get('auto_release_enabled', 'false') === 'true',
@@ -190,7 +178,7 @@ class AdminSettingsController extends Controller
 
     public function updateAutoReleaseSettings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         if ($request->has('enabled')) {
             Setting::set('auto_release_enabled', $request->boolean('enabled') ? 'true' : 'false');
         }
@@ -203,7 +191,6 @@ class AdminSettingsController extends Controller
 
     public function getEmailSettings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         return response()->json([
             'smtp_host' => Setting::get('smtp_host', ''),
@@ -217,7 +204,7 @@ class AdminSettingsController extends Controller
 
     public function updateEmailSettings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         foreach (['smtp_host', 'smtp_port', 'smtp_user', 'from_email', 'from_name'] as $key) {
             if ($request->has($key)) {
                 Setting::set($key, $request->input($key));
@@ -236,7 +223,7 @@ class AdminSettingsController extends Controller
 
     public function getWebhookSettings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         $hooks = Webhook::all();
 
         return response()->json($hooks);
@@ -244,7 +231,7 @@ class AdminSettingsController extends Controller
 
     public function updateWebhookSettings(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         if ($request->has('webhooks')) {
             Webhook::query()->delete();
             foreach ($request->input('webhooks') as $hook) {
@@ -269,7 +256,6 @@ class AdminSettingsController extends Controller
 
     public function getImpress(Request $request)
     {
-        $this->requireAdmin($request);
 
         return response()->json([
             'provider_name' => Setting::get('impressum_provider_name', ''),
@@ -289,7 +275,7 @@ class AdminSettingsController extends Controller
 
     public function updateImpress(Request $request)
     {
-        $this->requireAdmin($request);
+
         $fields = [
             'provider_name', 'provider_legal_form', 'street', 'zip_city', 'country',
             'email', 'phone', 'register_court', 'register_number', 'vat_id',
@@ -356,7 +342,7 @@ class AdminSettingsController extends Controller
 
     public function resetDatabase(Request $request)
     {
-        $this->requireAdmin($request);
+
         $request->validate(['confirm' => 'required|in:RESET']);
         // Delete all user data but keep admin account
         $admin = $request->user();
@@ -419,7 +405,7 @@ class AdminSettingsController extends Controller
 
     public function getUseCase(Request $request)
     {
-        $this->requireAdmin($request);
+
         $current = Setting::get('use_case', 'company');
         $allOptions = array_map(fn ($k) => self::useCaseTheme($k), ['company', 'residential', 'shared', 'rental', 'personal']);
 

@@ -33,6 +33,12 @@ class BookingController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate([
+            'from_date' => 'sometimes|date',
+            'to_date' => 'sometimes|date',
+            'status' => 'sometimes|string|in:active,confirmed,cancelled,completed,expired',
+        ]);
+
         $query = Booking::with(['lot', 'slot'])
             ->where('user_id', $request->user()->id);
         if ($request->has('status')) {

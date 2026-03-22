@@ -16,13 +16,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminReportController extends Controller
 {
-    private function requireAdmin($request): void
-    {
-        if (! $request->user() || ! $request->user()->isAdmin()) {
-            abort(403, 'Admin access required');
-        }
-    }
-
     /**
      * Sanitize a value for CSV output to prevent formula injection.
      * Prefixes dangerous leading characters (=, +, -, @, TAB, CR) with a single quote.
@@ -39,7 +32,6 @@ class AdminReportController extends Controller
 
     public function stats(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $now = now();
         $activeBookings = Booking::whereIn('status', ['confirmed', 'active'])
@@ -63,7 +55,6 @@ class AdminReportController extends Controller
 
     public function heatmap(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
 
         $request->validate(['days' => 'integer|min:1|max:365']);
         $days = (int) $request->get('days', 30);
@@ -97,7 +88,7 @@ class AdminReportController extends Controller
 
     public function reports(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         $days = (int) $request->get('days', 30);
         $since = now()->subDays($days);
 
@@ -153,7 +144,7 @@ class AdminReportController extends Controller
 
     public function dashboardCharts(Request $request): JsonResponse
     {
-        $this->requireAdmin($request);
+
         $days = (int) $request->get('days', 7);
         $startDate = now()->subDays($days - 1)->toDateString();
 
@@ -193,7 +184,6 @@ class AdminReportController extends Controller
 
     public function exportBookingsCsv(Request $request): StreamedResponse
     {
-        $this->requireAdmin($request);
 
         $headers = ['ID', 'User', 'Lot', 'Slot', 'Vehicle', 'Start', 'End', 'Status', 'Type'];
 
@@ -224,7 +214,6 @@ class AdminReportController extends Controller
 
     public function exportUsersCsv(Request $request): Response
     {
-        $this->requireAdmin($request);
 
         $users = User::orderBy('name')->get();
 
