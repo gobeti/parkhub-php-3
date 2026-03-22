@@ -937,5 +937,8 @@ export default {
       complete: 'Completa configurazione',
       networkError: 'Errore di rete',
     },
+    accessible: { title: 'Parcheggio Accessibile', subtitle: 'Parcheggio Accessibile', slots: 'Parcheggio Accessibile', totalSlots: 'Parcheggio Accessibile', utilization: 'Utilization', totalBookings: 'Active Bookings', usersWithNeeds: 'Users', priority: 'Priority: {{minutes}} min head start.', needs: 'Esigenze di accessibilità', needsDesc: 'Esigenze di accessibilità', wheelchair: 'Sedia a rotelle', reducedMobility: 'Mobilità ridotta', visual: 'Disabilità visiva', hearing: 'Disabilità uditiva', none: 'Nessuna esigenza', stats: 'Parcheggio Accessibile', manageSlots: 'Parcheggio Accessibile', selectLot: '...', slotLabel: 'Slot', noSlots: '-', toggleSuccess: 'OK', updated: 'OK', help: 'Parcheggio Accessibile' },
+    maintenance: { title: 'Pianificazione Manutenzione', subtitle: 'Pianificazione Manutenzione', create: 'New', createTitle: 'New', editTitle: 'Edit', lot: 'Lot', reason: 'Reason', start: 'Start', end: 'End', allSlots: 'All', specificSlots: 'Slot IDs', selectLot: '...', empty: '-', created: 'OK', updated: 'OK', deleted: 'OK', requiredFields: 'Required', activeBanner: '{{count}} active', help: 'Pianificazione Manutenzione' },
+    billing: { title: 'Fatturazione per Centro di Costo', subtitle: 'Fatturazione per Centro di Costo', export: 'CSV', exported: 'OK', totalSpending: 'Total', totalBookings: 'Bookings', totalUsers: 'Users', byCostCenter: 'Cost Center', byDepartment: 'Department', costCenter: 'Cost Center', department: 'Department', users: 'Users', bookings: 'Bookings', credits: 'Credits', amount: 'Amount', empty: '-', help: 'Fatturazione per Centro di Costo' },
   },
 };
