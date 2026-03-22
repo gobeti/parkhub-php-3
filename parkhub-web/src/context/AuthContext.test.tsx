@@ -26,7 +26,6 @@ const { mockLogin, mockMe } = vi.hoisted(() => ({
 vi.mock('../api/client', () => ({
   api: {
     login: mockLogin,
-    login2fa: mockLogin,
     me: mockMe,
   },
 }));

@@ -56,7 +56,7 @@ export function OnboardingHint({ id, message, icon: Icon = Lightbulb, position =
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           className={`absolute ${position === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 right-0 z-30 ${className}`}
         >
-          <div className="bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800/40 rounded-lg p-3 shadow-md" role="tooltip" aria-live="polite">
+          <div className="bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800/40 rounded-lg p-3 shadow-md">
             {/* Arrow */}
             <div
               className={`absolute ${position === 'bottom' ? '-top-1.5' : '-bottom-1.5'} left-6 w-3 h-3 bg-accent-50 dark:bg-accent-900/20 border-accent-200 dark:border-accent-800/40 rotate-45 ${

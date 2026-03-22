@@ -24,7 +24,6 @@ vi.mock('../context/AuthContext', () => ({
       credits_monthly_quota: 10,
     },
     logout: mockLogout,
-    refreshUser: vi.fn().mockResolvedValue(undefined),
   }),
 }));
 
@@ -38,10 +37,10 @@ vi.mock('../api/client', () => ({
     getLoginHistory: vi.fn().mockResolvedValue({ success: true, data: [] }),
     getSessions: vi.fn().mockResolvedValue({ success: true, data: [] }),
     revokeSession: vi.fn().mockResolvedValue({ success: true }),
-    revokeAllSessions: vi.fn().mockResolvedValue({ success: true }),
-    setup2fa: vi.fn().mockResolvedValue({ success: true, data: { secret: 'ABCD', qr_url: 'otpauth://test' } }),
-    verify2fa: vi.fn().mockResolvedValue({ success: true }),
-    disable2fa: vi.fn().mockResolvedValue({ success: true }),
+    get2FAStatus: vi.fn().mockResolvedValue({ success: true, data: { enabled: false } }),
+    setup2FA: vi.fn().mockResolvedValue({ success: true, data: { secret: 'ABCD', qr_url: 'otpauth://test' } }),
+    verify2FA: vi.fn().mockResolvedValue({ success: true }),
+    disable2FA: vi.fn().mockResolvedValue({ success: true }),
   },
 }));
 
@@ -114,16 +113,17 @@ vi.mock('@phosphor-icons/react', () => ({
   CaretDown: (props: any) => <span data-testid="icon-caret-down" {...props} />,
   CaretUp: (props: any) => <span data-testid="icon-caret-up" {...props} />,
   Shield: (props: any) => <span data-testid="icon-shield" {...props} />,
+  Warning: (props: any) => <span data-testid="icon-warning" {...props} />,
   ShieldCheck: (props: any) => <span data-testid="icon-shield-check" {...props} />,
-  ShieldSlash: (props: any) => <span data-testid="icon-shield-slash" {...props} />,
   Bell: (props: any) => <span data-testid="icon-bell" {...props} />,
-  BellSlash: (props: any) => <span data-testid="icon-bell-slash" {...props} />,
-  Moon: (props: any) => <span data-testid="icon-moon" {...props} />,
+  EnvelopeSimple: (props: any) => <span data-testid="icon-envelope-simple" {...props} />,
+  DeviceMobile: (props: any) => <span data-testid="icon-device-mobile" {...props} />,
   ClockCounterClockwise: (props: any) => <span data-testid="icon-clock" {...props} />,
   Desktop: (props: any) => <span data-testid="icon-desktop" {...props} />,
   Globe: (props: any) => <span data-testid="icon-globe" {...props} />,
+  ShieldWarning: (props: any) => <span data-testid="icon-shield-warning" {...props} />,
+  Check: (props: any) => <span data-testid="icon-check" {...props} />,
   X: (props: any) => <span data-testid="icon-x" {...props} />,
-  Warning: (props: any) => <span data-testid="icon-warning" {...props} />,
 }));
 
 vi.mock('react-hot-toast', () => ({

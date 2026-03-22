@@ -9,7 +9,7 @@ class ParkingLot extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['name', 'address', 'total_slots', 'available_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency'];
+    protected $fillable = ['name', 'address', 'total_slots', 'available_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency', 'operating_hours'];
 
     protected function casts(): array
     {
@@ -20,6 +20,7 @@ class ParkingLot extends Model
             'hourly_rate' => 'decimal:2',
             'daily_max' => 'decimal:2',
             'monthly_pass' => 'decimal:2',
+            'operating_hours' => 'array',
         ];
     }
 
@@ -36,5 +37,38 @@ class ParkingLot extends Model
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'lot_id');
+    }
+
+    /**
+     * Check if the lot is open at a given datetime based on operating_hours.
+     * Returns true if no operating hours are configured (always open).
+     */
+    public function isOpenAt(\DateTimeInterface $dateTime): bool
+    {
+        if (empty($this->operating_hours)) {
+            return true;
+        }
+
+        $dayName = strtolower($dateTime->format('l'));
+        $dayHours = $this->operating_hours[$dayName] ?? null;
+
+        if ($dayHours === null) {
+            return false; // Day not listed = closed
+        }
+
+        if (isset($dayHours['closed']) && $dayHours['closed']) {
+            return false;
+        }
+
+        $open = $dayHours['open'] ?? null;
+        $close = $dayHours['close'] ?? null;
+
+        if (! $open || ! $close) {
+            return true; // No hours specified = 24h open
+        }
+
+        $time = $dateTime->format('H:i');
+
+        return $time >= $open && $time < $close;
     }
 }

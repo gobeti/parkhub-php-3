@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Setting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 /**
- * Generates a printer-friendly HTML invoice for a completed booking.
- * Users can open the URL in a browser and use "Print → Save as PDF".
- * No external PDF library needed — pure HTML with @media print CSS.
+ * Generates PDF and HTML invoices for bookings.
+ * GET /api/v1/bookings/{id}/invoice — HTML (default) or PDF (?format=pdf)
+ * GET /api/v1/bookings/{id}/invoice.pdf — always PDF
  */
 class BookingInvoiceController extends Controller
 {
@@ -21,42 +22,112 @@ class BookingInvoiceController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
+        $data = $this->buildInvoiceData($booking, $user);
+
+        // If ?format=pdf or Accept header requests PDF
+        if ($request->input('format') === 'pdf' || $request->wantsJson() === false && str_contains($request->header('Accept', ''), 'application/pdf')) {
+            return $this->renderPdf($data);
+        }
+
+        return $this->renderHtmlResponse($data);
+    }
+
+    /**
+     * Explicit PDF endpoint: GET /api/v1/bookings/{id}/invoice.pdf
+     */
+    public function pdf(Request $request, string $id)
+    {
+        $user = $request->user();
+        $booking = Booking::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        return $this->renderPdf($this->buildInvoiceData($booking, $user));
+    }
+
+    /**
+     * Admin bulk export: POST /api/v1/admin/invoices/bulk
+     * Accepts array of booking IDs, returns a zip or combined PDF.
+     */
+    public function bulkExport(Request $request)
+    {
+        $request->validate([
+            'booking_ids' => 'required|array|min:1|max:50',
+            'booking_ids.*' => 'uuid',
+        ]);
+
+        $bookings = Booking::whereIn('id', $request->booking_ids)->get();
+
+        if ($bookings->isEmpty()) {
+            return response()->json(['error' => 'NO_BOOKINGS_FOUND', 'message' => 'No bookings found for given IDs'], 404);
+        }
+
+        // Generate combined PDF with all invoices
+        $htmlPages = [];
+        foreach ($bookings as $booking) {
+            $user = $booking->user;
+            if (! $user) {
+                continue;
+            }
+            $data = $this->buildInvoiceData($booking, $user);
+            $htmlPages[] = $this->renderHtml($data);
+        }
+
+        $combinedHtml = implode('<div style="page-break-after: always;"></div>', $htmlPages);
+        $pdf = Pdf::loadHTML($combinedHtml)->setPaper('a4');
+
+        return $pdf->download('invoices-bulk-'.date('Y-m-d').'.pdf');
+    }
+
+    private function buildInvoiceData(Booking $booking, $user): array
+    {
         $company = Setting::get('company_name', 'ParkHub');
         $vatId = Setting::get('impressum_vat_id', '');
         $street = Setting::get('impressum_street', '');
         $zipCity = Setting::get('impressum_zip_city', '');
         $email = Setting::get('impressum_email', '');
 
-        // Calculate duration
         $start = $booking->start_time ? strtotime($booking->start_time) : 0;
         $end = $booking->end_time ? strtotime($booking->end_time) : $start + 3600;
         $hours = max(1, round(($end - $start) / 3600, 2));
 
-        // Format dates
-        $startFmt = $start ? date('d.m.Y H:i', $start) : '—';
-        $endFmt = $end ? date('d.m.Y H:i', $end) : '—';
+        $startFmt = $start ? date('d.m.Y H:i', $start) : '-';
+        $endFmt = $end ? date('d.m.Y H:i', $end) : '-';
         $dateNow = date('d.m.Y');
 
-        // Invoice number: INV-YYYYMM-{short_id}
         $shortId = strtoupper(substr(str_replace('-', '', $booking->id), 0, 8));
         $invoiceNo = 'INV-'.date('Ym').'-'.$shortId;
 
-        $html = $this->renderHtml(compact(
+        return compact(
             'company', 'vatId', 'street', 'zipCity', 'email',
             'booking', 'user', 'hours', 'startFmt', 'endFmt',
-            'dateNow', 'invoiceNo'
-        ));
+            'dateNow', 'invoiceNo', 'shortId'
+        );
+    }
+
+    private function renderPdf(array $d)
+    {
+        $html = $this->renderHtml($d);
+        $pdf = Pdf::loadHTML($html)->setPaper('a4');
+        $shortId = $d['shortId'];
+
+        return $pdf->download("rechnung-{$shortId}.pdf");
+    }
+
+    private function renderHtmlResponse(array $d)
+    {
+        $html = $this->renderHtml($d);
 
         return response($html, 200, [
             'Content-Type' => 'text/html; charset=utf-8',
-            'Content-Disposition' => 'inline; filename="rechnung-'.$shortId.'.html"',
+            'Content-Disposition' => 'inline; filename="rechnung-'.$d['shortId'].'.html"',
             'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }
 
     private function renderHtml(array $d): string
     {
-        $e = fn (string $s) => htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $e = fn (string $s) => htmlspecialchars((string) $s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         $vatRow = $d['vatId']
             ? '<tr><td>Umsatzsteuer-ID</td><td>'.$e($d['vatId']).'</td></tr>'
@@ -64,6 +135,24 @@ class BookingInvoiceController extends Controller
 
         $address = array_filter([$d['street'], $d['zipCity']]);
         $addressHtml = implode('<br>', array_map($e, $address));
+
+        // Pricing breakdown
+        $pricingHtml = '';
+        if ($d['booking']->total_price) {
+            $curr = $d['booking']->currency ?? 'EUR';
+            $base = number_format((float) $d['booking']->base_price, 2, ',', '.');
+            $tax = number_format((float) $d['booking']->tax_amount, 2, ',', '.');
+            $total = number_format((float) $d['booking']->total_price, 2, ',', '.');
+            $pricingHtml = <<<PRICE
+  <div class="totals">
+    <table>
+      <tr><td>Nettobetrag</td><td style="text-align:right;">{$base} {$e($curr)}</td></tr>
+      <tr><td>MwSt. (19%)</td><td style="text-align:right;">{$tax} {$e($curr)}</td></tr>
+      <tr class="total"><td>Gesamtbetrag</td><td style="text-align:right;">{$total} {$e($curr)}</td></tr>
+    </table>
+  </div>
+PRICE;
+        }
 
         return <<<HTML
 <!DOCTYPE html>
@@ -110,7 +199,7 @@ class BookingInvoiceController extends Controller
 <div class="page">
 
   <div style="text-align:right; margin-bottom: 12px;" class="print-btn">
-    <button onclick="window.print()" style="background:#d97706; color:white; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-size:13px;">🖨 Als PDF speichern</button>
+    <button onclick="window.print()" style="background:#d97706; color:white; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-size:13px;">Als PDF speichern</button>
   </div>
 
   <div class="header">
@@ -135,7 +224,7 @@ class BookingInvoiceController extends Controller
       <p><strong>{$e($d['company'])}</strong><br>{$addressHtml}<br>{$e($d['email'])}</p>
     </div>
     <div class="party">
-      <h4>Rechnungsempfänger</h4>
+      <h4>Rechnungsempfaenger</h4>
       <p>
         <strong>{$e($d['user']->name)}</strong><br>
         {$e($d['user']->email)}<br>
@@ -144,7 +233,7 @@ class BookingInvoiceController extends Controller
     </div>
   </div>
 
-  <h3 style="margin-bottom:16px; font-size:16px; color:#374151;">Leistungsübersicht</h3>
+  <h3 style="margin-bottom:16px; font-size:16px; color:#374151;">Leistungsuebersicht</h3>
   <table>
     <thead>
       <tr>
@@ -159,7 +248,7 @@ class BookingInvoiceController extends Controller
         <td>
           <strong>Parkplatz-Buchung</strong><br>
           <span style="color:#6b7280; font-size:13px;">
-            {$e($d['booking']->lot_name ?? '—')} · Stellplatz {$e($d['booking']->slot_number ?? '—')}
+            {$e($d['booking']->lot_name ?? '-')} - Stellplatz {$e($d['booking']->slot_number ?? '-')}
           </span><br>
           <span style="color:#9ca3af; font-size:12px; font-family: monospace;">#{$e($d['booking']->id)}</span>
         </td>
@@ -175,15 +264,16 @@ class BookingInvoiceController extends Controller
     </tbody>
   </table>
 
+  {$pricingHtml}
   {$vatRow}
 
   <div class="notice">
-    <strong>Hinweis:</strong> Diese Buchungsbestätigung dient als Beleg. Gemäß § 14 UStG wird keine gesonderte Steuer ausgewiesen (Kleinunternehmerregelung oder Betreiber-konfiguriert). Bitte wenden Sie sich bei Fragen an {$e($d['email'])}.
+    <strong>Hinweis:</strong> Diese Buchungsbestaetigung dient als Beleg. Gemaess Paragraph 14 UStG wird keine gesonderte Steuer ausgewiesen (Kleinunternehmerregelung oder Betreiber-konfiguriert). Bitte wenden Sie sich bei Fragen an {$e($d['email'])}.
   </div>
 
   <div class="footer">
-    <strong>{$e($d['company'])}</strong> · ParkHub Open Source Parking Platform<br>
-    Erstellt am {$e($d['dateNow'])} · Buchungs-ID: {$e($d['booking']->id)}<br>
+    <strong>{$e($d['company'])}</strong> - ParkHub Open Source Parking Platform<br>
+    Erstellt am {$e($d['dateNow'])} - Buchungs-ID: {$e($d['booking']->id)}<br>
     <a href="https://github.com/nash87/parkhub-php" style="color:#9ca3af;">github.com/nash87/parkhub-php</a>
   </div>
 
