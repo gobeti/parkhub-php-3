@@ -26,6 +26,7 @@ use App\Models\Webhook;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -260,8 +261,9 @@ class BookingController extends Controller
         // Send booking confirmation email via job queue
         SendBookingConfirmationJob::dispatch($booking->id, $request->user()->id);
 
-        // Dispatch webhook events
-        foreach (Webhook::where('active', true)->get() as $webhook) {
+        // Dispatch webhook events (cached for 60s to avoid per-booking queries)
+        $activeWebhooks = Cache::remember('active_webhooks', 60, fn () => Webhook::where('active', true)->get());
+        foreach ($activeWebhooks as $webhook) {
             if (in_array('booking.created', $webhook->events ?? [])) {
                 SendWebhookJob::dispatch($webhook->id, 'booking.created', [
                     'booking_id' => $booking->id,
@@ -325,8 +327,9 @@ class BookingController extends Controller
         // Notify waitlist users that a slot has become available in this lot
         $this->notifyWaitlist($booking->lot_id, $booking->slot_id);
 
-        // Dispatch webhook events
-        foreach (Webhook::where('active', true)->get() as $webhook) {
+        // Dispatch webhook events (cached for 60s to avoid per-booking queries)
+        $activeWebhooks = Cache::remember('active_webhooks', 60, fn () => Webhook::where('active', true)->get());
+        foreach ($activeWebhooks as $webhook) {
             if (in_array('booking.cancelled', $webhook->events ?? [])) {
                 SendWebhookJob::dispatch($webhook->id, 'booking.cancelled', [
                     'booking_id' => $booking->id,
