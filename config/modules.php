@@ -36,4 +36,5 @@ return [
     'themes' => env('MODULE_THEMES', true),
     'oauth' => env('MODULE_OAUTH', false), // disabled by default — requires OAuth credentials
     'invoices' => env('MODULE_INVOICES', true),
+    'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', true),
 ];
