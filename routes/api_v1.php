@@ -226,3 +226,4 @@ module_routes('data_export', 'data_export.php');
 module_routes('setup_wizard', 'setup_wizard.php');
 module_routes('gdpr', 'gdpr.php');
 module_routes('push_notifications', 'push_notifications.php');
+module_routes('themes', 'themes.php');

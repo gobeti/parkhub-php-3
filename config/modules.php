@@ -33,4 +33,5 @@ return [
     'gdpr' => env('MODULE_GDPR', true),
     'push_notifications' => env('MODULE_PUSH_NOTIFICATIONS', true),
     'stripe' => env('MODULE_STRIPE', false), // disabled by default — requires Stripe keys
+    'themes' => env('MODULE_THEMES', true),
 ];
