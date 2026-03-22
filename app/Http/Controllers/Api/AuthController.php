@@ -10,6 +10,7 @@ use App\Http\Requests\ResetPasswordRequest;
 use App\Jobs\SendPasswordResetNotificationJob;
 use App\Mail\WelcomeEmail;
 use App\Models\AuditLog;
+use App\Models\LoginHistory;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -42,8 +43,34 @@ class AuthController extends Controller
             return response()->json(['error' => 'ACCOUNT_DISABLED', 'message' => 'Account is disabled'], 403);
         }
 
+        // 2FA check: if enabled, require code or return challenge
+        if ($user->two_factor_enabled) {
+            if (! $request->has('two_factor_code')) {
+                return response()->json([
+                    'requires_2fa' => true,
+                    'message' => 'Two-factor authentication code required.',
+                ]);
+            }
+
+            $valid = TwoFactorController::validateLoginCode($user, $request->two_factor_code);
+            if (! $valid) {
+                return response()->json([
+                    'error' => 'INVALID_2FA_CODE',
+                    'message' => 'Invalid two-factor authentication code.',
+                ], 401);
+            }
+        }
+
         $user->update(['last_login' => now()]);
         $token = $user->createToken('auth-token');
+
+        // Record login history
+        LoginHistory::create([
+            'user_id' => $user->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 512),
+            'logged_in_at' => now(),
+        ]);
 
         AuditLog::log([
             'user_id' => $user->id,
@@ -166,6 +193,34 @@ class AuthController extends Controller
         return response()->json(['message' => 'Account deleted']);
     }
 
+    /**
+     * Get login history for the current user.
+     */
+    public function loginHistory(Request $request): JsonResponse
+    {
+        $history = LoginHistory::where('user_id', $request->user()->id)
+            ->orderBy('logged_in_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return response()->json($history);
+    }
+
+    /**
+     * Admin: get login history for a specific user.
+     */
+    public function adminLoginHistory(Request $request, string $id): JsonResponse
+    {
+        User::findOrFail($id);
+
+        $history = LoginHistory::where('user_id', $id)
+            ->orderBy('logged_in_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return response()->json($history);
+    }
+
     private function userResponse(User $user): array
     {
         return [
@@ -184,6 +239,7 @@ class AuthController extends Controller
             'department' => $user->department,
             'credits_balance' => $user->credits_balance,
             'credits_monthly_quota' => $user->credits_monthly_quota,
+            'two_factor_enabled' => $user->two_factor_enabled,
         ];
     }
 

@@ -17,9 +17,10 @@ class User extends Authenticatable
         'username', 'email', 'password', 'name', 'picture', 'phone',
         'preferences', 'is_active', 'department', 'last_login',
         'credits_balance', 'credits_monthly_quota', 'credits_last_refilled',
+        'two_factor_secret', 'two_factor_enabled', 'notification_preferences',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret'];
 
     protected function casts(): array
     {
@@ -31,7 +32,14 @@ class User extends Authenticatable
             'credits_balance' => 'integer',
             'credits_monthly_quota' => 'integer',
             'credits_last_refilled' => 'datetime',
+            'two_factor_enabled' => 'boolean',
+            'notification_preferences' => 'array',
         ];
+    }
+
+    public function loginHistory()
+    {
+        return $this->hasMany(LoginHistory::class);
     }
 
     public function bookings()
