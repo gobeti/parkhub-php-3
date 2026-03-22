@@ -6,8 +6,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { UseCaseProvider } from './context/UseCaseContext';
 import { FeaturesProvider } from './context/FeaturesContext';
-import { ModuleProvider } from './context/ModuleContext';
 import './i18n';
+import { loadTranslationOverrides } from './i18n';
 
 // Eagerly loaded shell
 import { Layout } from './components/Layout';
@@ -48,6 +48,7 @@ const AdminUsersPage = lazy(() => import('./views/AdminUsers'), 'AdminUsersPage'
 const AdminAnnouncementsPage = lazy(() => import('./views/AdminAnnouncements'), 'AdminAnnouncementsPage');
 const AdminLotsPage = lazy(() => import('./views/AdminLots'), 'AdminLotsPage');
 const AdminReportsPage = lazy(() => import('./views/AdminReports'), 'AdminReportsPage');
+const FavoritesPage = lazy(() => import('./views/Favorites'), 'FavoritesPage');
 const TranslationsPage = lazy(() => import('./views/Translations'), 'TranslationsPage');
 const AdminTranslationsPage = lazy(() => import('./views/AdminTranslations'), 'AdminTranslationsPage');
 
@@ -81,7 +82,7 @@ function LoadingSplash() {
   );
 }
 
-/** Fetch /api/v1/theme on mount and apply use-case CSS theme */
+/** Fetch /api/v1/theme on mount and apply use-case CSS theme + load translation overrides */
 function useThemeLoader() {
   useEffect(() => {
     fetch('/api/v1/theme')
@@ -91,6 +92,7 @@ function useThemeLoader() {
         if (key) document.documentElement.dataset.usecase = key;
       })
       .catch(() => {});
+    loadTranslationOverrides();
   }, []);
 }
 
@@ -115,6 +117,7 @@ function AnimatedRoutes() {
           <Route path="bookings" element={<SuspenseRoute><BookingsPage /></SuspenseRoute>} />
           <Route path="credits" element={<SuspenseRoute><CreditsPage /></SuspenseRoute>} />
           <Route path="vehicles" element={<SuspenseRoute><VehiclesPage /></SuspenseRoute>} />
+          <Route path="favorites" element={<SuspenseRoute><FavoritesPage /></SuspenseRoute>} />
           <Route path="absences" element={<SuspenseRoute><AbsencesPage /></SuspenseRoute>} />
           <Route path="profile" element={<SuspenseRoute><ProfilePage /></SuspenseRoute>} />
           <Route path="team" element={<SuspenseRoute><TeamPage /></SuspenseRoute>} />
@@ -154,7 +157,6 @@ export function App() {
         <ThemeLoader>
         <UseCaseProvider>
         <FeaturesProvider>
-        <ModuleProvider>
         <AuthProvider>
           <AppRoutes />
           <Suspense fallback={null}><DemoOverlay /></Suspense>
@@ -168,7 +170,6 @@ export function App() {
             }}
           />
         </AuthProvider>
-        </ModuleProvider>
         </FeaturesProvider>
         </UseCaseProvider>
         </ThemeLoader>

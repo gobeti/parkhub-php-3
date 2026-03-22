@@ -158,6 +158,19 @@ class BookingController extends Controller
             ], 422);
         }
 
+        // Validate against operating hours
+        $lot = ParkingLot::find($request->lot_id);
+        if ($lot && ! empty($lot->operating_hours)) {
+            $endTimeParsedForHours = $request->end_time ? Carbon::parse($request->end_time) : $startTime->copy()->addHours(8);
+            if (! $lot->isOpenAt($startTime) || ! $lot->isOpenAt($endTimeParsedForHours)) {
+                return response()->json([
+                    'success' => false, 'data' => null,
+                    'error' => ['code' => 'OUTSIDE_OPERATING_HOURS', 'message' => 'Booking falls outside parking lot operating hours.'],
+                    'meta' => null,
+                ], 422);
+            }
+        }
+
         // Credits check — if credits system is enabled, verify balance
         $creditsEnabled = Setting::get('credits_enabled', 'false') === 'true';
         $creditsPerBooking = (int) Setting::get('credits_per_booking', '1');
@@ -633,49 +646,108 @@ class BookingController extends Controller
 
         $data = $request->only(['notes', 'vehicle_plate']);
 
-        // Allow extending end_time for active/confirmed bookings
-        if ($request->has('end_time')) {
+        // Only active/confirmed bookings can be modified
+        if ($request->hasAny(['start_time', 'end_time', 'slot_id'])) {
             if (! in_array($booking->status, [Booking::STATUS_ACTIVE, Booking::STATUS_CONFIRMED])) {
                 return response()->json([
                     'success' => false,
-                    'error' => ['code' => 'INVALID_STATUS', 'message' => 'Only active or confirmed bookings can be extended.'],
+                    'error' => ['code' => 'INVALID_STATUS', 'message' => 'Only active or confirmed bookings can be modified.'],
                 ], 422);
             }
+        }
 
-            $newEndTime = Carbon::parse($request->end_time);
-            if ($newEndTime->lte(Carbon::parse($booking->end_time))) {
+        $newStartTime = $request->has('start_time') ? Carbon::parse($request->start_time) : Carbon::parse($booking->start_time);
+        $newEndTime = $request->has('end_time') ? Carbon::parse($request->end_time) : Carbon::parse($booking->end_time);
+        $newSlotId = $request->input('slot_id', $booking->slot_id);
+        $timeChanged = $request->hasAny(['start_time', 'end_time']);
+        $slotChanged = $request->has('slot_id') && $newSlotId !== $booking->slot_id;
+
+        if ($timeChanged || $slotChanged) {
+            if ($newEndTime->lte($newStartTime)) {
                 return response()->json([
                     'success' => false,
-                    'error' => ['code' => 'INVALID_TIME', 'message' => 'New end time must be after the current end time.'],
+                    'error' => ['code' => 'INVALID_TIME', 'message' => 'End time must be after start time.'],
                 ], 422);
             }
 
-            // Check for conflicts with the extended time range
-            $conflict = Booking::where('slot_id', $booking->slot_id)
+            // Validate against operating hours
+            $lot = ParkingLot::find($booking->lot_id);
+            if ($lot && ! empty($lot->operating_hours)) {
+                if (! $lot->isOpenAt($newStartTime) || ! $lot->isOpenAt($newEndTime)) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => ['code' => 'OUTSIDE_OPERATING_HOURS', 'message' => 'Booking falls outside parking lot operating hours.'],
+                    ], 422);
+                }
+            }
+
+            // If slot changed, verify the new slot exists and belongs to the same lot
+            if ($slotChanged) {
+                $newSlot = ParkingSlot::where('id', $newSlotId)
+                    ->where('lot_id', $booking->lot_id)
+                    ->first();
+                if (! $newSlot) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => ['code' => 'INVALID_SLOT', 'message' => 'Slot not found in this parking lot.'],
+                    ], 422);
+                }
+            }
+
+            // Check for conflicts on the target slot
+            $conflict = Booking::where('slot_id', $newSlotId)
                 ->where('id', '!=', $booking->id)
                 ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
                 ->where('start_time', '<', $newEndTime)
-                ->where('end_time', '>', $booking->start_time)
+                ->where('end_time', '>', $newStartTime)
                 ->exists();
 
             if ($conflict) {
                 return response()->json([
                     'success' => false,
-                    'error' => ['code' => 'SLOT_CONFLICT', 'message' => 'Extending would conflict with another booking.'],
+                    'error' => ['code' => 'SLOT_CONFLICT', 'message' => 'Modification would conflict with another booking.'],
                 ], 409);
             }
 
-            $data['end_time'] = $newEndTime->toDateTimeString();
+            if ($request->has('start_time')) {
+                $data['start_time'] = $newStartTime->toDateTimeString();
+            }
+            if ($request->has('end_time')) {
+                $data['end_time'] = $newEndTime->toDateTimeString();
+            }
+            if ($slotChanged) {
+                $data['slot_id'] = $newSlotId;
+                $data['slot_number'] = ParkingSlot::find($newSlotId)?->slot_number;
+            }
+
+            $auditDetails = ['booking_id' => $id];
+            if ($request->has('start_time')) {
+                $auditDetails['old_start_time'] = (string) $booking->start_time;
+                $auditDetails['new_start_time'] = $data['start_time'];
+            }
+            if ($request->has('end_time')) {
+                $auditDetails['old_end_time'] = (string) $booking->end_time;
+                $auditDetails['new_end_time'] = $data['end_time'];
+            }
+            if ($slotChanged) {
+                $auditDetails['old_slot_id'] = $booking->slot_id;
+                $auditDetails['new_slot_id'] = $newSlotId;
+            }
 
             AuditLog::log([
                 'user_id' => $request->user()->id,
                 'username' => $request->user()->username,
-                'action' => 'booking_extended',
-                'details' => [
-                    'booking_id' => $id,
-                    'old_end_time' => $booking->end_time,
-                    'new_end_time' => $data['end_time'],
-                ],
+                'action' => 'booking_modified',
+                'details' => $auditDetails,
+            ]);
+
+            // Notify user about the modification
+            Notification::create([
+                'user_id' => $request->user()->id,
+                'type' => 'booking_modified',
+                'title' => 'Buchung geändert',
+                'message' => 'Ihre Buchung #'.substr($id, 0, 8).' wurde erfolgreich geändert.',
+                'data' => $auditDetails,
             ]);
         }
 
@@ -705,6 +777,66 @@ class BookingController extends Controller
         });
 
         return response()->json($events->values());
+    }
+
+    /**
+     * iCal feed — returns all active bookings as .ics for calendar subscription.
+     */
+    public function ical(Request $request)
+    {
+        $user = $request->user();
+        $bookings = Booking::where('user_id', $user->id)
+            ->whereIn('status', [Booking::STATUS_ACTIVE, Booking::STATUS_CONFIRMED])
+            ->whereNotNull('start_time')
+            ->get();
+
+        $orgName = Setting::get('company_name', 'ParkHub');
+        $prodId = '-//ParkHub//Bookings//EN';
+        $now = gmdate('Ymd\THis\Z');
+
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            "PRODID:{$prodId}",
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            "X-WR-CALNAME:{$orgName} Parking",
+            'X-WR-TIMEZONE:Europe/Berlin',
+        ];
+
+        foreach ($bookings as $b) {
+            $uid = $b->id.'@parkhub';
+            $start = gmdate('Ymd\THis\Z', strtotime($b->start_time));
+            $end = $b->end_time
+                ? gmdate('Ymd\THis\Z', strtotime($b->end_time))
+                : gmdate('Ymd\THis\Z', strtotime($b->start_time) + 3600);
+            $summary = "Parking: {$b->slot_number} ({$b->lot_name})";
+            $location = $b->lot_name ?? '';
+            $description = $b->vehicle_plate ? "Vehicle: {$b->vehicle_plate}" : '';
+
+            $lines[] = 'BEGIN:VEVENT';
+            $lines[] = "UID:{$uid}";
+            $lines[] = "DTSTAMP:{$now}";
+            $lines[] = "DTSTART:{$start}";
+            $lines[] = "DTEND:{$end}";
+            $lines[] = "SUMMARY:{$summary}";
+            if ($location) {
+                $lines[] = "LOCATION:{$location}";
+            }
+            if ($description) {
+                $lines[] = "DESCRIPTION:{$description}";
+            }
+            $lines[] = 'STATUS:CONFIRMED';
+            $lines[] = 'END:VEVENT';
+        }
+
+        $lines[] = 'END:VCALENDAR';
+        $ical = implode("\r\n", $lines)."\r\n";
+
+        return response($ical, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'inline; filename="parkhub-bookings.ics"',
+        ]);
     }
 
     public function createSwapRequest(Request $request, string $id)

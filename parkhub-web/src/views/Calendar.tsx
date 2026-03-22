@@ -1,20 +1,16 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { CaretLeft, CaretRight, CalendarBlank } from '@phosphor-icons/react';
 import { api, type CalendarEvent } from '../api/client';
 import { useTranslation } from 'react-i18next';
-import { CalendarLegend, getCalendarColor } from '../components/CalendarLegend';
+import toast from 'react-hot-toast';
 
 const statusColors: Record<string, string> = {
-  confirmed: 'bg-green-500',
-  active: 'bg-blue-500',
-  pending: 'bg-yellow-500',
-  cancelled: 'bg-red-500',
-  completed: 'bg-gray-400',
-  // Absence types
-  vacation: 'bg-sky-500',
-  sick: 'bg-orange-500',
-  homeoffice: 'bg-purple-500',
+  confirmed: 'bg-emerald-500',
+  active: 'bg-emerald-500',
+  pending: 'bg-amber-500',
+  cancelled: 'bg-surface-400',
+  completed: 'bg-primary-500',
 };
 
 function isSameDay(a: Date, b: Date) {
@@ -39,12 +35,17 @@ export function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     loadEvents();
+    return () => { abortRef.current?.abort(); };
   }, [currentMonth]);
 
   async function loadEvents() {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -52,9 +53,13 @@ export function CalendarPage() {
     const end = formatDate(new Date(year, month + 1, 0));
     try {
       const res = await api.calendarEvents(start, end);
+      if (controller.signal.aborted) return;
       if (res.success && res.data) setEvents(res.data);
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
+    } catch {
+      if (!controller.signal.aborted) toast.error(t('common.error'));
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
   }
 
   // Build calendar grid (Monday start)
@@ -138,9 +143,6 @@ export function CalendarPage() {
         </div>
       </div>
 
-      {/* Legend */}
-      <CalendarLegend />
-
       {/* Calendar grid */}
       <div className="bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 overflow-hidden">
         <div className="grid grid-cols-7 border-b border-surface-200 dark:border-surface-800">
@@ -209,7 +211,7 @@ export function CalendarPage() {
         </motion.div>
       ) : (
         <div className="text-center py-4">
-          <p className="text-sm text-surface-400 dark:text-surface-500">{t('calendar.selectDay', 'Klicke auf einen Tag, um Eintr\u00e4ge zu sehen')}</p>
+          <p className="text-sm text-surface-500 dark:text-surface-400">{t('calendar.selectDay', 'Klicke auf einen Tag, um Eintr\u00e4ge zu sehen')}</p>
         </div>
       )}
     </motion.div>
