@@ -31,6 +31,46 @@ export function AdminUsersPage() {
   const [editQuota, setEditQuota] = useState('');
   const [savingQuota, setSavingQuota] = useState(false);
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState('');
+  const [bulkRole, setBulkRole] = useState('user');
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === users.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(users.map(u => u.id)));
+    }
+  }
+
+  async function handleBulkAction() {
+    if (!bulkAction || selectedIds.size === 0) return;
+    if (!confirm(`${bulkAction} ${selectedIds.size} user(s)?`)) return;
+    setBulkLoading(true);
+    try {
+      const res = await api.adminBulkAction(bulkAction, Array.from(selectedIds), bulkAction === 'change_role' ? bulkRole : undefined);
+      if (res.success) {
+        toast.success(`Bulk ${bulkAction}: ${(res.data as any)?.successful ?? 0} succeeded`);
+        setSelectedIds(new Set());
+        setBulkAction('');
+        await loadUsers();
+      } else {
+        toast.error(res.error?.message || 'Bulk action failed');
+      }
+    } finally { setBulkLoading(false); }
+  }
+
   useEffect(() => { loadUsers(); }, []);
 
   useEffect(() => {
@@ -138,6 +178,18 @@ export function AdminUsersPage() {
   }
 
   const columns = useMemo(() => [
+    columnHelper.display({
+      id: 'select',
+      header: () => (
+        <input type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={toggleSelectAll}
+          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" />
+      ),
+      cell: info => (
+        <input type="checkbox" checked={selectedIds.has(info.row.original.id)}
+          onChange={() => toggleSelect(info.row.original.id)}
+          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" />
+      ),
+    }),
     columnHelper.accessor('name', {
       header: () => t('admin.users'),
       cell: info => (
@@ -345,6 +397,42 @@ export function AdminUsersPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 p-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-800"
+        >
+          <span className="text-sm font-medium text-brand-700 dark:text-brand-300">
+            {t('admin.selected', 'Selected')}: {selectedIds.size}
+          </span>
+          <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}
+            className="input text-sm py-1.5 px-3 w-auto"
+          >
+            <option value="">{t('admin.bulkAction', 'Bulk Action...')}</option>
+            <option value="activate">{t('admin.activate', 'Activate')}</option>
+            <option value="deactivate">{t('admin.deactivate', 'Deactivate')}</option>
+            <option value="change_role">{t('admin.changeRole', 'Change Role')}</option>
+            <option value="delete">{t('admin.delete', 'Delete')}</option>
+          </select>
+          {bulkAction === 'change_role' && (
+            <select value={bulkRole} onChange={e => setBulkRole(e.target.value)} className="input text-sm py-1.5 px-3 w-auto">
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+              <option value="premium">premium</option>
+            </select>
+          )}
+          <button onClick={handleBulkAction} disabled={!bulkAction || bulkLoading}
+            className="btn btn-primary btn-sm disabled:opacity-50"
+          >
+            {bulkLoading ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : null}
+            {t('admin.apply', 'Apply')}
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-surface-500 hover:text-surface-700">
+            {t('common.cancel', 'Cancel')}
+          </button>
+        </motion.div>
+      )}
 
       {/* Users Table — TanStack Table with sorting */}
       <DataTable

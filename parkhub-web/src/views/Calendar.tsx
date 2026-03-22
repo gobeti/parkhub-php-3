@@ -3,13 +3,18 @@ import { motion } from 'framer-motion';
 import { CaretLeft, CaretRight, CalendarBlank } from '@phosphor-icons/react';
 import { api, type CalendarEvent } from '../api/client';
 import { useTranslation } from 'react-i18next';
+import { CalendarLegend, getCalendarColor } from '../components/CalendarLegend';
 
 const statusColors: Record<string, string> = {
-  confirmed: 'bg-emerald-500',
-  active: 'bg-emerald-500',
-  pending: 'bg-amber-500',
-  cancelled: 'bg-surface-400',
-  completed: 'bg-primary-500',
+  confirmed: 'bg-green-500',
+  active: 'bg-blue-500',
+  pending: 'bg-yellow-500',
+  cancelled: 'bg-red-500',
+  completed: 'bg-gray-400',
+  // Absence types
+  vacation: 'bg-sky-500',
+  sick: 'bg-orange-500',
+  homeoffice: 'bg-purple-500',
 };
 
 function isSameDay(a: Date, b: Date) {
@@ -132,6 +137,9 @@ export function CalendarPage() {
           </button>
         </div>
       </div>
+
+      {/* Legend */}
+      <CalendarLegend />
 
       {/* Calendar grid */}
       <div className="bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 overflow-hidden">
