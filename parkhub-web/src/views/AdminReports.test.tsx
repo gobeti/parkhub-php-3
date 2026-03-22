@@ -58,7 +58,7 @@ describe('AdminReportsPage', () => {
     mockAdminStats.mockReturnValue(new Promise(() => {}));
     mockGetBookings.mockReturnValue(new Promise(() => {}));
     render(<AdminReportsPage />);
-    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
+    expect(document.querySelector('.skeleton')).toBeInTheDocument();
   });
 
   it('renders Reports heading after loading', async () => {
