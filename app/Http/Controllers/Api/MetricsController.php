@@ -94,12 +94,21 @@ class MetricsController extends Controller
         $lines[] = '';
 
         // ── parkhub_lot_occupancy_percent (per lot) ────────────────────────
-        $lots = ParkingLot::all(['id', 'name', 'total_slots', 'available_slots']);
+        // Compute occupancy dynamically from active bookings instead of stale available_slots column
+        $lots = ParkingLot::all(['id', 'name', 'total_slots']);
+        $now = now();
+        $activeByLot = Booking::whereIn('status', ['confirmed', 'active'])
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->selectRaw('lot_id, COUNT(*) as active_count')
+            ->groupBy('lot_id')
+            ->pluck('active_count', 'lot_id');
+
         $lines[] = '# HELP parkhub_lot_occupancy_percent Occupancy percentage per parking lot';
         $lines[] = '# TYPE parkhub_lot_occupancy_percent gauge';
         foreach ($lots as $lot) {
             $total = (int) $lot->total_slots;
-            $occupied = $total - (int) $lot->available_slots;
+            $occupied = (int) ($activeByLot[$lot->id] ?? 0);
             $pct = $total > 0 ? round(($occupied / $total) * 100, 2) : 0;
             $safeName = preg_replace('/[^a-zA-Z0-9_]/', '_', $lot->name);
             $lines[] = "parkhub_lot_occupancy_percent{lot_id=\"{$lot->id}\",lot_name=\"{$safeName}\"} {$pct}";

@@ -55,6 +55,11 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(3)->by($request->ip());
         });
 
+        // Payment endpoints: 10 per minute per user (prevent abuse)
+        RateLimiter::for('payments', function (Request $request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
+
         // Authenticated API: 120 per minute per user (or IP if unauthenticated)
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
