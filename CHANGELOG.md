@@ -7,6 +7,39 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.8.0] - 2026-03-23
+
+### Added
+- **Absence Approval Workflows**: Submit, review, approve/reject absence requests
+  - `POST /api/v1/absences/requests` -- submit request (status=pending)
+  - `GET /api/v1/absences/my` -- user's request history with status
+  - `GET /api/v1/admin/absences/pending` -- list pending requests (admin)
+  - `PUT /api/v1/admin/absences/{id}/approve` -- approve with comment (admin)
+  - `PUT /api/v1/admin/absences/{id}/reject` -- reject with reason (admin)
+  - AbsenceApproval.tsx frontend with submit form, my requests, admin pending queue
+  - `MODULE_ABSENCE_APPROVAL=true` toggle (50th module)
+  - 9 PHP tests + 7 vitest tests
+- **Calendar Drag-to-Reschedule**: Drag bookings to new dates with conflict check
+  - `PUT /api/v1/bookings/{id}/reschedule` -- reschedule with conflict detection
+  - Updated Calendar.tsx with drag-and-drop, confirmation dialog, help tooltip
+  - `MODULE_CALENDAR_DRAG=true` toggle (51st module)
+  - 6 PHP tests
+- **Customizable Admin Dashboard Widgets**: Configurable widget grid for admins
+  - `GET /api/v1/admin/widgets` -- get widget layout
+  - `PUT /api/v1/admin/widgets` -- save widget layout
+  - `GET /api/v1/admin/widgets/data/{widget_id}` -- widget data (8 types)
+  - Widget types: occupancy_chart, revenue_summary, recent_bookings, user_growth, booking_heatmap, active_alerts, maintenance_status, ev_charging_status
+  - AdminDashboard.tsx frontend with catalog, toggle, grid display
+  - `MODULE_WIDGETS=true` toggle (52nd module)
+  - 6 PHP tests + 8 vitest tests
+- **Frontend sync from parkhub-rust v3.8.0**: AbsenceApproval.tsx, AdminDashboard.tsx, updated Calendar.tsx (drag support), App.tsx (routes), Layout.tsx (nav), Admin.tsx (widgets tab), api/client.ts (absence approval + reschedule + widget endpoints + types), all 10 i18n locale files with absenceApproval/calendarDrag/widgets translations
+
+### Changed
+- Module count: 52 modules (added `absence_approval`, `calendar_drag`, `widgets`)
+- Migration adds `reviewer_comment` column to absences table
+
+---
+
 ## [3.7.0] - 2026-03-23
 
 ### Added

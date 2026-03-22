@@ -333,6 +333,35 @@ export const api = {
     request<TenantInfo>('/api/v1/admin/tenants', { method: 'POST', body: JSON.stringify(data) }),
   updateTenant: (id: string, data: CreateTenantRequest) =>
     request<TenantInfo>(`/api/v1/admin/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  // ── Absence Approval ──
+  submitAbsenceRequest: (data: { absence_type: string; start_date: string; end_date: string; reason: string }) =>
+    request<AbsenceApprovalRequest>('/api/v1/absences/requests', { method: 'POST', body: JSON.stringify(data) }),
+  myAbsenceRequests: () => request<AbsenceApprovalRequest[]>('/api/v1/absences/my'),
+  pendingAbsenceRequests: () => request<AbsenceApprovalRequest[]>('/api/v1/admin/absences/pending'),
+  approveAbsenceRequest: (id: string, comment?: string) =>
+    request<AbsenceApprovalRequest>(`/api/v1/admin/absences/${id}/approve`, {
+      method: 'PUT', body: JSON.stringify({ comment }),
+    }),
+  rejectAbsenceRequest: (id: string, reason: string) =>
+    request<AbsenceApprovalRequest>(`/api/v1/admin/absences/${id}/reject`, {
+      method: 'PUT', body: JSON.stringify({ reason }),
+    }),
+
+  // ── Calendar Drag Reschedule ──
+  rescheduleBooking: (id: string, newStart: string, newEnd: string) =>
+    request<RescheduleResponse>(`/api/v1/bookings/${id}/reschedule`, {
+      method: 'PUT', body: JSON.stringify({ new_start: newStart, new_end: newEnd }),
+    }),
+
+  // ── Admin Widgets ──
+  getWidgetLayout: () => request<WidgetLayoutResponse>('/api/v1/admin/widgets'),
+  saveWidgetLayout: (widgets: WidgetEntryData[]) =>
+    request<WidgetLayoutResponse>('/api/v1/admin/widgets', {
+      method: 'PUT', body: JSON.stringify({ widgets }),
+    }),
+  getWidgetData: (widgetId: string) =>
+    request<WidgetDataResponse>(`/api/v1/admin/widgets/data/${widgetId}`),
 };
 
 // ── Types ──
@@ -844,4 +873,45 @@ export interface PaginatedAuditLog {
   page: number;
   per_page: number;
   total_pages: number;
+}
+
+// ── Absence Approval ──
+export interface AbsenceApprovalRequest {
+  id: string;
+  user_id: string;
+  user_name: string;
+  absence_type: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewer_id?: string;
+  reviewer_comment?: string;
+  created_at: string;
+  reviewed_at?: string;
+}
+
+// ── Calendar Drag Reschedule ──
+export interface RescheduleResponse {
+  success: boolean;
+  message: string;
+  booking?: any;
+}
+
+// ── Admin Widgets ──
+export interface WidgetEntryData {
+  id: string;
+  widget_type: string;
+  position: { x: number; y: number; w: number; h: number };
+  visible: boolean;
+}
+
+export interface WidgetLayoutResponse {
+  user_id: string;
+  widgets: WidgetEntryData[];
+}
+
+export interface WidgetDataResponse {
+  widget_id: string;
+  data: any;
 }
