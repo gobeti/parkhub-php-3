@@ -7,6 +7,27 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.0.0] - 2026-03-22
+
+### Added
+- **10-Language i18n**: Full internationalization with EN, DE, FR, ES, IT, PT, TR, PL, JA, ZH locale files
+  - Language selector dropdown in sidebar Layout component
+  - i18n tests validate all 10 locales for missing keys and empty string values
+- **Admin Analytics module**: `GET /api/v1/admin/analytics/overview` endpoint
+  - Daily bookings (30d), revenue by day, peak hours (24 bins), top lots, user growth (12mo), avg duration
+  - DB-agnostic: SQLite, PostgreSQL, MySQL support
+  - `MODULE_ANALYTICS=true` toggle (30th module)
+  - 9 PHP tests for auth, data structure, accuracy, and module toggle
+- **AdminAnalytics frontend view**: Analytics dashboard synced from parkhub-rust with route at `/admin/analytics`
+- 488 vitest + 942 PHPUnit = **1430 tests** total
+
+### Changed
+- Module count: 30 modules (added `analytics`)
+- README badges updated to v3.0.0
+- Frontend fully synced with parkhub-rust (all locale files, i18n index, Layout, App.tsx, Admin views)
+
+---
+
 ## [2.9.0] - 2026-03-22
 
 ### Added
