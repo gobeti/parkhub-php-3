@@ -7,6 +7,10 @@ use App\Http\Resources\ParkingLotResource;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
+use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\Output\QRMarkupSVG;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -216,39 +220,52 @@ class LotController extends Controller
     }
 
     /**
-     * Generate QR code for a lot.
-     *
-     * NOTE: Currently delegates to an external API (api.qrserver.com) which means
-     * the booking URL is sent to a third-party server — a privacy concern.
-     * TODO: Replace with a local QR library (e.g. `bacon/bacon-qr-code` which is
-     * already a transitive Laravel dependency, or `chillerlan/php-qrcode`) to
-     * generate QR codes server-side without leaking URLs to external services.
+     * Generate QR code for a lot (local generation — no external API).
      */
     public function qrCode(Request $request, string $id): JsonResponse
     {
         $lot = ParkingLot::findOrFail($id);
-        $data = urlencode(url('/').'/book?lot='.$id);
+        $data = url('/').'/book?lot='.$id;
 
         return response()->json([
             'lot_id' => $id,
             'lot_name' => $lot->name,
-            'qr_url' => "https://api.qrserver.com/v1/create-qr-code/?data={$data}&size=256x256",
-            'data' => urldecode($data),
+            'qr_svg' => $this->generateQrSvg($data),
+            'data' => $data,
         ]);
     }
 
-    /** @see self::qrCode() for privacy note about external QR API */
+    /**
+     * Generate QR code for a specific slot (local generation — no external API).
+     */
     public function slotQrCode(Request $request, string $lotId, string $slotId): JsonResponse
     {
         $slot = ParkingSlot::where('lot_id', $lotId)->findOrFail($slotId);
-        $data = urlencode(url('/').'/book?lot='.$lotId.'&slot='.$slotId);
+        $data = url('/').'/book?lot='.$lotId.'&slot='.$slotId;
 
         return response()->json([
             'lot_id' => $lotId,
             'slot_id' => $slotId,
             'slot_number' => $slot->slot_number,
-            'qr_url' => "https://api.qrserver.com/v1/create-qr-code/?data={$data}&size=256x256",
-            'data' => urldecode($data),
+            'qr_svg' => $this->generateQrSvg($data),
+            'data' => $data,
         ]);
+    }
+
+    /**
+     * Generate a base64-encoded SVG QR code locally.
+     */
+    private function generateQrSvg(string $data): string
+    {
+        $options = new QROptions([
+            'outputInterface' => QRMarkupSVG::class,
+            'eccLevel' => EccLevel::M,
+            'scale' => 10,
+            'outputBase64' => false,
+        ]);
+
+        $svg = (new QRCode($options))->render($data);
+
+        return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 }

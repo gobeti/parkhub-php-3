@@ -75,6 +75,31 @@ class BookingController extends Controller
 
         $user = $request->user();
 
+        // Enforce max advance days (config-based booking policy)
+        $maxAdvanceDays = (int) config('parkhub.max_advance_days', 90);
+        if ($maxAdvanceDays > 0 && now()->diffInDays($startTime, false) > $maxAdvanceDays && ! $user->isAdmin()) {
+            return response()->json([
+                'success' => false, 'data' => null,
+                'error' => ['code' => 'BOOKING_TOO_FAR_AHEAD', 'message' => "Cannot book more than {$maxAdvanceDays} days in advance."],
+                'meta' => null,
+            ], 422);
+        }
+
+        // Enforce max active bookings (config-based booking policy)
+        $maxActive = (int) config('parkhub.max_active_bookings', 10);
+        if ($maxActive > 0 && ! $user->isAdmin()) {
+            $activeCount = Booking::where('user_id', $user->id)
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
+                ->count();
+            if ($activeCount >= $maxActive) {
+                return response()->json([
+                    'success' => false, 'data' => null,
+                    'error' => ['code' => 'MAX_ACTIVE_BOOKINGS', 'message' => "Maximum {$maxActive} active bookings allowed."],
+                    'meta' => null,
+                ], 422);
+            }
+        }
+
         // Enforce max bookings per day
         $maxPerDay = (int) Setting::get('max_bookings_per_day', '0');
         if ($maxPerDay > 0 && ! $user->isAdmin()) {
