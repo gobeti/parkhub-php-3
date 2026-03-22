@@ -48,6 +48,7 @@ vi.mock('@phosphor-icons/react', () => ({
   UserPlus: (props: any) => <span data-testid="icon-user-plus" {...props} />,
   CaretUp: (props: any) => <span data-testid="icon-caret-up" {...props} />,
   CaretDown: (props: any) => <span data-testid="icon-caret-down" {...props} />,
+  DownloadSimple: (props: any) => <span data-testid="icon-download" {...props} />,
 }));
 
 vi.mock('react-i18next', () => ({
@@ -155,10 +156,10 @@ describe('AdminUsersPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders loading skeleton initially', () => {
+  it('renders loading spinner initially', () => {
     mockAdminUsers.mockReturnValue(new Promise(() => {}));
     render(<AdminUsersPage />);
-    expect(document.querySelector('.skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-spinner')).toBeInTheDocument();
   });
 
   it('renders user list after load', async () => {

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
+use App\Models\AuditLog;
+use App\Models\Notification;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;

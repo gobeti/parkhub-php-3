@@ -146,7 +146,7 @@ class BookingEdgeCaseExtendedTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_booking_extend_to_earlier_time_rejected(): void
+    public function test_booking_extend_to_earlier_end_time_allowed(): void
     {
         [$user, $lot, $slots] = $this->createUserAndLot();
         $token = $user->createToken('test')->plainTextToken;
@@ -161,9 +161,34 @@ class BookingEdgeCaseExtendedTest extends TestCase
             'status' => 'confirmed',
         ]);
 
+        // Shortening a booking (end_time still after start_time) is valid
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->patchJson('/api/v1/bookings/'.$booking->id, [
                 'end_time' => now()->addHours(3)->toISOString(),
+            ]);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_booking_extend_end_before_start_rejected(): void
+    {
+        [$user, $lot, $slots] = $this->createUserAndLot();
+        $token = $user->createToken('test')->plainTextToken;
+
+        $booking = Booking::create([
+            'user_id' => $user->id,
+            'lot_id' => $lot->id,
+            'slot_id' => $slots[0]->id,
+            'start_time' => now()->addHours(2),
+            'end_time' => now()->addHours(5),
+            'booking_type' => 'single',
+            'status' => 'confirmed',
+        ]);
+
+        // End time before start time must be rejected
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/v1/bookings/'.$booking->id, [
+                'end_time' => now()->addHour()->toISOString(),
             ]);
 
         $response->assertStatus(422)

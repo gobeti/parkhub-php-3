@@ -1,4 +1,4 @@
-const BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
+const BASE_URL = import.meta.env?.VITE_API_URL || '';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -44,6 +44,16 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<ApiResp
   }
 }
 
+async function requestBlob(path: string): Promise<Blob> {
+  const token = localStorage.getItem('parkhub_token');
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.blob();
+}
+
 // ── Auth ──
 export const api = {
   login: (username: string, password: string) =>
@@ -70,12 +80,14 @@ export const api = {
       method: 'PUT', body: JSON.stringify({ current_password, password, password_confirmation }),
     }),
 
-  // ── Modules ──
-  getModules: () => request<{ modules: Record<string, boolean>; version: string }>('/api/v1/modules'),
+  exportMyData: () => requestBlob('/api/v1/user/export'),
+
+  deleteMyAccount: () =>
+    request('/api/v1/users/me/delete', { method: 'DELETE' }),
 
   // ── Setup ──
   getSetupStatus: () => request<SetupStatus>('/api/v1/setup/status'),
-  completeSetup: (data: any) => request('/api/v1/setup/complete', { method: 'POST', body: JSON.stringify(data) }),
+  completeSetup: (data: SetupPayload) => request('/api/v1/setup/complete', { method: 'POST', body: JSON.stringify(data) }),
 
   // ── Lots ──
   getLots: () => request<ParkingLot[]>('/api/v1/lots'),
@@ -90,12 +102,12 @@ export const api = {
 
   // ── Bookings ──
   getBookings: () => request<Booking[]>('/api/v1/bookings'),
-  createBooking: (data: any) => request<Booking>('/api/v1/bookings', { method: 'POST', body: JSON.stringify(data) }),
+  createBooking: (data: CreateBookingPayload) => request<Booking>('/api/v1/bookings', { method: 'POST', body: JSON.stringify(data) }),
   cancelBooking: (id: string) => request<void>(`/api/v1/bookings/${id}`, { method: 'DELETE' }),
 
   // ── Vehicles ──
   getVehicles: () => request<Vehicle[]>('/api/v1/vehicles'),
-  createVehicle: (data: any) => request<Vehicle>('/api/v1/vehicles', { method: 'POST', body: JSON.stringify(data) }),
+  createVehicle: (data: CreateVehiclePayload) => request<Vehicle>('/api/v1/vehicles', { method: 'POST', body: JSON.stringify(data) }),
   deleteVehicle: (id: string) => request<void>(`/api/v1/vehicles/${id}`, { method: 'DELETE' }),
 
   // ── Absences ──
@@ -125,7 +137,7 @@ export const api = {
   // ── Admin ──
   adminStats: () => request<AdminStats>('/api/v1/admin/stats'),
   adminUsers: () => request<User[]>('/api/v1/admin/users'),
-  adminUpdateUser: (id: string, data: any) => request<User>(`/api/v1/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  adminUpdateUser: (id: string, data: UpdateUserPayload) => request<User>(`/api/v1/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   adminDeleteUser: (id: string) => request<void>(`/api/v1/admin/users/${id}`, { method: 'DELETE' }),
   adminUpdateUserRole: (id: string, role: string) =>
     request<User>(`/api/v1/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
@@ -193,33 +205,36 @@ export const api = {
       method: 'PUT', body: JSON.stringify(data),
     }),
 
+  // ── Favorites ──
+  getFavorites: () => request<Favorite[]>('/api/v1/user/favorites'),
+  addFavorite: (slot_id: string, lot_id: string) =>
+    request<Favorite>('/api/v1/user/favorites', { method: 'POST', body: JSON.stringify({ slot_id, lot_id }) }),
+  removeFavorite: (slotId: string) =>
+    request<void>(`/api/v1/user/favorites/${slotId}`, { method: 'DELETE' }),
+
   // ── 2FA ──
-  setup2fa: () => request<TwoFactorSetup>('/api/v1/auth/2fa/setup', { method: 'POST' }),
-  verify2fa: (code: string) => request('/api/v1/auth/2fa/verify', { method: 'POST', body: JSON.stringify({ code }) }),
-  disable2fa: (password: string) => request('/api/v1/auth/2fa/disable', { method: 'POST', body: JSON.stringify({ password }) }),
+  setup2FA: () => request<TwoFactorSetup>('/api/v1/auth/2fa/setup', { method: 'POST' }),
+  verify2FA: (code: string) => request<{ enabled: boolean }>('/api/v1/auth/2fa/verify', { method: 'POST', body: JSON.stringify({ code }) }),
+  disable2FA: (current_password: string) => request<{ enabled: boolean }>('/api/v1/auth/2fa/disable', { method: 'POST', body: JSON.stringify({ current_password }) }),
+  get2FAStatus: () => request<{ enabled: boolean }>('/api/v1/auth/2fa/status'),
 
   // ── Login History ──
   getLoginHistory: () => request<LoginHistoryEntry[]>('/api/v1/auth/login-history'),
 
   // ── Sessions ──
-  getSessions: () => request<Session[]>('/api/v1/auth/sessions'),
-  revokeSession: (id: string) => request('/api/v1/auth/sessions/' + id, { method: 'DELETE' }),
-  revokeAllSessions: () => request('/api/v1/auth/sessions', { method: 'DELETE' }),
+  getSessions: () => request<SessionInfo[]>('/api/v1/auth/sessions'),
+  revokeSession: (id: string) => request<void>(`/api/v1/auth/sessions/${id}`, { method: 'DELETE' }),
 
   // ── Notification Preferences ──
   getNotificationPreferences: () => request<NotificationPreferences>('/api/v1/preferences/notifications'),
-  updateNotificationPreferences: (data: Partial<NotificationPreferences>) =>
-    request<NotificationPreferences>('/api/v1/preferences/notifications', { method: 'PUT', body: JSON.stringify(data) }),
+  updateNotificationPreferences: (prefs: NotificationPreferences) =>
+    request<NotificationPreferences>('/api/v1/preferences/notifications', { method: 'PUT', body: JSON.stringify(prefs) }),
 
-  // ── Admin Bulk ──
-  adminBulkAction: (action: string, userIds: string[], role?: string) =>
-    request('/api/v1/admin/users/bulk', { method: 'POST', body: JSON.stringify({ action, user_ids: userIds, role }) }),
-
-  // ── Login (2FA-aware) ──
-  login2fa: (username: string, password: string, twoFactorCode?: string) =>
-    request<{ user: User; tokens: { access_token: string }; requires_2fa?: boolean }>('/api/v1/auth/login', {
-      method: 'POST', body: JSON.stringify({ username, password, ...(twoFactorCode ? { two_factor_code: twoFactorCode } : {}) }),
-    }),
+  // ── Bulk Admin ──
+  adminBulkUpdate: (user_ids: string[], action: string, role?: string) =>
+    request<BulkResult>('/api/v1/admin/users/bulk-update', { method: 'POST', body: JSON.stringify({ user_ids, action, role }) }),
+  adminBulkDelete: (user_ids: string[]) =>
+    request<BulkResult>('/api/v1/admin/users/bulk-delete', { method: 'POST', body: JSON.stringify({ user_ids }) }),
 };
 
 // ── Types ──
@@ -270,6 +285,13 @@ export interface ParkingSlot {
   slot_type?: SlotType;
   features?: SlotFeature[];
   zone_id?: string;
+}
+
+export interface Favorite {
+  user_id: string;
+  slot_id: string;
+  lot_id: string;
+  created_at: string;
 }
 
 export interface Booking {
@@ -444,6 +466,36 @@ export interface CreateLotRequest {
   status?: LotStatus;
 }
 
+export interface SetupPayload {
+  password: string;
+  password_confirmation: string;
+  company_name?: string;
+  use_case?: string;
+}
+
+export interface CreateBookingPayload {
+  lot_id: string;
+  slot_id: string;
+  start_time: string;
+  end_time: string;
+  vehicle_id?: string;
+}
+
+export interface CreateVehiclePayload {
+  plate: string;
+  make?: string;
+  model?: string;
+  color?: string;
+}
+
+export interface UpdateUserPayload {
+  name?: string;
+  email?: string;
+  role?: string;
+  is_active?: boolean;
+  department?: string;
+}
+
 export interface UpdateLotRequest {
   name?: string;
   address?: string;
@@ -500,35 +552,43 @@ export interface ReviewProposalRequest {
   comment?: string;
 }
 
-// ── Security Types ──
-
+// ── 2FA Types ──
 export interface TwoFactorSetup {
   secret: string;
-  qr_uri: string;
+  otpauth_uri: string;
+  qr_code_base64: string;
 }
 
+// ── Login History ──
 export interface LoginHistoryEntry {
-  id: string;
+  timestamp: string;
   ip_address: string;
   user_agent: string;
-  logged_in_at: string;
+  success: boolean;
 }
 
-export interface Session {
+// ── Session Info ──
+export interface SessionInfo {
   id: string;
-  name: string;
-  abilities: string[];
-  last_used_at?: string;
+  username: string;
+  role: string;
   created_at: string;
-  expires_at?: string;
+  expires_at: string;
   is_current: boolean;
 }
 
+// ── Notification Preferences ──
 export interface NotificationPreferences {
   email_booking_confirm: boolean;
-  email_reminder: boolean;
-  email_swap: boolean;
+  email_booking_reminder: boolean;
+  email_swap_request: boolean;
   push_enabled: boolean;
-  quiet_hours_start: string | null;
-  quiet_hours_end: string | null;
+}
+
+// ── Bulk Result ──
+export interface BulkResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  errors: string[];
 }

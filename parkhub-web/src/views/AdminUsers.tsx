@@ -4,12 +4,13 @@ import { createColumnHelper } from '@tanstack/react-table';
 import {
   Users, SpinnerGap, MagnifyingGlass, Coins,
   PencilSimple, X, Check, Gauge, UserMinus, UserPlus,
+  CheckSquare, Square, Trash, Lightning,
 } from '@phosphor-icons/react';
 import { api, type User } from '../api/client';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { DataTable } from '../components/ui/DataTable';
-import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/Skeleton';
 
 const columnHelper = createColumnHelper<User>();
 
@@ -30,46 +31,12 @@ export function AdminUsersPage() {
   const [editingQuotaId, setEditingQuotaId] = useState<string | null>(null);
   const [editQuota, setEditQuota] = useState('');
   const [savingQuota, setSavingQuota] = useState(false);
-
-  // Bulk selection
+  // Bulk actions
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState('');
   const [bulkRole, setBulkRole] = useState('user');
-  const [bulkLoading, setBulkLoading] = useState(false);
-
-  function toggleSelect(id: string) {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleSelectAll() {
-    if (selectedIds.size === users.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(users.map(u => u.id)));
-    }
-  }
-
-  async function handleBulkAction() {
-    if (!bulkAction || selectedIds.size === 0) return;
-    if (!confirm(`${bulkAction} ${selectedIds.size} user(s)?`)) return;
-    setBulkLoading(true);
-    try {
-      const res = await api.adminBulkAction(bulkAction, Array.from(selectedIds), bulkAction === 'change_role' ? bulkRole : undefined);
-      if (res.success) {
-        toast.success(`Bulk ${bulkAction}: ${(res.data as any)?.successful ?? 0} succeeded`);
-        setSelectedIds(new Set());
-        setBulkAction('');
-        await loadUsers();
-      } else {
-        toast.error(res.error?.message || 'Bulk action failed');
-      }
-    } finally { setBulkLoading(false); }
-  }
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -164,6 +131,56 @@ export function AdminUsersPage() {
     }
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === users.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(users.map(u => u.id)));
+    }
+  }
+
+  async function handleBulkAction() {
+    if (selectedIds.size === 0 || !bulkAction) return;
+    setBulkRunning(true);
+    try {
+      if (bulkAction === 'delete') {
+        const res = await api.adminBulkDelete(Array.from(selectedIds));
+        if (res.success && res.data) {
+          toast.success(t('admin.bulkDeleted', { succeeded: res.data.succeeded, total: res.data.total }));
+          await loadUsers();
+          setSelectedIds(new Set());
+        } else {
+          toast.error(res.error?.message || t('admin.bulkDeleteFailed'));
+        }
+      } else {
+        const res = await api.adminBulkUpdate(
+          Array.from(selectedIds),
+          bulkAction,
+          bulkAction === 'set_role' ? bulkRole : undefined,
+        );
+        if (res.success && res.data) {
+          toast.success(t('admin.bulkUpdated', { succeeded: res.data.succeeded, total: res.data.total }));
+          await loadUsers();
+          setSelectedIds(new Set());
+        } else {
+          toast.error(res.error?.message || t('admin.bulkUpdateFailed'));
+        }
+      }
+    } finally {
+      setBulkRunning(false);
+      setBulkConfirm(false);
+      setBulkAction('');
+    }
+  }
+
   function roleBadge(role: string) {
     const colors: Record<string, string> = {
       superadmin: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
@@ -178,18 +195,6 @@ export function AdminUsersPage() {
   }
 
   const columns = useMemo(() => [
-    columnHelper.display({
-      id: 'select',
-      header: () => (
-        <input type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={toggleSelectAll}
-          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" />
-      ),
-      cell: info => (
-        <input type="checkbox" checked={selectedIds.has(info.row.original.id)}
-          onChange={() => toggleSelect(info.row.original.id)}
-          className="w-4 h-4 rounded border-surface-300 dark:border-surface-600" />
-      ),
-    }),
     columnHelper.accessor('name', {
       header: () => t('admin.users'),
       cell: info => (
@@ -315,12 +320,8 @@ export function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6" role="status" aria-label={t('common.loading')}>
-        <div className="flex items-center justify-between">
-          <SkeletonText width="w-40" className="h-7" />
-          <SkeletonCard height="h-10" className="w-64" />
-        </div>
-        <SkeletonTable rows={6} />
+      <div className="flex items-center justify-center h-64" role="status" aria-label={t('common.loading')}>
+        <SpinnerGap weight="bold" className="w-8 h-8 text-primary-600 animate-spin" />
       </div>
     );
   }
@@ -331,7 +332,7 @@ export function AdminUsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-surface-900 dark:text-white">{t('admin.users')}</h2>
-          <span className="text-sm text-surface-400 tabular-nums">({users.length})</span>
+          <span className="text-sm text-surface-500 dark:text-surface-400 tabular-nums">({users.length})</span>
         </div>
 
         <div className="relative">
@@ -356,6 +357,54 @@ export function AdminUsersPage() {
           )}
         </div>
       </div>
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-800">
+          <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+            {t('admin.selectedCount', { count: selectedIds.size })}
+          </span>
+          <select
+            value={bulkAction}
+            onChange={e => setBulkAction(e.target.value)}
+            className="input text-xs py-1 px-2"
+            aria-label={t('admin.selectAction')}
+          >
+            <option value="">{t('admin.selectAction')}</option>
+            <option value="activate">{t('admin.bulkActivate')}</option>
+            <option value="deactivate">{t('admin.bulkDeactivate')}</option>
+            <option value="set_role">{t('admin.bulkChangeRole')}</option>
+            <option value="delete">{t('admin.bulkDelete')}</option>
+          </select>
+          {bulkAction === 'set_role' && (
+            <select value={bulkRole} onChange={e => setBulkRole(e.target.value)} className="input text-xs py-1 px-2" aria-label={t('admin.editRole')}>
+              <option value="user">user</option>
+              <option value="premium">premium</option>
+              <option value="admin">admin</option>
+            </select>
+          )}
+          <button
+            onClick={() => setBulkConfirm(true)}
+            disabled={!bulkAction || bulkRunning}
+            className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-1"
+          >
+            {bulkRunning ? <SpinnerGap className="animate-spin" weight="bold" size={14} /> : <Lightning weight="bold" size={14} />}
+            {t('admin.bulkApply')}
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="text-xs text-gray-500 hover:text-gray-700">
+            {t('admin.bulkClear')}
+          </button>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={bulkConfirm}
+        title={t('admin.bulkAction')}
+        message={t('admin.bulkActionConfirm', { action: bulkAction, count: selectedIds.size })}
+        variant={bulkAction === 'delete' ? 'danger' : 'default'}
+        onConfirm={handleBulkAction}
+        onCancel={() => setBulkConfirm(false)}
+      />
 
       {/* Grant Credits Modal */}
       <AnimatePresence>
@@ -398,48 +447,13 @@ export function AdminUsersPage() {
         )}
       </AnimatePresence>
 
-      {/* Bulk Actions Bar */}
-      {selectedIds.size > 0 && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 p-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-800"
-        >
-          <span className="text-sm font-medium text-brand-700 dark:text-brand-300">
-            {t('admin.selected', 'Selected')}: {selectedIds.size}
-          </span>
-          <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}
-            className="input text-sm py-1.5 px-3 w-auto"
-          >
-            <option value="">{t('admin.bulkAction', 'Bulk Action...')}</option>
-            <option value="activate">{t('admin.activate', 'Activate')}</option>
-            <option value="deactivate">{t('admin.deactivate', 'Deactivate')}</option>
-            <option value="change_role">{t('admin.changeRole', 'Change Role')}</option>
-            <option value="delete">{t('admin.delete', 'Delete')}</option>
-          </select>
-          {bulkAction === 'change_role' && (
-            <select value={bulkRole} onChange={e => setBulkRole(e.target.value)} className="input text-sm py-1.5 px-3 w-auto">
-              <option value="user">user</option>
-              <option value="admin">admin</option>
-              <option value="premium">premium</option>
-            </select>
-          )}
-          <button onClick={handleBulkAction} disabled={!bulkAction || bulkLoading}
-            className="btn btn-primary btn-sm disabled:opacity-50"
-          >
-            {bulkLoading ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : null}
-            {t('admin.apply', 'Apply')}
-          </button>
-          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-surface-500 hover:text-surface-700">
-            {t('common.cancel', 'Cancel')}
-          </button>
-        </motion.div>
-      )}
-
       {/* Users Table — TanStack Table with sorting */}
       <DataTable
         data={users}
         columns={columns}
         searchValue={debouncedSearch}
         emptyMessage={search ? t('admin.noUsersMatch') : t('admin.noUsersFound')}
+        exportFilename="users"
       />
     </motion.div>
   );

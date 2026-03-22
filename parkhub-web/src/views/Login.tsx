@@ -24,9 +24,6 @@ export function LoginPage() {
   const { login, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [needs2fa, setNeeds2fa] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [pendingCreds, setPendingCreds] = useState<{ username: string; password: string } | null>(null);
 
   const {
     register,
@@ -48,22 +45,8 @@ export function LoginPage() {
     const result = await login(data.username, data.password);
     if (result.success) {
       navigate('/', { replace: true });
-    } else if (result.requires2fa) {
-      setNeeds2fa(true);
-      setPendingCreds({ username: data.username, password: data.password });
     } else {
       setServerError(result.error || t('auth.loginError'));
-    }
-  }
-
-  async function onSubmit2fa() {
-    if (!pendingCreds || twoFactorCode.length !== 6) return;
-    setServerError(null);
-    const result = await login(pendingCreds.username, pendingCreds.password, twoFactorCode);
-    if (result.success) {
-      navigate('/', { replace: true });
-    } else {
-      setServerError(result.error || t('auth.invalid2faCode', 'Invalid 2FA code'));
     }
   }
 
@@ -74,23 +57,45 @@ export function LoginPage() {
 
   return (
     <div className="min-h-dvh bg-white dark:bg-surface-950 flex">
-      {/* Left panel — clean branding */}
+      {/* Left panel — premium branding with animated gradient */}
       <div className="hidden lg:flex lg:w-[45%] bg-surface-950 dark:bg-surface-900 relative items-end p-12 overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 via-primary-400 to-emerald-400" />
-        <div className="relative z-10">
+        {/* Animated gradient strip at top */}
+        <motion.div
+          className="absolute top-0 left-0 w-full h-1"
+          style={{ background: 'linear-gradient(90deg, var(--color-primary-500), var(--color-primary-400), var(--color-accent-400), var(--color-primary-500))', backgroundSize: '200% 100%' }}
+          animate={{ backgroundPosition: ['0% 0%', '200% 0%'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+        />
+
+        {/* Decorative gradient orbs */}
+        <div className="absolute top-[20%] right-[10%] w-64 h-64 rounded-full bg-gradient-to-br from-primary-500/15 to-accent-500/10 blur-3xl" />
+        <div className="absolute bottom-[30%] left-[5%] w-48 h-48 rounded-full bg-gradient-to-tr from-primary-400/10 to-cyan-400/8 blur-3xl" />
+
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="relative z-10"
+        >
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30">
               <CarSimple weight="fill" className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold text-white tracking-tight">ParkHub</span>
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4 leading-tight whitespace-pre-line">
+          <h2 className="text-3xl font-bold text-white mb-4 leading-tight whitespace-pre-line" style={{ letterSpacing: '-0.02em' }}>
             {t('auth.heroTitle')}
           </h2>
           <p className="text-surface-400 text-sm leading-relaxed max-w-sm">
             {t('auth.heroSubtitle')}
           </p>
-        </div>
+        </motion.div>
       </div>
 
       {/* Right panel — form */}
@@ -118,14 +123,14 @@ export function LoginPage() {
             <span className="text-lg font-bold text-surface-900 dark:text-white tracking-tight">ParkHub</span>
           </div>
 
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white mb-1">
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
             {t('auth.login')}
           </h1>
           <p className="text-surface-500 dark:text-surface-400 text-sm mb-8">
             {t('auth.loginSubtitle')}
           </p>
 
-          {/* Demo hint — click to auto-fill credentials */}
+          {/* Demo hint */}
           <button
             type="button"
             id="demo-autofill"
@@ -136,57 +141,6 @@ export function LoginPage() {
             {t('auth.demoHint')}
           </button>
 
-          {needs2fa ? (
-            /* 2FA Code Step */
-            <div className="space-y-5">
-              <div className="text-center mb-4">
-                <div className="w-12 h-12 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mx-auto mb-3">
-                  <Eye weight="bold" className="w-6 h-6 text-brand-600" />
-                </div>
-                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
-                  {t('auth.2faTitle', 'Two-Factor Authentication')}
-                </h2>
-                <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
-                  {t('auth.2faPrompt', 'Enter the 6-digit code from your authenticator app.')}
-                </p>
-              </div>
-
-              <input
-                type="text"
-                value={twoFactorCode}
-                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                className="input text-center font-mono text-2xl tracking-[0.5em] py-3"
-                maxLength={6}
-                autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter' && twoFactorCode.length === 6) onSubmit2fa(); }}
-              />
-
-              {serverError && (
-                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-red-600 dark:text-red-400 text-center" role="alert"
-                >
-                  {serverError}
-                </motion.p>
-              )}
-
-              <button
-                onClick={onSubmit2fa}
-                disabled={isSubmitting || twoFactorCode.length !== 6}
-                className="btn btn-primary w-full py-2.5 disabled:opacity-50"
-              >
-                {isSubmitting ? <SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> : null}
-                {t('auth.verify', 'Verify')}
-              </button>
-
-              <button
-                onClick={() => { setNeeds2fa(false); setPendingCreds(null); setTwoFactorCode(''); setServerError(null); }}
-                className="text-sm text-surface-500 hover:text-surface-700 w-full text-center"
-              >
-                {t('auth.backToLogin', 'Back to login')}
-              </button>
-            </div>
-          ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             <FormField label={t('auth.email')} htmlFor="username" error={errors.username}>
               <FormInput
@@ -221,7 +175,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 transition-colors"
                   aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 >
                   {showPassword ? <EyeSlash weight="bold" className="w-4 h-4" /> : <Eye weight="bold" className="w-4 h-4" />}
@@ -244,7 +198,7 @@ export function LoginPage() {
               id="login-submit"
               type="submit"
               disabled={isSubmitting}
-              className="btn btn-primary w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`btn btn-primary w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/15 ${isSubmitting ? 'btn-shimmer' : ''}`}
             >
               {isSubmitting ? (
                 <><SpinnerGap weight="bold" className="w-4 h-4 animate-spin" /> {t('auth.loggingIn')}</>
@@ -253,7 +207,6 @@ export function LoginPage() {
               )}
             </button>
           </form>
-          )}
 
           <p className="text-center text-sm text-surface-500 dark:text-surface-400 mt-6">
             {t('auth.noAccount')}{' '}
@@ -262,7 +215,7 @@ export function LoginPage() {
             </Link>
           </p>
 
-          <p className="text-center text-xs text-surface-400 mt-8">
+          <p className="text-center text-xs text-surface-500 dark:text-surface-400 mt-8">
             ParkHub v{APP_VERSION}
           </p>
         </motion.div>
