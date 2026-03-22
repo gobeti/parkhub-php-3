@@ -71,6 +71,9 @@ Route::get('/translations/overrides', [TranslationController::class, 'overrides'
 // Modules endpoint (public — frontend uses this to discover available features)
 Route::get('/modules', [ModuleController::class, 'index']);
 
+// Discovery / handshake endpoint (public)
+Route::get('/discover', [PublicController::class, 'discover']);
+
 // ── Core protected routes ───────────────────────────────────────────────────
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
@@ -137,6 +140,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('/settings/webhooks', [AdminSettingsController::class, 'getWebhookSettings']);
         Route::put('/settings/webhooks', [AdminSettingsController::class, 'updateWebhookSettings']);
         Route::post('/reset', [AdminSettingsController::class, 'resetDatabase']);
+
+        // Backup / restore
+        Route::get('/backup', [AdminSettingsController::class, 'exportBackup']);
+        Route::post('/restore', [AdminSettingsController::class, 'importBackup']);
 
         // User management
         Route::get('/users', [AdminController::class, 'users']);
