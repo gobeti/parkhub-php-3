@@ -701,6 +701,7 @@ export default {
       success: 'Erfolg',
       noData: 'Keine Daten verfugbar',
       back: 'Zuruck',
+      next: 'Weiter',
       dismiss: 'Ausblenden',
     },
     confirm: {
