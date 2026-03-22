@@ -38,4 +38,5 @@ return [
     'invoices' => env('MODULE_INVOICES', true),
     'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', true),
     'operating_hours' => env('MODULE_OPERATING_HOURS', true),
+    'realtime' => env('MODULE_REALTIME', true),
 ];

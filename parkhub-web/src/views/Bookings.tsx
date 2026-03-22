@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { format, formatDistanceToNow, isFuture } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import type { Locale } from 'date-fns';
+import { useWebSocket, type WsEvent } from '../hooks/useWebSocket';
 
 export function BookingsPage() {
   const { t, i18n } = useTranslation();
@@ -27,6 +28,16 @@ export function BookingsPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchLot, setSearchLot] = useState('');
   const [passBooking, setPassBooking] = useState<Booking | null>(null);
+
+  const handleWsEvent = useCallback((event: WsEvent) => {
+    if (event.event === 'booking_created') {
+      toast.success(t('bookings.wsNewBooking', 'Someone booked a spot in this lot'));
+    } else if (event.event === 'booking_cancelled') {
+      toast(t('bookings.wsCancelledBooking', 'A booking was cancelled'), { icon: '\uD83D\uDCCB' });
+    }
+  }, [t]);
+
+  useWebSocket({ onEvent: handleWsEvent });
 
   useEffect(() => {
     loadData();
@@ -245,7 +256,7 @@ function BookingCard({ booking, now, vehicles, onCancel, cancelling, onShowPass,
         )}
         <span className="flex items-center gap-1">
           <Clock weight="regular" className="w-3.5 h-3.5" />
-          {format(new Date(booking.start_time), 'HH:mm')} — {format(new Date(booking.end_time), 'HH:mm')}
+          {format(new Date(booking.start_time), 'HH:mm')} &mdash; {format(new Date(booking.end_time), 'HH:mm')}
         </span>
       </div>
 
