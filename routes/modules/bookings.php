@@ -28,9 +28,10 @@ Route::middleware(['module:bookings', 'auth:sanctum', 'throttle:api'])->group(fu
     Route::get('/calendar', [BookingController::class, 'index']);
     Route::get('/calendar/events', [BookingController::class, 'calendarEvents']);
 
-    // Invoice
+    // Invoice (both dot and slash notation for Rust API compatibility)
     Route::get('/bookings/{id}/invoice', [BookingInvoiceController::class, 'show']);
     Route::get('/bookings/{id}/invoice.pdf', [BookingInvoiceController::class, 'pdf']);
+    Route::get('/bookings/{id}/invoice/pdf', [BookingInvoiceController::class, 'pdf']);
 
     // iCal feed
     Route::get('/bookings/ical', [BookingController::class, 'ical']);

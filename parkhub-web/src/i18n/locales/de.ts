@@ -117,6 +117,7 @@ export default {
       startsIn: 'Beginnt {{time}}',
       endsIn: 'Endet {{time}}',
       invoice: 'Rechnung',
+      downloadInvoice: 'Rechnung',
       loading: 'Buchungen werden geladen...',
       insufficientCredits: 'Nicht genug Credits zum Buchen',
     },

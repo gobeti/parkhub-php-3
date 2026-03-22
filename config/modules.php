@@ -35,4 +35,5 @@ return [
     'stripe' => env('MODULE_STRIPE', false), // disabled by default — requires Stripe keys
     'themes' => env('MODULE_THEMES', true),
     'oauth' => env('MODULE_OAUTH', false), // disabled by default — requires OAuth credentials
+    'invoices' => env('MODULE_INVOICES', true),
 ];
