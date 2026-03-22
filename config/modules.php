@@ -52,6 +52,9 @@ return [
     'recommendations' => env('MODULE_RECOMMENDATIONS', true),
     'history' => env('MODULE_HISTORY', true),
     'geofence' => env('MODULE_GEOFENCE', true),
+    'waitlist_ext' => env('MODULE_WAITLIST_EXT', true),
+    'parking_pass' => env('MODULE_PARKING_PASS', true),
+    'api_docs' => env('MODULE_API_DOCS', true),
 
     // ── Integration (disabled by default — requires credentials) ───
     'stripe' => env('MODULE_STRIPE', false),

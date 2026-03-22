@@ -256,5 +256,8 @@ module_routes('visitors', 'visitors.php');
 module_routes('ev_charging', 'ev_charging.php');
 module_routes('recommendations', 'recommendations.php');
 
+module_routes('waitlist_ext', 'waitlist.php');
+module_routes('parking_pass', 'parking_pass.php');
+
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');

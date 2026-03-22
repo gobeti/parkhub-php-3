@@ -44,5 +44,8 @@
         <env name="MODULE_DYNAMIC_PRICING" value="true"/>
         <env name="MODULE_HISTORY" value="true"/>
         <env name="MODULE_GEOFENCE" value="true"/>
+        <env name="MODULE_WAITLIST_EXT" value="true"/>
+        <env name="MODULE_PARKING_PASS" value="true"/>
+        <env name="MODULE_API_DOCS" value="true"/>
     </php>
 </phpunit>
