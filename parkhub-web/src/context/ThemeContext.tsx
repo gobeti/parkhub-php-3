@@ -7,7 +7,7 @@ type ColorMode = 'light' | 'dark' | 'system';
 
 // ── Design Themes ──
 
-export type DesignThemeId = 'classic' | 'glass' | 'bento' | 'brutalist' | 'neon' | 'warm';
+export type DesignThemeId = 'classic' | 'glass' | 'bento' | 'brutalist' | 'neon' | 'warm' | 'liquid' | 'mono' | 'ocean' | 'forest' | 'synthwave' | 'zen';
 
 export interface DesignThemeInfo {
   id: DesignThemeId;
@@ -81,6 +81,66 @@ export const DESIGN_THEMES: DesignThemeInfo[] = [
       dark: ['#1a0e04', '#271505', '#ea580c', '#fed7aa', '#7c2d12'],
     },
     tags: ['cozy', 'earth', 'soft'],
+  },
+  {
+    id: 'liquid',
+    name: 'Liquid',
+    description: 'iOS-inspired translucent depth with frosted layers.',
+    previewColors: {
+      light: ['#f0f4f8', 'rgba(255,255,255,0.45)', '#007aff', '#1a2332', 'rgba(255,255,255,0.5)'],
+      dark: ['#0d1117', 'rgba(255,255,255,0.04)', '#388bfd', '#e6edf3', 'rgba(255,255,255,0.08)'],
+    },
+    tags: ['ios', 'translucent', 'depth', '2026'],
+  },
+  {
+    id: 'mono',
+    name: 'Mono',
+    description: 'Hyper-minimal monochrome. Developer-aesthetic precision.',
+    previewColors: {
+      light: ['#fafafa', '#ffffff', '#171717', '#171717', '#e5e5e5'],
+      dark: ['#0a0a0a', '#111111', '#ededed', '#ededed', '#222222'],
+    },
+    tags: ['minimal', 'monochrome', 'developer', 'linear'],
+  },
+  {
+    id: 'ocean',
+    name: 'Ocean',
+    description: 'Deep blue maritime palette with teal accents.',
+    previewColors: {
+      light: ['#eff8ff', '#ffffff', '#0891b2', '#0c2d48', '#bae6fd'],
+      dark: ['#031e30', '#042f4a', '#06b6d4', '#bae6fd', '#0e4d6e'],
+    },
+    tags: ['blue', 'maritime', 'calming', 'teal'],
+  },
+  {
+    id: 'forest',
+    name: 'Forest',
+    description: 'Nature-inspired organic greens. Grounded and sustainable.',
+    previewColors: {
+      light: ['#f5f7f2', '#fafcf8', '#16a34a', '#1a2e1a', '#c8dcc0'],
+      dark: ['#0d1a0d', '#142814', '#22c55e', '#c8dcc0', '#1e3a1e'],
+    },
+    tags: ['nature', 'green', 'organic', 'sustainable'],
+  },
+  {
+    id: 'synthwave',
+    name: 'Synthwave',
+    description: '80s retro-futurism with neon purple-pink glow.',
+    previewColors: {
+      light: ['#f5f0ff', '#ffffff', '#a855f7', '#2e1065', '#ddd6fe'],
+      dark: ['#0f0019', 'rgba(168,85,247,0.06)', '#a855f7', '#e9d5ff', 'rgba(168,85,247,0.2)'],
+    },
+    tags: ['retro', '80s', 'cyberpunk', 'purple', 'glow'],
+  },
+  {
+    id: 'zen',
+    name: 'Zen',
+    description: 'Wabi-sabi Japanese minimalism. Paper textures, ink-wash subtlety.',
+    previewColors: {
+      light: ['#faf8f5', '#fdfcfa', '#87a68f', '#3d3731', '#e8e4df'],
+      dark: ['#1a1815', '#221f1b', '#87a68f', '#d4cfc8', '#33302b'],
+    },
+    tags: ['japanese', 'wabi-sabi', 'minimal', 'paper', 'zen'],
   },
 ];
 
