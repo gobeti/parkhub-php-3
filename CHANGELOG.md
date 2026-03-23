@@ -7,6 +7,36 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.2.0] - 2026-03-23
+
+### Added
+- **SAML/SSO Enterprise Authentication** (`MODULE_SSO=true`)
+  - `GET /api/v1/auth/sso/providers` -- list enabled SSO identity providers
+  - `GET /api/v1/auth/sso/{provider}/login` -- initiate SAML login (returns redirect URL)
+  - `POST /api/v1/auth/sso/{provider}/callback` -- handle SAML assertion callback
+  - `PUT /api/v1/admin/sso/{provider}` -- create or update SSO provider (admin)
+  - `DELETE /api/v1/admin/sso/{provider}` -- remove SSO provider (admin)
+  - 10 PHP tests
+- **Webhooks v2** (`MODULE_WEBHOOKS_V2=true`)
+  - `GET /api/v1/admin/webhooks-v2` -- list all v2 webhooks
+  - `POST /api/v1/admin/webhooks-v2` -- create webhook with HMAC-SHA256 secret
+  - `GET /api/v1/admin/webhooks-v2/{id}` -- get single webhook
+  - `PUT /api/v1/admin/webhooks-v2/{id}` -- update webhook
+  - `DELETE /api/v1/admin/webhooks-v2/{id}` -- delete webhook
+  - `POST /api/v1/admin/webhooks-v2/{id}/test` -- send test event
+  - `GET /api/v1/admin/webhooks-v2/{id}/deliveries` -- delivery history
+  - 10 PHP tests
+- **Enhanced PWA** (`MODULE_ENHANCED_PWA=true`)
+  - `GET /api/v1/pwa/manifest` -- dynamic PWA manifest based on branding settings
+  - `GET /api/v1/pwa/offline-data` -- essential data for offline mode (next booking, lot info)
+  - Offline indicator, cached booking display, bottom nav bar, pull-to-refresh
+  - 6 PHP tests
+- **Frontend**: SSOButtons component, AdminSSO page, AdminWebhooks page, PWAEnhanced components
+- **Admin nav**: SSO and Webhooks tabs added to admin panel
+- **i18n**: All 10 locales synced with sso, webhooksV2, and pwa translations
+
+---
+
 ## [4.1.0] - 2026-03-23
 
 ### Added
