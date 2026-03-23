@@ -25,7 +25,6 @@ vi.mock('react-i18next', () => ({
         'admin.translations': 'Translations',
         'admin.rateLimits': 'Rate Limits',
         'admin.tenants': 'Tenants',
-        'apiDocs.title': 'API Docs',
       };
       return map[key] || key;
     },
@@ -59,7 +58,9 @@ vi.mock('@phosphor-icons/react', () => ({
   CurrencyDollar: (props: any) => <span data-testid="icon-currency" {...props} />,
   UserPlus: (props: any) => <span data-testid="icon-user-plus" {...props} />,
   Lightning: (props: any) => <span data-testid="icon-lightning" {...props} />,
-  BookOpen: (props: any) => <span data-testid="icon-book-open" {...props} />,
+  PuzzlePiece: (props: any) => <span data-testid="icon-puzzle" {...props} />,
+  GraphicsCard: (props: any) => <span data-testid="icon-graphql" {...props} />,
+  ShieldCheck: (props: any) => <span data-testid="icon-shield" {...props} />,
 }));
 
 import { AdminPage } from './Admin';
