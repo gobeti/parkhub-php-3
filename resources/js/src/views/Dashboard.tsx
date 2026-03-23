@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
-  CalendarCheck, Car, Coins, Clock, CalendarPlus, ArrowRight,
+  CalendarCheck, Car, Coins, CalendarPlus, ArrowRight,
   TrendUp, MapPin,
 } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext';

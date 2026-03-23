@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createColumnHelper } from '@tanstack/react-table';
 import {
-  Users, SpinnerGap, MagnifyingGlass, Coins,
-  PencilSimple, X, Check, Gauge, UserMinus, UserPlus,
+  SpinnerGap, MagnifyingGlass, Coins,
+  PencilSimple, X, Check, UserMinus, UserPlus,
 } from '@phosphor-icons/react';
 import { api, type User } from '../api/client';
 import { useTranslation } from 'react-i18next';

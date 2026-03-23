@@ -113,7 +113,7 @@ config:
     host: ""
     port: 587
     user: ""
-    password: ""
+    password: "CHANGEME"  # override at deploy time
     from: "noreply@parkhub.local"
 
   # Stripe
@@ -192,14 +192,14 @@ mysql:
   auth:
     database: parkhub
     username: parkhub
-    password: ""
-    rootPassword: ""
+    password: "CHANGEME"  # override at deploy time
+    rootPassword: "CHANGEME"  # override at deploy time
 
 # -- Redis dependency (optional in-cluster cache)
 redis:
   enabled: false
   auth:
-    password: ""
+    password: "CHANGEME"  # override at deploy time
 
 # -- Extra environment variables
 extraEnv: []
