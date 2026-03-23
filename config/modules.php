@@ -78,6 +78,11 @@ return [
     'scheduled_reports' => env('MODULE_SCHEDULED_REPORTS', true),
     'api_versioning' => env('MODULE_API_VERSIONING', true),
 
+    // ── v4.2 Features ───────────────────────────────────────────────
+    'sso' => env('MODULE_SSO', false),
+    'webhooks_v2' => env('MODULE_WEBHOOKS_V2', false),
+    'enhanced_pwa' => env('MODULE_ENHANCED_PWA', true),
+
     // ── Enterprise (disabled by default — opt-in) ──────────────────
     'multi_tenant' => env('MODULE_MULTI_TENANT', false),
     'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', false),
