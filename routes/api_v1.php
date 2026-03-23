@@ -274,3 +274,8 @@ module_routes('api_versioning', 'api_versioning.php');
 
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');
+
+// v4.2 features
+module_routes('sso', 'sso.php');
+module_routes('webhooks_v2', 'webhooks_v2.php');
+module_routes('enhanced_pwa', 'enhanced_pwa.php');
