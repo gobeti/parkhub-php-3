@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ApiResponseWrapper;
+use App\Http\Middleware\ApiVersionHeader;
 use App\Http\Middleware\AuthenticateFromCookie;
 use App\Http\Middleware\CheckModule;
 use App\Http\Middleware\ForceJsonResponse;
@@ -42,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ForceJsonResponse::class,
             AuthenticateFromCookie::class,
             ApiResponseWrapper::class,
+            ApiVersionHeader::class,
         ]);
 
         $middleware->alias([

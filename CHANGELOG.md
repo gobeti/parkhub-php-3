@@ -7,6 +7,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.1.0] - 2026-03-23
+
+### Added
+- **Booking Sharing & Guest Invites** (`MODULE_SHARING=true`)
+  - `POST /api/v1/bookings/{id}/share` -- generate shareable link with configurable expiry
+  - `GET /api/v1/shared/{code}` -- public view (no auth required)
+  - `POST /api/v1/bookings/{id}/invite` -- invite guest via email
+  - `DELETE /api/v1/bookings/{id}/share` -- revoke share link
+  - 7 PHP tests
+- **Scheduled Reports** (`MODULE_SCHEDULED_REPORTS=true`)
+  - `GET /api/v1/admin/reports/schedules` -- list all report schedules
+  - `POST /api/v1/admin/reports/schedules` -- create schedule (daily/weekly/monthly)
+  - `GET /api/v1/admin/reports/schedules/{id}` -- show single schedule
+  - `PUT /api/v1/admin/reports/schedules/{id}` -- update schedule
+  - `DELETE /api/v1/admin/reports/schedules/{id}` -- delete schedule
+  - `POST /api/v1/admin/reports/schedules/{id}/send-now` -- trigger immediate delivery
+  - 7 PHP tests
+- **API Versioning** (`MODULE_API_VERSIONING=true`)
+  - `GET /api/v1/version` -- version info, deprecation notices, supported versions
+  - `GET /api/v1/changelog` -- parsed changelog entries
+  - `X-API-Version` response header middleware
+  - `X-API-Version-Warning` header for unsupported client versions
+  - 4 PHP tests
+- **Frontend**: BookingSharing modal, AdminScheduledReports page, ApiVersion badge & admin panel
+- **i18n**: All 10 locales synced with sharing, scheduledReports, and apiVersion translations
+
+---
+
 ## [4.0.0] - 2026-03-23
 
 ### Added

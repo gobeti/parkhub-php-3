@@ -73,6 +73,11 @@ return [
     'graphql' => env('MODULE_GRAPHQL', true),
     'compliance' => env('MODULE_COMPLIANCE', true),
 
+    // ── v4.1 Features (enabled by default) ─────────────────────────
+    'sharing' => env('MODULE_SHARING', true),
+    'scheduled_reports' => env('MODULE_SCHEDULED_REPORTS', true),
+    'api_versioning' => env('MODULE_API_VERSIONING', true),
+
     // ── Enterprise (disabled by default — opt-in) ──────────────────
     'multi_tenant' => env('MODULE_MULTI_TENANT', false),
     'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', false),
