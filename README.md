@@ -11,7 +11,7 @@
   <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg?style=flat-square&logo=php&logoColor=white" alt="PHP 8.4"></a>
   <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-12-FF2D20.svg?style=flat-square&logo=laravel&logoColor=white" alt="Laravel 12"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB.svg?style=flat-square&logo=react&logoColor=black" alt="React 19"></a>
-  <img src="https://img.shields.io/badge/Tests-1690%2B-success.svg?style=flat-square" alt="1690+ tests">
+  <img src="https://img.shields.io/badge/Tests-1200%2B-success.svg?style=flat-square" alt="1200+ tests">
   <a href="docs/GDPR.md"><img src="https://img.shields.io/badge/DSGVO-konform-green.svg?style=flat-square" alt="GDPR Compliant"></a>
   <a href="docs/COMPLIANCE.md"><img src="https://img.shields.io/badge/Compliance-Audited-brightgreen.svg?style=flat-square" alt="Compliance Audited"></a>
   <a href="docker-compose.yml"><img src="https://img.shields.io/badge/Docker-ready-2496ED.svg?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready"></a>
@@ -79,6 +79,31 @@ php artisan test                      # Run 998 PHPUnit tests
 
 ## Features
 
+### v4.1.0 Highlights
+
+- **Booking Sharing & Guest Invites** -- Share bookings via secure links with optional expiry, invite guests by email
+- **Scheduled Reports (Email Digest)** -- Automated daily/weekly/monthly report delivery via email (occupancy, revenue, activity, trends)
+- **API Versioning & Deprecation** -- `X-API-Version` header, deprecation notices, version changelog endpoint
+
+### v4.0.0 Highlights
+
+- **Plugin/Extension System** -- Event-hook based plugin architecture with admin marketplace UI, 2 built-in plugins (Slack Notifier, Auto-Assign Preferred Spot)
+- **GraphQL API** -- Query parser mapped to REST handlers with interactive GraphiQL playground
+- **Compliance Reports** -- GDPR/DSGVO compliance dashboard with 10 automated checks, Art. 30 data map, audit trail export
+
+### v3.6--v3.9 Highlights
+
+- **Parking History & Stats** -- Personal booking timeline with monthly trends and favourite lot stats
+- **Geofencing & Auto Check-in** -- GPS proximity-based auto check-in
+- **Enhanced Waitlist** -- Priority-based with accept/decline offers and 15-minute expiry
+- **Digital Parking Pass** -- QR badge with public verification endpoint
+- **Absence Approval Workflows** -- Submit/approve/reject with admin queue and comments
+- **Calendar Drag-to-Reschedule** -- Drag events to new dates with conflict detection
+- **Customizable Admin Widgets** -- 8 configurable dashboard widgets with per-user layout
+- **Kubernetes Helm Chart** -- Production chart with HPA, PVC, Laravel-specific config
+- **k6 Load Testing Suite** -- Smoke, load, stress, and spike test scripts
+- **Postman Collection** -- 100+ requests with auto-token handling
+
 ### Core Highlights
 
 - **Full booking lifecycle** -- One-tap quick booking, recurring reservations, guest bookings, swap requests, waitlists, automatic no-show release, QR code check-in
@@ -89,7 +114,7 @@ php artisan test                      # Run 998 PHPUnit tests
 - **Vehicle management** -- Photo upload, German licence plate city-code lookup (400+ codes)
 - **Absence tracking** -- Homeoffice, vacation, sick leave with iCal import/export and team overview
 - **10 languages** -- EN, DE, FR, ES, IT, PT, TR, PL, JA, ZH with runtime hot-loading
-- **6 switchable themes** -- Classic, Glass, Bento, Brutalist, Neon, Warm
+- **12 switchable themes** -- Classic, Glass, Bento, Brutalist, Neon, Warm, Wabi-Sabi, Scandinavian, Cyberpunk, Terracotta, Oceanic, Art Deco
 - **PWA** -- Installable as native app, service worker for offline capability, Command Palette (Ctrl+K)
 - **Observability** -- Prometheus metrics at `/api/metrics`, health endpoints, structured logging
 
@@ -125,7 +150,7 @@ php artisan test                      # Run 998 PHPUnit tests
 
 ## Module System
 
-ParkHub organizes functionality into **35 runtime-toggleable modules** across four categories. Toggle any module via `MODULE_*=true|false` environment variables.
+ParkHub organizes functionality into **58 runtime-toggleable modules** across five categories. Toggle any module via `MODULE_*=true|false` environment variables.
 
 ### Core Modules (20 -- enabled by default, opt-out)
 
@@ -142,7 +167,7 @@ ParkHub organizes functionality into **35 runtime-toggleable modules** across fo
 | Swap | Booking swap requests |
 | Waitlist | Waitlist for full lots |
 | Credits | Credit system for bookings |
-| Themes | 6 switchable design themes |
+| Themes | 12 switchable design themes |
 | Notifications | In-app notifications |
 | QR Codes | QR code generation for bookings |
 | Invoices | PDF invoice generation |
@@ -152,7 +177,7 @@ ParkHub organizes functionality into **35 runtime-toggleable modules** across fo
 | Lobby Display | Public occupancy display board |
 | GDPR | Data export and erasure endpoints |
 
-### Admin Modules (6 -- enabled by default, opt-out)
+### Admin Modules (8 -- enabled by default, opt-out)
 
 | Module | Description |
 |--------|-------------|
@@ -162,8 +187,33 @@ ParkHub organizes functionality into **35 runtime-toggleable modules** across fo
 | Import | Data import from CSV/JSON |
 | Metrics | Prometheus metrics at `/api/metrics` |
 | Rate Dashboard | Real-time rate limit monitoring |
+| Compliance | GDPR compliance reports with 10 automated checks |
+| Scheduled Reports | Automated email digest delivery |
 
-### Integration Modules (7 -- disabled by default, opt-in)
+### Feature Modules (18 -- enabled by default, opt-out)
+
+| Module | Description |
+|--------|-------------|
+| Visitors | Visitor pre-registration with QR passes |
+| EV Charging | EV charging station management |
+| Accessible | Accessible parking with priority booking |
+| Maintenance | Maintenance scheduling with auto-block |
+| Cost Center | Cost center billing and analytics |
+| Fleet | Fleet/vehicle management overview |
+| History | Personal parking history and stats |
+| Geofence | Geofencing with GPS auto check-in |
+| Waitlist Ext | Enhanced waitlist with priority and notifications |
+| Parking Pass | Digital QR badge with public verification |
+| Absence Approval | Absence approval workflows |
+| Calendar Drag | Drag-to-reschedule on calendar |
+| Widgets | Customizable admin dashboard widgets |
+| Sharing | Booking sharing and guest invites |
+| API Versioning | API version headers and deprecation |
+| Plugins | Plugin/extension system with event hooks |
+| GraphQL | GraphQL API with interactive playground |
+| API Docs | Interactive API documentation |
+
+### Integration Modules (8 -- disabled by default, opt-in)
 
 | Module | Description | Requires |
 |--------|-------------|----------|
@@ -174,13 +224,16 @@ ParkHub organizes functionality into **35 runtime-toggleable modules** across fo
 | Push Notifications | Legacy push notification support | Push service |
 | Broadcasting | Real-time event broadcasting | Broadcasting driver |
 | Realtime | Server-Sent Events (SSE) | -- |
+| Email Templates | Professional HTML email templates | SMTP |
 
-### Enterprise Modules (2 -- disabled by default, opt-in)
+### Enterprise Modules (4 -- disabled by default, opt-in)
 
 | Module | Description |
 |--------|-------------|
 | Multi-Tenant | Tenant isolation with scoping middleware |
 | Dynamic Pricing | Time-based and demand-based pricing rules |
+| Setup Wizard | Interactive onboarding wizard |
+| Branding | Custom logo, colors, company name |
 
 ---
 
@@ -235,13 +288,20 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md) for step-by-step guides for eac
 
 ## Testing
 
-**1,506 tests** -- 998 PHPUnit (backend) + 508 Vitest (frontend) + Playwright E2E. CI runs on every push via GitHub Actions. Lighthouse CI enforces accessibility >= 95, performance >= 90.
+**1,200+ tests** -- PHPUnit backend + Vitest frontend + Playwright E2E. CI runs on every push via GitHub Actions. Lighthouse CI enforces accessibility >= 95, performance >= 90.
 
 ```bash
-composer test                       # PHPUnit (998 tests)
-cd parkhub-web && npx vitest run    # Frontend (508 tests)
+composer test                       # PHPUnit backend
+cd parkhub-web && npx vitest run    # Frontend
 npx playwright test                 # E2E
 ```
+
+### CI & Security Scanning
+
+- **GitHub Actions** CI on every push (PHPUnit, Vitest, Pint lint, Larastan static analysis)
+- **CodeQL** -- automated code scanning, 0 open alerts
+- **Trivy** -- container image vulnerability scanning
+- **Dependabot** -- automated dependency updates with auto-merge for patch/minor
 
 ---
 
@@ -271,8 +331,11 @@ Interactive API documentation is available via Scramble at `/docs/api` when enab
 
 ## Legal Compliance
 
-ParkHub PHP is designed for legal compliance across multiple jurisdictions. All legal
-documents are provided as **operator-customizable templates** -- not binding legal texts.
+ParkHub PHP is designed for legal compliance across multiple jurisdictions. Audited against **9 regulatory frameworks**:
+
+**GDPR** (EU) | **DSGVO** (DE) | **TTDSG** (DE) | **DDG** (DE) | **BDSG** (DE) | **NIS2** (EU) | **CCPA** (US) | **UK GDPR** | **nDSG** (CH)
+
+All legal documents are provided as **operator-customizable templates** -- not binding legal texts.
 
 | Document | Purpose | Location |
 |----------|---------|----------|
