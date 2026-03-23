@@ -1,0 +1,20 @@
+apiVersion: v2
+name: parkhub-php
+description: Self-hosted parking management platform — Laravel + React, Docker-ready
+type: application
+version: 1.0.0
+appVersion: "3.9.0"
+home: https://github.com/nash87/parkhub-php
+sources:
+  - https://github.com/nash87/parkhub-php
+maintainers:
+  - name: nash87
+    url: https://github.com/nash87
+keywords:
+  - parking
+  - management
+  - self-hosted
+  - gdpr
+  - laravel
+  - php
+icon: https://raw.githubusercontent.com/nash87/parkhub-php/main/public/favicon.svg
