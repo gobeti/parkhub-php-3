@@ -7,6 +7,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.0.0] - 2026-03-23
+
+### Added
+- **Plugin/Extension System** (`MODULE_PLUGINS=true`)
+  - `GET /api/v1/admin/plugins` -- list all plugins with status
+  - `PUT /api/v1/admin/plugins/{id}/toggle` -- enable/disable plugin
+  - `GET /api/v1/admin/plugins/{id}/config` -- get plugin configuration
+  - `PUT /api/v1/admin/plugins/{id}/config` -- update plugin configuration
+  - Plugin registry with event hooks: `booking_created`, `booking_cancelled`, `user_registered`, `lot_full`
+  - 2 built-in plugins: "Slack Notifier", "Auto-Assign Preferred Spot"
+  - 9 PHP tests
+- **GraphQL API** (`MODULE_GRAPHQL=true`)
+  - `POST /api/v1/graphql` -- basic GraphQL query parser mapped to REST handlers
+  - `GET /api/v1/graphql/playground` -- GraphiQL interactive playground
+  - Queries: `me`, `lots`, `lot(id)`, `bookings`, `booking(id)`, `myVehicles`
+  - Mutations: `createBooking`, `cancelBooking`, `addVehicle`
+  - 7 PHP tests
+- **Compliance Reports** (`MODULE_COMPLIANCE=true`)
+  - `GET /api/v1/admin/compliance/report` -- GDPR/DSGVO compliance status with 10 checks
+  - `GET /api/v1/admin/compliance/data-map` -- Art. 30 data processing inventory
+  - `GET /api/v1/admin/compliance/audit-export` -- audit trail export (JSON/CSV)
+  - TOM summary, legal basis, retention periods, sub-processor tracking
+  - 8 PHP tests
+- **Frontend**: AdminCompliance view, AdminGraphQL test, compliance admin nav tab
+- **i18n**: All 10 locales synced with compliance and plugin translations
+
+---
+
 ## [3.9.0] - 2026-03-23
 
 ### Added

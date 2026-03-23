@@ -68,6 +68,11 @@ return [
     'broadcasting' => env('MODULE_BROADCASTING', false),
     'realtime' => env('MODULE_REALTIME', false),
 
+    // ── v4.0 Features (enabled by default) ─────────────────────────
+    'plugins' => env('MODULE_PLUGINS', true),
+    'graphql' => env('MODULE_GRAPHQL', true),
+    'compliance' => env('MODULE_COMPLIANCE', true),
+
     // ── Enterprise (disabled by default — opt-in) ──────────────────
     'multi_tenant' => env('MODULE_MULTI_TENANT', false),
     'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', false),
