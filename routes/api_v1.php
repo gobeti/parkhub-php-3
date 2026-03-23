@@ -267,5 +267,10 @@ module_routes('plugins', 'plugins.php');
 module_routes('graphql', 'graphql.php');
 module_routes('compliance', 'compliance.php');
 
+// v4.1 features
+module_routes('sharing', 'sharing.php');
+module_routes('scheduled_reports', 'scheduled_reports.php');
+module_routes('api_versioning', 'api_versioning.php');
+
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');
