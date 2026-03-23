@@ -47,5 +47,13 @@
         <env name="MODULE_WAITLIST_EXT" value="true"/>
         <env name="MODULE_PARKING_PASS" value="true"/>
         <env name="MODULE_API_DOCS" value="true"/>
+        <!-- v4.1 features -->
+        <env name="MODULE_SHARING" value="true"/>
+        <env name="MODULE_SCHEDULED_REPORTS" value="true"/>
+        <env name="MODULE_API_VERSIONING" value="true"/>
+        <!-- v4.2 features -->
+        <env name="MODULE_SSO" value="true"/>
+        <env name="MODULE_WEBHOOKS_V2" value="true"/>
+        <env name="MODULE_ENHANCED_PWA" value="true"/>
     </php>
 </phpunit>

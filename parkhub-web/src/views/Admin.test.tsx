@@ -61,6 +61,8 @@ vi.mock('@phosphor-icons/react', () => ({
   PuzzlePiece: (props: any) => <span data-testid="icon-puzzle" {...props} />,
   GraphicsCard: (props: any) => <span data-testid="icon-graphql" {...props} />,
   ShieldCheck: (props: any) => <span data-testid="icon-shield" {...props} />,
+  Clock: (props: any) => <span data-testid="icon-clock-std" {...props} />,
+  WebhooksLogo: (props: any) => <span data-testid="icon-webhooks" {...props} />,
 }));
 
 import { AdminPage } from './Admin';
