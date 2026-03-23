@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/nash87/parkhub-php/actions/workflows/ci.yml"><img src="https://github.com/nash87/parkhub-php/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v3.8.0-brightgreen.svg?style=flat-square" alt="v3.8.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v3.9.0-brightgreen.svg?style=flat-square" alt="v3.9.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT License"></a>
   <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg?style=flat-square&logo=php&logoColor=white" alt="PHP 8.4"></a>
   <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-12-FF2D20.svg?style=flat-square&logo=laravel&logoColor=white" alt="Laravel 12"></a>
@@ -15,6 +15,7 @@
   <a href="docs/GDPR.md"><img src="https://img.shields.io/badge/DSGVO-konform-green.svg?style=flat-square" alt="GDPR Compliant"></a>
   <a href="docs/COMPLIANCE.md"><img src="https://img.shields.io/badge/Compliance-Audited-brightgreen.svg?style=flat-square" alt="Compliance Audited"></a>
   <a href="docker-compose.yml"><img src="https://img.shields.io/badge/Docker-ready-2496ED.svg?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready"></a>
+  <a href="helm/README.md"><img src="https://img.shields.io/badge/Helm-chart-0F1689.svg?style=flat-square&logo=helm&logoColor=white" alt="Helm Chart"></a>
 </p>
 
 <p align="center">
@@ -26,6 +27,7 @@
 <p align="center">
   <a href="https://parkhub-php-demo.onrender.com"><strong>Try the Live Demo</strong></a> &nbsp;|&nbsp;
   <a href="docs/INSTALLATION.md">Installation</a> &nbsp;|&nbsp;
+  <a href="helm/README.md">Helm Chart</a> &nbsp;|&nbsp;
   <a href="docs/API.md">API Docs</a> &nbsp;|&nbsp;
   <a href="docs/GDPR.md">GDPR Guide</a> &nbsp;|&nbsp;
   <a href="docs/COMPLIANCE.md">Compliance</a> &nbsp;|&nbsp;

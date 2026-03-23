@@ -7,6 +7,32 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.9.0] - 2026-03-23
+
+### Added
+- **Kubernetes Helm Chart**: Production-ready Helm chart for deploying ParkHub PHP to Kubernetes
+  - Full `helm/parkhub/` chart with deployment, service, ingress, HPA, PVC, configmap, secret templates
+  - Laravel-specific configuration: APP_KEY, DB_CONNECTION, Redis, cache/queue/session drivers
+  - Apache port 80 (default), `www-data` security context, 512Mi memory limit
+  - All 52 module feature flags exposed via `values.yaml`
+  - MySQL and Redis service dependency configuration
+  - Health check probes at `/health` and `/health/ready`
+  - `helm/README.md` with Laravel-specific installation and migration instructions
+- **k6 Load Testing Scripts**: Performance testing suite at `tests/load/`
+  - `smoke.js` -- 1 VU, 30s sanity check (health, login, bookings)
+  - `load.js` -- 50 VUs, 5min sustained load with full booking lifecycle
+  - `stress.js` -- 100 VUs, 10min stress test hitting all major endpoints
+  - `spike.js` -- 200 VUs spike test for traffic surge resilience
+  - `config.js` -- shared configuration with environment variable overrides
+  - Default base URL `http://localhost:8082` (PHP edition)
+- **Postman Collection**: Complete API collection at `docs/postman/`
+  - `ParkHub.postman_collection.json` -- full API surface with auth, bookings, lots, admin endpoints
+  - `ParkHub.postman_environment.json` -- local environment preset (port 8082)
+  - Auto-extracts Bearer token from login response
+  - Interactive API docs also available via Scramble at `/docs/api`
+
+---
+
 ## [3.8.0] - 2026-03-23
 
 ### Added
