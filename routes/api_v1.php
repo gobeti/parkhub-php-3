@@ -263,5 +263,9 @@ module_routes('absence_approval', 'absence_approval.php');
 module_routes('calendar_drag', 'calendar_drag.php');
 module_routes('widgets', 'widgets.php');
 
+module_routes('plugins', 'plugins.php');
+module_routes('graphql', 'graphql.php');
+module_routes('compliance', 'compliance.php');
+
 // OAuth — always load routes (module disabled by default, middleware gates access)
 require base_path('routes/modules/oauth.php');
