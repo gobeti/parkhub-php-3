@@ -1,52 +1,45 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/parkhub-web"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-    groups:
-      npm-minor-patch:
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "composer"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-    groups:
-      composer-minor-patch:
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-
+  # GitHub Actions — group all action bumps into one PR
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
     groups:
-      actions-minor-patch:
-        update-types:
-          - "minor"
-          - "patch"
+      actions:
+        patterns: ["*"]
+    labels: ["dependencies", "ci"]
+    open-pull-requests-limit: 5
+
+  # npm (frontend)
+  - package-ecosystem: "npm"
+    directory: "/parkhub-web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+    labels: ["dependencies", "frontend"]
+    open-pull-requests-limit: 5
+
+  # Composer (PHP)
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      composer-minor-patch:
+        update-types: ["minor", "patch"]
+    labels: ["dependencies", "php"]
+    open-pull-requests-limit: 5
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies", "docker"]
+    open-pull-requests-limit: 5
