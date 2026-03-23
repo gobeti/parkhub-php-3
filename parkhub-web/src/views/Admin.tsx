@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ChartBar, GearSix, Users, Megaphone, ChartLine, MapPin, Translate, PresentationChart, Gauge,
   Buildings, ClockCounterClockwise, Database, Car, Wheelchair, Wrench, CurrencyDollar, UserPlus, Lightning,
-  PuzzlePiece, GraphicsCard, ShieldCheck, Clock, Webhooks,
+  PuzzlePiece, GraphicsCard, ShieldCheck, Clock, WebhooksLogo,
 } from '@phosphor-icons/react';
 
 function AdminNav() {
@@ -34,7 +34,7 @@ function AdminNav() {
     { name: t('compliance.title', 'Compliance'), path: '/admin/compliance', icon: ShieldCheck },
     { name: t('scheduledReports.title', 'Scheduled Reports'), path: '/admin/scheduled-reports', icon: Clock },
     { name: t('sso.title', 'SSO'), path: '/admin/sso', icon: ShieldCheck },
-    { name: t('webhooksV2.title', 'Webhooks'), path: '/admin/webhooks', icon: Webhooks },
+    { name: t('webhooksV2.title', 'Webhooks'), path: '/admin/webhooks', icon: WebhooksLogo },
     { name: 'GraphQL', path: '/api/v1/graphql/playground', icon: GraphicsCard },
   ];
 

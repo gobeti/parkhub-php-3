@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
-use App\Models\Lot;
-use App\Models\Slot;
+use App\Models\ParkingLot;
+use App\Models\ParkingSlot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,13 +15,28 @@ class SharingControllerTest extends TestCase
 
     private function createBookingForUser(User $user): Booking
     {
-        $lot = Lot::factory()->create();
-        $slot = Slot::factory()->create(['lot_id' => $lot->id]);
+        $lot = ParkingLot::create([
+            'name' => 'Test Lot',
+            'address' => '123 Test St',
+            'total_slots' => 10,
+            'available_slots' => 5,
+            'status' => 'open',
+        ]);
+        $slot = ParkingSlot::create([
+            'lot_id' => $lot->id,
+            'slot_number' => 'A1',
+            'status' => 'available',
+        ]);
 
-        return Booking::factory()->create([
+        return Booking::create([
             'user_id' => $user->id,
             'lot_id' => $lot->id,
             'slot_id' => $slot->id,
+            'lot_name' => $lot->name,
+            'slot_number' => $slot->slot_number,
+            'start_time' => now(),
+            'end_time' => now()->addHours(2),
+            'status' => 'active',
         ]);
     }
 

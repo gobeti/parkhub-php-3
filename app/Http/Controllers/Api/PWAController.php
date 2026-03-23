@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Lot;
+use App\Models\ParkingLot;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -99,7 +99,7 @@ class PWAController extends Controller
             }
 
             // Basic lot info for offline display
-            $lots = Lot::select('id', 'name', 'address', 'total_slots')->take(10)->get();
+            $lots = ParkingLot::select('id', 'name', 'address', 'total_slots')->take(10)->get();
             $lotInfo = $lots->map(fn ($lot) => [
                 'id' => $lot->id,
                 'name' => $lot->name,
