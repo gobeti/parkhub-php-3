@@ -55,5 +55,7 @@
         <env name="MODULE_SSO" value="true"/>
         <env name="MODULE_WEBHOOKS_V2" value="true"/>
         <env name="MODULE_ENHANCED_PWA" value="true"/>
+        <!-- v4.4 features -->
+        <env name="MODULE_NOTIFICATION_CENTER" value="true"/>
     </php>
 </phpunit>

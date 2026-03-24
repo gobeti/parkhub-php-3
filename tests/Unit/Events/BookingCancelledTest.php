@@ -4,7 +4,6 @@ namespace Tests\Unit\Events;
 
 use App\Events\BookingCancelled;
 use App\Models\Booking;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

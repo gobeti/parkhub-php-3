@@ -3,6 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\PushSubscription;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,6 +23,6 @@ class PushSubscriptionModelTest extends TestCase
     public function test_push_subscription_uses_uuid(): void
     {
         $model = new PushSubscription;
-        $this->assertTrue(in_array(\Illuminate\Database\Eloquent\Concerns\HasUuids::class, class_uses_recursive($model)));
+        $this->assertTrue(in_array(HasUuids::class, class_uses_recursive($model)));
     }
 }

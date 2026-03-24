@@ -283,3 +283,6 @@ module_routes('enhanced_pwa', 'enhanced_pwa.php');
 // v4.3 features
 module_routes('rbac', 'rbac.php');
 module_routes('parking_zones', 'parking_zones.php');
+
+// v4.4 features
+module_routes('notification_center', 'notification_center.php');
