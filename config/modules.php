@@ -83,6 +83,11 @@ return [
     'webhooks_v2' => env('MODULE_WEBHOOKS_V2', false),
     'enhanced_pwa' => env('MODULE_ENHANCED_PWA', true),
 
+    // ── v4.3 Features ───────────────────────────────────────────────
+    'rbac' => env('MODULE_RBAC', true),
+    'audit_export' => env('MODULE_AUDIT_EXPORT', true),
+    'parking_zones' => env('MODULE_PARKING_ZONES', true),
+
     // ── Enterprise (disabled by default — opt-in) ──────────────────
     'multi_tenant' => env('MODULE_MULTI_TENANT', false),
     'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', false),
