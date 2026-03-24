@@ -380,6 +380,37 @@ export const api = {
     request<GeofenceConfig>(`/api/v1/admin/lots/${lotId}/geofence`, {
       method: 'PUT', body: JSON.stringify(data),
     }),
+
+  // ── RBAC ──
+  listRoles: () => request<any[]>('/api/v1/admin/roles'),
+  createRole: (data: { name: string; description?: string | null; permissions: string[] }) =>
+    request<any>('/api/v1/admin/roles', { method: 'POST', body: JSON.stringify(data) }),
+  updateRole: (id: string, data: { name?: string; description?: string | null; permissions?: string[] }) =>
+    request<any>(`/api/v1/admin/roles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteRole: (id: string) =>
+    request<void>(`/api/v1/admin/roles/${id}`, { method: 'DELETE' }),
+  listPermissions: () => request<any[]>('/api/v1/admin/permissions'),
+  getUserRoles: (userId: string) => request<any>(`/api/v1/admin/users/${userId}/roles`),
+  assignUserRoles: (userId: string, roleIds: string[]) =>
+    request<any>(`/api/v1/admin/users/${userId}/roles`, { method: 'PUT', body: JSON.stringify({ role_ids: roleIds }) }),
+
+  // ── Parking Zones with Pricing ──
+  getZonePricing: (lotId: string) => request<any[]>(`/api/v1/lots/${lotId}/zones/pricing`),
+  createZoneWithPricing: (lotId: string, data: { name: string; tier: string; description?: string; pricing_multiplier?: number; max_capacity?: number }) =>
+    request<any>(`/api/v1/lots/${lotId}/zones/pricing`, { method: 'POST', body: JSON.stringify(data) }),
+  updateZonePricing: (zoneId: string, data: { tier?: string; pricing_multiplier?: number; max_capacity?: number }) =>
+    request<any>(`/api/v1/admin/zones/${zoneId}/pricing`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  // ── Enhanced Audit Export ──
+  exportAuditLogEnhanced: (params: { format: string; action?: string; user_id?: string; from?: string; to?: string }) => {
+    const qs = new URLSearchParams();
+    qs.set('format', params.format);
+    if (params.action) qs.set('action', params.action);
+    if (params.user_id) qs.set('user_id', params.user_id);
+    if (params.from) qs.set('from', params.from);
+    if (params.to) qs.set('to', params.to);
+    return `/api/v1/admin/audit-log/export/enhanced?${qs}`;
+  },
 };
 
 // ── Types ──

@@ -7,6 +7,39 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.3.0] - 2026-03-24
+
+### Added
+- **RBAC (Role-Based Access Control)** (`MODULE_RBAC=true`)
+  - `GET /api/v1/admin/roles` -- list all roles (5 built-in + custom)
+  - `POST /api/v1/admin/roles` -- create custom role with permissions
+  - `PUT /api/v1/admin/roles/{id}` -- update role name/description/permissions
+  - `DELETE /api/v1/admin/roles/{id}` -- delete custom role (built-in protected)
+  - `GET /api/v1/admin/permissions` -- list all available permissions
+  - `GET /api/v1/admin/users/{userId}/roles` -- get user's assigned roles
+  - `PUT /api/v1/admin/users/{userId}/roles` -- assign roles to user
+  - Built-in roles: super_admin, admin, manager, user, viewer
+  - Permissions: manage_users, manage_lots, manage_bookings, view_reports, manage_settings, manage_plugins
+  - 10 PHP tests
+- **Advanced Audit Export** (`MODULE_AUDIT_EXPORT=true`)
+  - `GET /api/v1/admin/audit-log/export/enhanced?format=csv|json|pdf` -- multi-format export
+  - Supports date range filtering (`from`, `to`), action filter, user_id filter
+  - CSV, JSON (with metadata), and text-based PDF export
+  - 8 PHP tests
+- **Parking Zones with Pricing Tiers** (`MODULE_PARKING_ZONES=true`)
+  - `GET /api/v1/lots/{lotId}/zones/pricing` -- list zones with pricing tiers
+  - `POST /api/v1/lots/{lotId}/zones/pricing` -- create zone with tier
+  - `PUT /api/v1/admin/zones/{id}/pricing` -- update zone pricing tier
+  - `DELETE /api/v1/lots/{lotId}/zones/{id}/pricing` -- reset zone to standard
+  - Tier levels: economy (0.8x), standard (1.0x), premium (1.5x), vip (2.0x)
+  - Custom multiplier and max capacity support
+  - 8 PHP tests
+- **Frontend**: AdminRoles page, AdminZones page, enhanced AdminAuditLog with export dialog
+- **Admin nav**: Roles & Permissions and Zones tabs added to admin panel
+- **i18n**: All 10 locales synced with parkingZones, rbac, and auditLog translations
+
+---
+
 ## [4.2.0] - 2026-03-23
 
 ### Added
