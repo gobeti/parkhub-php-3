@@ -88,6 +88,9 @@ return [
     'audit_export' => env('MODULE_AUDIT_EXPORT', true),
     'parking_zones' => env('MODULE_PARKING_ZONES', true),
 
+    // ── v4.4 Features ───────────────────────────────────────────────
+    'notification_center' => env('MODULE_NOTIFICATION_CENTER', true),
+
     // ── Enterprise (disabled by default — opt-in) ──────────────────
     'multi_tenant' => env('MODULE_MULTI_TENANT', false),
     'dynamic_pricing' => env('MODULE_DYNAMIC_PRICING', false),

@@ -3,6 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\BookingNote;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,6 +22,6 @@ class BookingNoteModelTest extends TestCase
     public function test_booking_note_uses_uuid(): void
     {
         $model = new BookingNote;
-        $this->assertTrue(in_array(\Illuminate\Database\Eloquent\Concerns\HasUuids::class, class_uses_recursive($model)));
+        $this->assertTrue(in_array(HasUuids::class, class_uses_recursive($model)));
     }
 }
