@@ -53,6 +53,7 @@ class AutoReleaseBookings extends Command
                 Notification::create([
                     'user_id' => $waiter->user_id,
                     'type' => 'waitlist',
+                    'title' => 'Spot Available',
                     'message' => "A spot opened up in {$booking->lot_name}. Book now before it's taken.",
                     'data' => json_encode(['lot_id' => $booking->lot_id]),
                 ]);

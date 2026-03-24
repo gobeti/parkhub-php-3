@@ -28,13 +28,12 @@ class CreateAdminUser extends Command
         $password = $this->option('password') ?: env('PARKHUB_ADMIN_PASSWORD', 'admin');
         $username = $this->option('username');
 
-        User::create([
+        $user = User::create([
             'id' => Str::uuid(),
             'username' => $username,
             'email' => $email,
             'password' => bcrypt($password),
             'name' => 'Admin',
-            'role' => 'admin',
             'is_active' => true,
             'preferences' => json_encode([
                 'language' => 'en',
@@ -42,6 +41,8 @@ class CreateAdminUser extends Command
                 'notifications_enabled' => true,
             ]),
         ]);
+        $user->role = 'admin';
+        $user->save();
 
         Setting::set('needs_password_change', 'true');
 
