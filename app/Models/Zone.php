@@ -9,7 +9,7 @@ class Zone extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['lot_id', 'name', 'color', 'description'];
+    protected $fillable = ['lot_id', 'name', 'color', 'description', 'tier', 'pricing_multiplier', 'max_capacity'];
 
     public function lot()
     {
