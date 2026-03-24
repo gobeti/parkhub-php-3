@@ -12,7 +12,7 @@ class ValidatesExternalUrlsTest extends TestCase
     public function test_rejects_non_http_urls(): void
     {
         $this->assertFalse($this->isExternalUrl('ftp://example.com'));
-        $this->assertFalse($this->isExternalUrl('file:///etc/passwd'));
+        $this->assertFalse($this->isExternalUrl('file:///path/to/file'));
         $this->assertFalse($this->isExternalUrl('javascript:alert(1)'));
     }
 
