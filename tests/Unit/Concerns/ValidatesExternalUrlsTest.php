@@ -1,0 +1,47 @@
+<?php
+
+namespace Tests\Unit\Concerns;
+
+use App\Http\Concerns\ValidatesExternalUrls;
+use Tests\TestCase;
+
+class ValidatesExternalUrlsTest extends TestCase
+{
+    use ValidatesExternalUrls;
+
+    public function test_rejects_non_http_urls(): void
+    {
+        $this->assertFalse($this->isExternalUrl('ftp://example.com'));
+        $this->assertFalse($this->isExternalUrl('file:///path/to/file'));
+        $this->assertFalse($this->isExternalUrl('javascript:alert(1)'));
+    }
+
+    public function test_rejects_urls_without_protocol(): void
+    {
+        $this->assertFalse($this->isExternalUrl('example.com'));
+        $this->assertFalse($this->isExternalUrl('//example.com'));
+    }
+
+    public function test_rejects_urls_with_empty_host(): void
+    {
+        $this->assertFalse($this->isExternalUrl('http://'));
+        $this->assertFalse($this->isExternalUrl('https://'));
+    }
+
+    public function test_rejects_localhost(): void
+    {
+        $this->assertFalse($this->isExternalUrl('http://localhost'));
+        $this->assertFalse($this->isExternalUrl('https://localhost/path'));
+    }
+
+    public function test_rejects_private_ip_127(): void
+    {
+        $this->assertFalse($this->isExternalUrl('http://127.0.0.1'));
+        $this->assertFalse($this->isExternalUrl('http://127.0.0.1:8080'));
+    }
+
+    public function test_rejects_unresolvable_host(): void
+    {
+        $this->assertFalse($this->isExternalUrl('http://this-host-definitely-does-not-exist.invalid'));
+    }
+}
