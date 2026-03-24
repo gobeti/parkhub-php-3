@@ -3,8 +3,6 @@
 namespace Tests\Unit\Models;
 
 use App\Models\ChargingSession;
-use App\Models\EvCharger;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
