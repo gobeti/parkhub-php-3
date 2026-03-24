@@ -58,12 +58,22 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-vi.mock('@phosphor-icons/react', () => ({
-  ClockCounterClockwise: (props: any) => <span data-testid="icon-clock" {...props} />,
-  DownloadSimple: (props: any) => <span data-testid="icon-download" {...props} />,
-  FunnelSimple: (props: any) => <span data-testid="icon-funnel" {...props} />,
-  MagnifyingGlass: (props: any) => <span data-testid="icon-search" {...props} />,
-}));
+vi.mock('@phosphor-icons/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@phosphor-icons/react')>();
+  const icon = (props: any) => <span {...props} />;
+  return {
+    ...actual,
+    ClockCounterClockwise: icon,
+    DownloadSimple: icon,
+    FunnelSimple: icon,
+    MagnifyingGlass: icon,
+    FileCsv: icon,
+    FileDoc: icon,
+    FileJs: icon,
+    Question: icon,
+    CircleNotch: icon,
+  };
+});
 
 import { AdminAuditLogPage } from './AdminAuditLog';
 

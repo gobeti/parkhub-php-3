@@ -279,3 +279,7 @@ require base_path('routes/modules/oauth.php');
 module_routes('sso', 'sso.php');
 module_routes('webhooks_v2', 'webhooks_v2.php');
 module_routes('enhanced_pwa', 'enhanced_pwa.php');
+
+// v4.3 features
+module_routes('rbac', 'rbac.php');
+module_routes('parking_zones', 'parking_zones.php');

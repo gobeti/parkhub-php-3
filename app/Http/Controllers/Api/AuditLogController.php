@@ -154,7 +154,7 @@ class AuditLogController extends Controller
                     'entries' => $mapped,
                 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             }, 'audit-log.json', [
-                'Content-Type' => 'application/json',
+                'Content-Type' => 'application/json; charset=UTF-8',
             ]);
         }
 
