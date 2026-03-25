@@ -52,5 +52,8 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "jsdom": "^29.0.1",
     "vitest": "^4.1.0"
+  },
+  "overrides": {
+    "picomatch": ">=4.0.2"
   }
 }
