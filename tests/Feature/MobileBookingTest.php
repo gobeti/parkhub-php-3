@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
-use App\Models\ParkingLot;
+use App\Models\ParkingLot as Lot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -43,13 +43,13 @@ class MobileBookingTest extends TestCase
 
     public function test_nearby_lots_returns_lots_within_radius(): void
     {
-        ParkingLot::factory()->create([
+        Lot::factory()->create([
             'name' => 'Close Lot',
             'latitude' => 48.7758,
             'longitude' => 9.1829,
             'total_slots' => 50,
         ]);
-        ParkingLot::factory()->create([
+        Lot::factory()->create([
             'name' => 'Far Lot',
             'latitude' => 49.5,
             'longitude' => 10.0,
@@ -69,7 +69,7 @@ class MobileBookingTest extends TestCase
 
     public function test_nearby_lots_default_radius(): void
     {
-        ParkingLot::factory()->create([
+        Lot::factory()->create([
             'latitude' => 48.7758,
             'longitude' => 9.1829,
             'total_slots' => 10,
@@ -83,8 +83,8 @@ class MobileBookingTest extends TestCase
 
     public function test_quick_book_returns_lots_with_availability(): void
     {
-        ParkingLot::factory()->create(['name' => 'Full Lot', 'total_slots' => 0]);
-        ParkingLot::factory()->create(['name' => 'Available Lot', 'total_slots' => 10]);
+        Lot::factory()->create(['name' => 'Full Lot', 'total_slots' => 0]);
+        Lot::factory()->create(['name' => 'Available Lot', 'total_slots' => 10]);
 
         $response = $this->actingAs($this->user)
             ->getJson('/api/v1/mobile/quick-book')
@@ -107,7 +107,7 @@ class MobileBookingTest extends TestCase
 
     public function test_active_booking_returns_current_booking(): void
     {
-        $lot = ParkingLot::factory()->create(['name' => 'Test Lot']);
+        $lot = Lot::factory()->create(['name' => 'Test Lot']);
         Booking::factory()->create([
             'user_id' => $this->user->id,
             'lot_id' => $lot->id,
@@ -129,7 +129,7 @@ class MobileBookingTest extends TestCase
 
     public function test_active_booking_ignores_expired(): void
     {
-        $lot = ParkingLot::factory()->create();
+        $lot = Lot::factory()->create();
         Booking::factory()->create([
             'user_id' => $this->user->id,
             'lot_id' => $lot->id,
@@ -146,7 +146,7 @@ class MobileBookingTest extends TestCase
 
     public function test_active_booking_ignores_cancelled(): void
     {
-        $lot = ParkingLot::factory()->create();
+        $lot = Lot::factory()->create();
         Booking::factory()->create([
             'user_id' => $this->user->id,
             'lot_id' => $lot->id,
