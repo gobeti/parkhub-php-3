@@ -3,6 +3,7 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\SendBookingConfirmationJob;
+use App\Mail\BookingConfirmation;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
@@ -33,7 +34,7 @@ class SendBookingConfirmationJobTest extends TestCase
 
         (new SendBookingConfirmationJob($booking->id, $user->id))->handle();
 
-        Mail::assertQueued(\App\Mail\BookingConfirmation::class, function ($mail) use ($user) {
+        Mail::assertQueued(BookingConfirmation::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
