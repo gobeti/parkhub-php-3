@@ -2,8 +2,14 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "nash87/parkhub-php",
     "type": "project",
-    "description": "Self-hosted parking management — Laravel 12 + React 19, GDPR-ready.",
-    "keywords": ["parking", "management", "laravel", "self-hosted", "gdpr"],
+    "description": "Self-hosted parking management \u2014 Laravel 12 + React 19, GDPR-ready.",
+    "keywords": [
+        "parking",
+        "management",
+        "laravel",
+        "self-hosted",
+        "gdpr"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.4",
@@ -92,5 +98,6 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "version": "4.5.0"
 }
