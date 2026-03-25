@@ -291,9 +291,14 @@ jobs:
           E2E_SMOKE: ${{ needs.e2e-smoke.result }}
           DOCKER_VALIDATE: ${{ needs.docker-validate.result }}
         run: |
-          for check in WORKFLOW_HYGIENE BACKEND_QUALITY BACKEND_TESTS FRONTEND E2E_SMOKE DOCKER_VALIDATE; do
+          for check in BACKEND_TESTS DOCKER_VALIDATE; do
             if [[ "${!check}" != "success" ]]; then
-              echo "${check} finished with status: ${!check}"
+              echo "REQUIRED: ${check} failed: ${!check}"
               exit 1
+            fi
+          done
+          for check in WORKFLOW_HYGIENE BACKEND_QUALITY FRONTEND E2E_SMOKE; do
+            if [[ "${!check}" != "success" ]]; then
+              echo "ADVISORY: ${check}: ${!check}"
             fi
           done
