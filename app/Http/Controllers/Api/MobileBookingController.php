@@ -58,7 +58,7 @@ class MobileBookingController extends Controller
                     : 0,
             ];
         })
-            ->filter(fn($l) => $l['distance_meters'] <= $radius)
+            ->filter(fn ($l) => $l['distance_meters'] <= $radius)
             ->sortBy('distance_meters')
             ->values();
 
@@ -92,7 +92,7 @@ class MobileBookingController extends Controller
                 'available_slots' => $available,
             ];
         })
-            ->filter(fn($l) => $l['available_slots'] > 0)
+            ->filter(fn ($l) => $l['available_slots'] > 0)
             ->values();
 
         return response()->json([

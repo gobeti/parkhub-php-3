@@ -107,7 +107,7 @@ jobs:
 
   deploy-demo:
     name: Deploy demo
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID != ''
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     needs: publish
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -115,7 +115,12 @@ jobs:
     permissions: {}
 
     steps:
+      - name: Skip demo deploy when Render secrets are missing
+        if: ${{ secrets.RENDER_API_KEY == '' || secrets.RENDER_SERVICE_ID == '' }}
+        run: echo "Render demo deploy skipped because required secrets are not configured."
+
       - name: Trigger Render deploy
+        if: ${{ secrets.RENDER_API_KEY != '' && secrets.RENDER_SERVICE_ID != '' }}
         run: |
           curl -fsS -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
             -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \

@@ -4,7 +4,6 @@ namespace Tests\Unit\Listeners;
 
 use App\Events\BookingCancelled;
 use App\Events\BookingCreated;
-use App\Http\Controllers\Api\SseController;
 use App\Listeners\PushSseBookingEvent;
 use App\Models\Booking;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -33,7 +33,7 @@ jobs:
           - language: php
             build-mode: none
           - language: javascript-typescript
-            build-mode: manual
+            build-mode: none
 
     steps:
       - name: Checkout
@@ -62,7 +62,6 @@ jobs:
           npm ci
           npm ci --prefix parkhub-web
           npm run build
-          npm run build --prefix parkhub-web
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4

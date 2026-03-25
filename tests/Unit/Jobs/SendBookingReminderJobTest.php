@@ -3,6 +3,7 @@
 namespace Tests\Unit\Jobs;
 
 use App\Jobs\SendBookingReminderJob;
+use App\Mail\BookingReminderMail;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
@@ -39,7 +40,7 @@ class SendBookingReminderJobTest extends TestCase
 
         (new SendBookingReminderJob(60))->handle();
 
-        Mail::assertSent(\App\Mail\BookingReminderMail::class, function ($mail) use ($user) {
+        Mail::assertSent(BookingReminderMail::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
