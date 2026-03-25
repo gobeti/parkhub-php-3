@@ -32,7 +32,7 @@ class MobileBookingController extends Controller
         $lng = (float) $request->query('lng');
         $radius = (float) ($request->query('radius', 1000));
 
-        $lots = Lot::all()->map(function ($lot) use ($lat, $lng) {
+        $lots = ParkingLot::all()->map(function ($lot) use ($lat, $lng) {
             $lotLat = $lot->latitude ?? 0;
             $lotLng = $lot->longitude ?? 0;
             $distance = $this->haversineDistance($lat, $lng, $lotLat, $lotLng);
@@ -78,7 +78,7 @@ class MobileBookingController extends Controller
      */
     public function quickBook(Request $request): JsonResponse
     {
-        $lots = Lot::all()->map(function ($lot) {
+        $lots = ParkingLot::all()->map(function ($lot) {
             $totalSlots = $lot->total_slots ?? 0;
             $activeBookings = Booking::where('lot_id', $lot->id)
                 ->where('status', 'confirmed')
@@ -125,13 +125,13 @@ class MobileBookingController extends Controller
         $now = Carbon::now();
         $start = Carbon::parse($booking->start_time);
         $end = Carbon::parse($booking->end_time);
-        $totalSeconds = $end->diffInSeconds($start);
-        $remainingSeconds = max(0, $end->diffInSeconds($now));
+        $totalSeconds = (int) $start->diffInSeconds($end, true);
+        $remainingSeconds = (int) max(0, $now->diffInSeconds($end, false));
         $progress = $totalSeconds > 0
             ? round((($totalSeconds - $remainingSeconds) / $totalSeconds) * 100, 1)
             : 100;
 
-        $lot = Lot::find($booking->lot_id);
+        $lot = ParkingLot::find($booking->lot_id);
 
         return response()->json([
             'success' => true,
