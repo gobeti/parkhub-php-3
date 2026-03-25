@@ -30,8 +30,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - language: php
-            build-mode: none
           - language: javascript-typescript
             build-mode: none
 
