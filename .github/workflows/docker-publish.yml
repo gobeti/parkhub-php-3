@@ -74,16 +74,9 @@ jobs:
         continue-on-error: true
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:scan
-          format: sarif
-          output: trivy-results.sarif
+          format: table
           severity: CRITICAL
           exit-code: '0'
-
-      - name: Upload Trivy SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-results.sarif
 
       - name: Build and push multi-arch image
         id: push
