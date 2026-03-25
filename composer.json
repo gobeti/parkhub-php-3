@@ -98,6 +98,5 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "version": "4.5.0"
+    "prefer-stable": true
 }

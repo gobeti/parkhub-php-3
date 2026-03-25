@@ -41,8 +41,8 @@ jobs:
 
       - name: Validate Helm chart
         run: |
-          helm lint ./helm/parkhub
-          helm template parkhub ./helm/parkhub > /dev/null
+          helm lint ./helm/parkhub --set config.appKey=base64:ci-dummy-app-key
+          helm template parkhub ./helm/parkhub --set config.appKey=base64:ci-dummy-app-key > /dev/null
 
       - name: Validate Docker Compose
         run: docker compose -f docker-compose.yml config -q
