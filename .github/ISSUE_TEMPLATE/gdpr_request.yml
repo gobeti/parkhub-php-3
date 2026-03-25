@@ -1,5 +1,5 @@
 name: GDPR / Privacy Request
-description: Report a GDPR compliance issue in the ParkHub PHP software itself
+description: Report a GDPR compliance issue in the ParkHub software itself
 labels: ["gdpr", "privacy"]
 body:
   - type: markdown
@@ -7,14 +7,14 @@ body:
       value: |
         **Important distinction:**
 
-        - If you want to exercise your GDPR rights (Art. 15 access, Art. 17 deletion, Art. 20 portability)
-          regarding **your personal data in a specific ParkHub installation**, please contact the **operator**
+        - If you want to exercise your GDPR rights (Art. 15 access, Art. 17 deletion) regarding
+          **your personal data in a specific ParkHub installation**, please contact the **operator**
           of that installation directly. Look for the Impressum page at `/impressum` on their instance.
           ParkHub is self-hosted software — we do not operate any installation and have no access
           to any user data.
 
-        - Use this form only to report a **compliance issue in the ParkHub PHP software itself**
-          (e.g., a missing anonymization, a broken data export, a legal template error).
+        - Use this form only to report a **compliance issue in the ParkHub software itself**
+          (e.g., a missing anonymization, a broken GDPR export, a legal template error).
   - type: textarea
     id: description
     attributes:
