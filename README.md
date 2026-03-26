@@ -12,7 +12,7 @@
   <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-12-FF2D20.svg?style=flat-square&logo=laravel&logoColor=white" alt="Laravel 12"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB.svg?style=flat-square&logo=react&logoColor=black" alt="React 19"></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4.svg?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4"></a>
-  <img src="https://img.shields.io/badge/Tests-1200%2B-success.svg?style=flat-square" alt="1200+ tests">
+  <img src="https://img.shields.io/badge/Tests-1500%2B-success.svg?style=flat-square" alt="1500+ tests">
   <a href="docs/GDPR.md"><img src="https://img.shields.io/badge/DSGVO-konform-green.svg?style=flat-square" alt="GDPR Compliant"></a>
   <a href="docs/COMPLIANCE.md"><img src="https://img.shields.io/badge/Compliance-Audited-brightgreen.svg?style=flat-square" alt="Compliance Audited"></a>
   <a href="docker-compose.yml"><img src="https://img.shields.io/badge/Docker-ready-2496ED.svg?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready"></a>
@@ -82,7 +82,7 @@ composer install
 ```bash
 composer setup                        # Install + configure + migrate + build
 composer dev                          # Dev server + Vite + queue + logs
-php artisan test                      # Run 998 PHPUnit tests
+php artisan test                      # Run 1,565 PHPUnit tests
 ```
 
 **[Live Demo](https://parkhub-php-demo.onrender.com)** | Login: `admin@parkhub.test` / `demo` | (auto-resets every 6 hours)
@@ -162,7 +162,7 @@ php artisan test                      # Run 998 PHPUnit tests
 
 ## Module System
 
-ParkHub organizes functionality into **64 runtime-toggleable modules** across five categories. Toggle any module via `MODULE_*=true|false` environment variables.
+ParkHub organizes functionality into **67 runtime-toggleable modules** across five categories. Toggle any module via `MODULE_*=true|false` environment variables.
 
 ### Core Modules (20 -- enabled by default, opt-out)
 
@@ -302,7 +302,7 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md) for step-by-step guides for eac
 
 ## Testing
 
-**1,200+ tests** -- PHPUnit backend + Vitest frontend + Playwright E2E. CI runs on every push via GitHub Actions. Lighthouse CI enforces accessibility >= 95, performance >= 90.
+**1,565+ backend tests** -- plus Vitest frontend and Playwright E2E coverage. CI runs on every push via GitHub Actions. Lighthouse CI enforces accessibility >= 95, performance >= 90.
 
 ```bash
 composer test                       # PHPUnit backend
