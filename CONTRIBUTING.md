@@ -237,7 +237,7 @@ parkhub-php/
   routes/
     api.php                 # Main API routes
     api_v1.php              # V1 API routes
-    modules/                # Per-module route files (67 modules)
+    modules/                # Module route fragments (62 files for 67 toggles)
   tests/
     Feature/                # Integration tests
     Unit/                   # Unit tests
