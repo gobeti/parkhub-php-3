@@ -89,13 +89,14 @@ const sampleWaitlistResponse = {
 
 describe('WaitlistPage', () => {
   beforeEach(() => {
-    global.fetch = vi.fn((url: string) => {
-      if (typeof url === 'string' && url.includes('/api/v1/lots') && !url.includes('waitlist')) {
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/v1/lots') && !url.includes('waitlist')) {
         return Promise.resolve({
           json: () => Promise.resolve({ success: true, data: sampleLots }),
         } as Response);
       }
-      if (typeof url === 'string' && url.includes('/waitlist') && !url.includes('subscribe')) {
+      if (url.includes('/waitlist') && !url.includes('subscribe')) {
         return Promise.resolve({
           json: () => Promise.resolve(sampleWaitlistResponse),
         } as Response);
@@ -103,7 +104,7 @@ describe('WaitlistPage', () => {
       return Promise.resolve({
         json: () => Promise.resolve({ success: true, data: {} }),
       } as Response);
-    });
+    }) as typeof fetch;
   });
 
   afterEach(() => {
@@ -134,8 +135,9 @@ describe('WaitlistPage', () => {
 
   it('displays full lots with join button', async () => {
     // Return no waitlist entries for the user
-    global.fetch = vi.fn((url: string) => {
-      if (typeof url === 'string' && url.includes('/api/v1/lots') && !url.includes('waitlist')) {
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/v1/lots') && !url.includes('waitlist')) {
         return Promise.resolve({
           json: () => Promise.resolve({ success: true, data: sampleLots }),
         } as Response);
@@ -143,7 +145,7 @@ describe('WaitlistPage', () => {
       return Promise.resolve({
         json: () => Promise.resolve({ success: true, data: { total: 0, entries: [] } }),
       } as Response);
-    });
+    }) as typeof fetch;
 
     render(<WaitlistPage />);
     await waitFor(() => {
@@ -175,7 +177,7 @@ describe('WaitlistPage', () => {
           data: [{ id: 'lot-1', name: 'Garage A', total_slots: 10, available_slots: 5 }],
         }),
       } as Response)
-    );
+    ) as typeof fetch;
 
     render(<WaitlistPage />);
     await waitFor(() =>

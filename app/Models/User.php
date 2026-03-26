@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -38,47 +40,47 @@ class User extends Authenticatable
         ];
     }
 
-    public function loginHistory()
+    public function loginHistory(): HasMany
     {
         return $this->hasMany(LoginHistory::class);
     }
 
-    public function bookings()
+    public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }
 
-    public function vehicles()
+    public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class);
     }
 
-    public function absences()
+    public function absences(): HasMany
     {
         return $this->hasMany(Absence::class);
     }
 
-    public function notifications_list()
+    public function notifications_list(): HasMany
     {
         return $this->hasMany(Notification::class);
     }
 
-    public function favorites()
+    public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);
     }
 
-    public function recurringBookings()
+    public function recurringBookings(): HasMany
     {
         return $this->hasMany(RecurringBooking::class);
     }
 
-    public function creditTransactions()
+    public function creditTransactions(): HasMany
     {
         return $this->hasMany(CreditTransaction::class);
     }
 
-    public function tenant()
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }

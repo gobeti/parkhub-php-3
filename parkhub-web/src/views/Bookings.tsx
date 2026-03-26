@@ -7,7 +7,7 @@ import {
   ArrowClockwise, Warning,
   MagnifyingGlass, Funnel, QrCode, FilePdf,
 } from '@phosphor-icons/react';
-import type { TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { api, type Booking, type Vehicle } from '../api/client';
 import { BookingsSkeleton } from '../components/Skeleton';
 import { ParkingPass } from '../components/ParkingPass';

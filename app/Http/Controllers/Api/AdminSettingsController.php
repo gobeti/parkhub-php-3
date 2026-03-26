@@ -25,7 +25,7 @@ class AdminSettingsController extends Controller
     public function getSettings(Request $request): JsonResponse
     {
 
-        $settings = Setting::all()->pluck('value', 'key')->toArray();
+        $settings = Setting::query()->pluck('value', 'key')->all();
         $defaults = [
             'company_name' => 'ParkHub',
             'use_case' => 'company',
@@ -370,7 +370,7 @@ class AdminSettingsController extends Controller
         $data = [
             'exported_at' => now()->toISOString(),
             'version' => SystemController::appVersion(),
-            'settings' => Setting::all()->pluck('value', 'key'),
+            'settings' => Setting::query()->pluck('value', 'key'),
             'users' => User::all()->makeHidden(['password', 'remember_token']),
             'lots' => ParkingLot::with('slots')->get(),
             'bookings' => Booking::limit(10000)->get(),

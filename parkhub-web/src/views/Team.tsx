@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Users } from '@phosphor-icons/react';
 import { api, type TeamAbsenceEntry } from '../api/client';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { ABSENCE_CONFIG, type AbsenceType } from '../constants/absenceConfig';
 
 export function TeamPage() {
@@ -97,7 +98,7 @@ export function TeamPage() {
   );
 }
 
-function TeamMemberCard({ name, entries, t }: { name: string; entries: TeamAbsenceEntry[]; t: (k: string, f?: string) => string }) {
+function TeamMemberCard({ name, entries, t }: { name: string; entries: TeamAbsenceEntry[]; t: TFunction }) {
   return (
     <div className="py-3 border-b border-surface-100 dark:border-surface-800 last:border-b-0">
       <div className="flex items-center gap-3 mb-2">

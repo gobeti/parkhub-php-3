@@ -66,18 +66,19 @@ const sampleLots = [{ id: 'lot-1', name: 'Main Lot' }];
 
 describe('EVChargingPage', () => {
   beforeEach(() => {
-    global.fetch = vi.fn((url: string) => {
-      if (typeof url === 'string' && url.includes('/chargers/sessions')) {
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/chargers/sessions')) {
         return Promise.resolve({ json: () => Promise.resolve({ success: true, data: [] }) } as Response);
       }
-      if (typeof url === 'string' && url.includes('/chargers')) {
+      if (url.includes('/chargers')) {
         return Promise.resolve({ json: () => Promise.resolve({ success: true, data: sampleChargers }) } as Response);
       }
-      if (typeof url === 'string' && url.includes('/lots')) {
+      if (url.includes('/lots')) {
         return Promise.resolve({ json: () => Promise.resolve({ success: true, data: sampleLots }) } as Response);
       }
       return Promise.resolve({ json: () => Promise.resolve({ success: true, data: [] }) } as Response);
-    });
+    }) as typeof fetch;
   });
 
   afterEach(() => vi.restoreAllMocks());
@@ -115,7 +116,7 @@ describe('AdminChargersPage', () => {
   beforeEach(() => {
     global.fetch = vi.fn(() =>
       Promise.resolve({ json: () => Promise.resolve({ success: true, data: { total_chargers: 8, available: 5, in_use: 2, offline: 1, total_sessions: 120, total_kwh: 1500.5 } }) } as Response)
-    );
+    ) as typeof fetch;
   });
 
   afterEach(() => vi.restoreAllMocks());

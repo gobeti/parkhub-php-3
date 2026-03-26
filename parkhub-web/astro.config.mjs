@@ -54,7 +54,7 @@ export default defineConfig({
       },
     },
   },
-  fonts: process.env.CI || process.env.DOCKER ? [] : [
+  fonts: process.env.CI || process.env.DOCKER ? undefined : [
     {
       name: 'Outfit',
       cssVariable: '--font-outfit',
