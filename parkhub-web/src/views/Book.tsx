@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   ArrowLeft, MapPin, Clock, Car, SpinnerGap, Check,
   Lightning, Wheelchair, Motorcycle, Star,
@@ -351,7 +351,7 @@ function StepSelectLot({ lots, loading, onSelect, t }: {
   );
 }
 
-const SLOT_TYPE_ICON: Record<string, React.ComponentType<{ weight?: string; className?: string }>> = {
+const SLOT_TYPE_ICON: Record<string, React.ElementType> = {
   electric: Lightning, handicap: Wheelchair, motorcycle: Motorcycle, vip: Star,
 };
 

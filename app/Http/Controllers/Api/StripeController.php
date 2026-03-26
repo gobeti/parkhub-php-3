@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Stripe\Checkout\Session;
 use Stripe\Stripe;
 
 class StripeController extends Controller
@@ -33,11 +32,17 @@ class StripeController extends Controller
 
         $secretKey = config('services.stripe.secret');
 
-        if ($secretKey && class_exists(Stripe::class)) {
+        if (
+            $secretKey
+            && class_exists('\Stripe\Stripe')
+            && class_exists('\Stripe\Checkout\Session')
+        ) {
             Stripe::setApiKey($secretKey);
 
             try {
-                $session = Session::create([
+                /** @var class-string $sessionClass */
+                $sessionClass = '\Stripe\Checkout\Session';
+                $session = $sessionClass::create([
                     'payment_method_types' => ['card'],
                     'mode' => 'payment',
                     'line_items' => [[

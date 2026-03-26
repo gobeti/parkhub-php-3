@@ -7,40 +7,10 @@ parameters:
 			path: app/Console/Commands/CreateAdminUser.php
 
 		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Absence model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/AbsenceController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Booking model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/AdminController.php
-
-		-
 			message: '#^Relation ''user'' is not found in App\\Models\\CreditTransaction model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/Api/AdminCreditController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Booking model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/AdminReportController.php
-
-		-
-			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
-			identifier: larastan.noUnnecessaryCollectionCall
-			count: 1
-			path: app/Http/Controllers/Api/AdminSettingsController.php
-
-		-
-			message: '#^Relation ''lot'' is not found in App\\Models\\Booking model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
 
 		-
 			message: '#^Relation ''requester'' is not found in App\\Models\\SwapRequest model\.$#'
@@ -52,12 +22,6 @@ parameters:
 			message: '#^Relation ''requesterBooking'' is not found in App\\Models\\SwapRequest model\.$#'
 			identifier: larastan.relationExistence
 			count: 2
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Relation ''slot'' is not found in App\\Models\\Booking model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
 			path: app/Http/Controllers/Api/BookingController.php
 
 		-
@@ -77,30 +41,6 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Booking model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/LotController.php
-
-		-
-			message: '#^Relation ''slots'' is not found in App\\Models\\ParkingLot model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/RecommendationController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Absence model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/TeamController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Booking model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/TeamController.php
 
 		-
 			message: '#^Relation ''proposer'' is not found in App\\Models\\TranslationProposal model\.$#'
@@ -131,9 +71,3 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Jobs/ExpandRecurringBookingsJob.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Booking model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Jobs/SendBookingReminderJob.php

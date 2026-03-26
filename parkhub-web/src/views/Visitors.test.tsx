@@ -106,12 +106,13 @@ const sampleVisitors = [
 
 describe('VisitorsPage', () => {
   beforeEach(() => {
-    global.fetch = vi.fn((url: string) => {
-      if (typeof url === 'string' && url.includes('/api/v1/visitors')) {
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/v1/visitors')) {
         return Promise.resolve({ json: () => Promise.resolve({ success: true, data: sampleVisitors }) } as Response);
       }
       return Promise.resolve({ json: () => Promise.resolve({ success: true, data: [] }) } as Response);
-    });
+    }) as typeof fetch;
   });
 
   afterEach(() => {
@@ -154,7 +155,7 @@ describe('AdminVisitorsPage', () => {
   beforeEach(() => {
     global.fetch = vi.fn(() =>
       Promise.resolve({ json: () => Promise.resolve({ success: true, data: sampleVisitors }) } as Response)
-    );
+    ) as typeof fetch;
   });
 
   afterEach(() => {
@@ -173,7 +174,7 @@ describe('AdminVisitorsPage', () => {
   it('shows empty state when no visitors', async () => {
     global.fetch = vi.fn(() =>
       Promise.resolve({ json: () => Promise.resolve({ success: true, data: [] }) } as Response)
-    );
+    ) as typeof fetch;
     render(<AdminVisitorsPage />);
     await waitFor(() => expect(screen.getByText('No visitors registered')).toBeTruthy());
   });

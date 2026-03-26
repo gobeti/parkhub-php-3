@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ParkingSlot extends Model
 {
@@ -27,22 +30,22 @@ class ParkingSlot extends Model
         return $this->slot_number;
     }
 
-    public function lot()
+    public function lot(): BelongsTo
     {
         return $this->belongsTo(ParkingLot::class, 'lot_id');
     }
 
-    public function zone()
+    public function zone(): BelongsTo
     {
         return $this->belongsTo(Zone::class);
     }
 
-    public function bookings()
+    public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'slot_id');
     }
 
-    public function activeBooking()
+    public function activeBooking(): HasOne
     {
         return $this->hasOne(Booking::class, 'slot_id')
             ->where('status', 'active')

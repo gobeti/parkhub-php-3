@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, type ElementType } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,14 @@ import { Breadcrumb } from './ui/Breadcrumb';
 import { NotificationBadge } from './ui/NotificationBadge';
 import { languages } from '../i18n/index';
 
-const NAV_ITEMS = [
+type NavItem = {
+  to: string;
+  icon: ElementType;
+  key: string;
+  end?: boolean;
+};
+
+const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', icon: House, key: 'dashboard', end: true },
   { to: '/bookings', icon: CalendarCheck, key: 'bookings' },
   { to: '/vehicles', icon: Car, key: 'vehicles' },

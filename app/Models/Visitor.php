@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Visitor extends Model
 {
@@ -30,7 +31,7 @@ class Visitor extends Model
         ];
     }
 
-    public function host()
+    public function host(): BelongsTo
     {
         return $this->belongsTo(User::class, 'host_user_id');
     }

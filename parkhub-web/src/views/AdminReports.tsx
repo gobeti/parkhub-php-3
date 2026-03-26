@@ -8,7 +8,7 @@ import { OccupancyHeatmap } from '../components/OccupancyHeatmap';
 import { ExportButton } from '../components/ExportButton';
 
 function StatCard({ icon: Icon, label, value }: {
-  icon: React.ComponentType<{ weight?: string; className?: string }>;
+  icon: React.ElementType;
   label: string;
   value: number;
   color?: string;

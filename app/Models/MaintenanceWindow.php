@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MaintenanceWindow extends Model
 {
@@ -26,7 +27,7 @@ class MaintenanceWindow extends Model
         ];
     }
 
-    public function lot()
+    public function lot(): BelongsTo
     {
         return $this->belongsTo(ParkingLot::class, 'lot_id');
     }

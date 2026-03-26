@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { NotificationPreferences } from './client';
 
 // We can't directly import `request` since it's not exported — but we can test
 // the behaviour through the public `api` object which calls `request` internally.
@@ -280,7 +281,18 @@ describe('API client', () => {
   });
 
   it('calls update notification preferences', async () => {
-    const prefs = { email_booking_confirm: false, email_booking_reminder: true, email_swap_request: false, push_enabled: true };
+    const prefs: NotificationPreferences = {
+      email_booking_confirm: false,
+      email_booking_reminder: true,
+      email_swap_request: false,
+      sms_booking_confirm: false,
+      sms_booking_reminder: false,
+      sms_booking_cancelled: false,
+      whatsapp_booking_confirm: false,
+      whatsapp_booking_reminder: false,
+      whatsapp_booking_cancelled: false,
+      push_enabled: true,
+    };
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true, status: 200,
       json: () => Promise.resolve({ success: true, data: prefs }),
