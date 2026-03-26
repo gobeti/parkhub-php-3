@@ -338,16 +338,15 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'data' => null, 'error' => ['code' => 'NOT_FOUND', 'message' => 'Booking not found.'], 'meta' => null], 404);
         }
 
-        if ($booking->user_id !== $request->user()->id) {
-            return response()->json(['success' => false, 'data' => null, 'error' => ['code' => 'FORBIDDEN', 'message' => 'You do not have access to this booking.'], 'meta' => null], 403);
-        }
+        $this->authorize('view', $booking);
 
         return BookingResource::make($booking);
     }
 
     public function destroy(Request $request, string $id)
     {
-        $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
+        $booking = Booking::findOrFail($id);
+        $this->authorize('delete', $booking);
 
         // Mark as cancelled instead of hard-deleting — preserves audit trail
         $booking->update(['status' => Booking::STATUS_CANCELLED]);
@@ -610,14 +609,9 @@ class BookingController extends Controller
 
     public function updateNotes(Request $request, string $id)
     {
-        // Enforce ownership — regular users may only update their own bookings.
-        // Admins may update any booking's notes.
+        $booking = Booking::findOrFail($id);
+        $this->authorize('updateNotes', $booking);
         $user = $request->user();
-        if ($user->isAdmin()) {
-            $booking = Booking::findOrFail($id);
-        } else {
-            $booking = Booking::where('user_id', $user->id)->findOrFail($id);
-        }
 
         $request->validate([
             'notes' => 'nullable|string|max:2000',
@@ -639,7 +633,8 @@ class BookingController extends Controller
 
     public function checkin(Request $request, string $id)
     {
-        $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
+        $booking = Booking::findOrFail($id);
+        $this->authorize('update', $booking);
         $booking->update(['checked_in_at' => now(), 'status' => Booking::STATUS_ACTIVE]);
         AuditLog::log([
             'user_id' => $request->user()->id,
@@ -653,7 +648,8 @@ class BookingController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
+        $booking = Booking::findOrFail($id);
+        $this->authorize('update', $booking);
 
         $data = $request->only(['notes', 'vehicle_plate']);
 
