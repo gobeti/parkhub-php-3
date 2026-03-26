@@ -5,6 +5,7 @@ namespace Tests\Unit\Policies;
 use App\Models\ParkingLot;
 use App\Models\User;
 use App\Policies\ParkingLotPolicy;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ParkingLotPolicyTest extends TestCase
@@ -20,7 +21,7 @@ class ParkingLotPolicyTest extends TestCase
     private function makeUser(string $role = 'user'): User
     {
         $user = new User;
-        $user->id = (string) \Illuminate\Support\Str::uuid();
+        $user->id = (string) Str::uuid();
         $user->role = $role;
 
         return $user;
