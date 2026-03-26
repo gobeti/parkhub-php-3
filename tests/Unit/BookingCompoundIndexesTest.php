@@ -46,4 +46,3 @@ class BookingCompoundIndexesTest extends TestCase
         );
     }
 }
-
