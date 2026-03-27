@@ -23,6 +23,8 @@ vi.mock('react-i18next', () => ({
         'admin.announcements': 'Announcements',
         'admin.reports': 'Reports',
         'admin.translations': 'Translations',
+        'admin.rateLimits': 'Rate Limits',
+        'admin.tenants': 'Tenants',
       };
       return map[key] || key;
     },
@@ -45,6 +47,22 @@ vi.mock('@phosphor-icons/react', () => ({
   ChartLine: (props: any) => <span data-testid="icon-chart-line" {...props} />,
   MapPin: (props: any) => <span data-testid="icon-map-pin" {...props} />,
   Translate: (props: any) => <span data-testid="icon-translate" {...props} />,
+  PresentationChart: (props: any) => <span data-testid="icon-presentation" {...props} />,
+  Gauge: (props: any) => <span data-testid="icon-gauge" {...props} />,
+  Buildings: (props: any) => <span data-testid="icon-buildings" {...props} />,
+  ClockCounterClockwise: (props: any) => <span data-testid="icon-clock" {...props} />,
+  Database: (props: any) => <span data-testid="icon-database" {...props} />,
+  Car: (props: any) => <span data-testid="icon-car" {...props} />,
+  Wheelchair: (props: any) => <span data-testid="icon-wheelchair" {...props} />,
+  Wrench: (props: any) => <span data-testid="icon-wrench" {...props} />,
+  CurrencyDollar: (props: any) => <span data-testid="icon-currency" {...props} />,
+  UserPlus: (props: any) => <span data-testid="icon-user-plus" {...props} />,
+  Lightning: (props: any) => <span data-testid="icon-lightning" {...props} />,
+  PuzzlePiece: (props: any) => <span data-testid="icon-puzzle" {...props} />,
+  GraphicsCard: (props: any) => <span data-testid="icon-graphql" {...props} />,
+  ShieldCheck: (props: any) => <span data-testid="icon-shield" {...props} />,
+  LockKey: (props: any) => <span data-testid="icon-lock-key" {...props} />,
+  MapTrifold: (props: any) => <span data-testid="icon-map-trifold" {...props} />,
 }));
 
 import { AdminPage } from './Admin';
@@ -69,6 +87,9 @@ describe('AdminPage', () => {
     expect(screen.getByText('Announcements')).toBeInTheDocument();
     expect(screen.getByText('Reports')).toBeInTheDocument();
     expect(screen.getByText('Translations')).toBeInTheDocument();
+    expect(screen.getByText('Analytics')).toBeInTheDocument();
+    expect(screen.getByText('Rate Limits')).toBeInTheDocument();
+    expect(screen.getByText('Tenants')).toBeInTheDocument();
   });
 
   it('renders tab links with correct paths', () => {
@@ -80,6 +101,9 @@ describe('AdminPage', () => {
     expect(screen.getByText('Announcements').closest('a')).toHaveAttribute('href', '/admin/announcements');
     expect(screen.getByText('Reports').closest('a')).toHaveAttribute('href', '/admin/reports');
     expect(screen.getByText('Translations').closest('a')).toHaveAttribute('href', '/admin/translations');
+    expect(screen.getByText('Analytics').closest('a')).toHaveAttribute('href', '/admin/analytics');
+    expect(screen.getByText('Rate Limits').closest('a')).toHaveAttribute('href', '/admin/rate-limits');
+    expect(screen.getByText('Tenants').closest('a')).toHaveAttribute('href', '/admin/tenants');
   });
 
   it('renders the outlet for child routes', () => {

@@ -68,11 +68,10 @@ const AdminVisitorsPage = lazy(() => import('./views/Visitors'), 'AdminVisitorsP
 const EVChargingPage = lazy(() => import('./views/EVCharging'), 'EVChargingPage');
 const AdminChargersPage = lazy(() => import('./views/EVCharging'), 'AdminChargersPage');
 const ParkingHistoryPage = lazy(() => import('./views/ParkingHistory'), 'ParkingHistoryPage');
-const WaitlistPage = lazy(() => import('./views/Waitlist'), 'WaitlistPage');
-const ParkingPassPage = lazy(() => import('./views/ParkingPassView'), 'ParkingPassPage');
+const AbsenceApprovalPage = lazy(() => import('./views/AbsenceApproval'), 'AbsenceApprovalPage');
+const AdminDashboardPage = lazy(() => import('./views/AdminDashboard'), 'AdminDashboardPage');
 const AdminPluginsPage = lazy(() => import('./views/AdminPlugins'), 'AdminPluginsPage');
 const AdminCompliancePage = lazy(() => import('./views/AdminCompliance'), 'AdminCompliancePage');
-const AdminScheduledReportsPage = lazy(() => import('./views/AdminScheduledReports'), 'AdminScheduledReportsPage');
 const AdminSSOPage = lazy(() => import('./views/AdminSSO'), 'AdminSSOPage');
 const AdminWebhooksPage = lazy(() => import('./views/AdminWebhooks'), 'AdminWebhooksPage');
 const AdminRolesPage = lazy(() => import('./views/AdminRoles'), 'AdminRolesPage');
@@ -158,8 +157,7 @@ function AnimatedRoutes() {
           <Route path="visitors" element={<SuspenseRoute><VisitorsPage /></SuspenseRoute>} />
           <Route path="ev-charging" element={<SuspenseRoute><EVChargingPage /></SuspenseRoute>} />
           <Route path="history" element={<SuspenseRoute><ParkingHistoryPage /></SuspenseRoute>} />
-          <Route path="waitlist" element={<SuspenseRoute><WaitlistPage /></SuspenseRoute>} />
-          <Route path="passes" element={<SuspenseRoute><ParkingPassPage /></SuspenseRoute>} />
+          <Route path="absence-approval" element={<SuspenseRoute><AbsenceApprovalPage /></SuspenseRoute>} />
           <Route path="map" element={<SuspenseRoute><MapViewPage /></SuspenseRoute>} />
           <Route path="translations" element={<SuspenseRoute><TranslationsPage /></SuspenseRoute>} />
           <Route path="admin" element={<AdminRoute><SuspenseRoute><AdminPage /></SuspenseRoute></AdminRoute>}>
@@ -181,9 +179,9 @@ function AnimatedRoutes() {
             <Route path="billing" element={<SuspenseRoute><AdminBillingPage /></SuspenseRoute>} />
             <Route path="visitors" element={<SuspenseRoute><AdminVisitorsPage /></SuspenseRoute>} />
             <Route path="chargers" element={<SuspenseRoute><AdminChargersPage /></SuspenseRoute>} />
+            <Route path="widgets" element={<SuspenseRoute><AdminDashboardPage /></SuspenseRoute>} />
             <Route path="plugins" element={<SuspenseRoute><AdminPluginsPage /></SuspenseRoute>} />
             <Route path="compliance" element={<SuspenseRoute><AdminCompliancePage /></SuspenseRoute>} />
-            <Route path="scheduled-reports" element={<SuspenseRoute><AdminScheduledReportsPage /></SuspenseRoute>} />
             <Route path="sso" element={<SuspenseRoute><AdminSSOPage /></SuspenseRoute>} />
             <Route path="webhooks" element={<SuspenseRoute><AdminWebhooksPage /></SuspenseRoute>} />
             <Route path="roles" element={<SuspenseRoute><AdminRolesPage /></SuspenseRoute>} />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
+import { createColumnHelper } from '@tanstack/react-table';
 import {
   SpinnerGap, MagnifyingGlass, Coins,
   PencilSimple, X, Check, UserMinus, UserPlus,
@@ -178,7 +178,7 @@ export function AdminUsersPage() {
     );
   }
 
-  const columns = useMemo<ColumnDef<User, any>[]>(() => [
+  const columns = useMemo(() => [
     columnHelper.accessor('name', {
       header: () => t('admin.users'),
       cell: info => (

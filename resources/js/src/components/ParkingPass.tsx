@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, DownloadSimple } from '@phosphor-icons/react';
+import { X, DownloadSimple, Printer } from '@phosphor-icons/react';
 import type { Booking } from '../api/client';
+import { getInMemoryToken } from '../api/client';
 import { format } from 'date-fns';
 
 interface ParkingPassProps {
@@ -15,10 +16,14 @@ export function ParkingPass({ booking, onClose }: ParkingPassProps) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('parkhub_token');
-    const BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
+    const token = getInMemoryToken();
+    const BASE_URL = import.meta.env?.VITE_API_URL || '';
     fetch(`${BASE_URL}/api/v1/bookings/${booking.id}/qr`, {
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      credentials: 'include',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load pass');
@@ -102,14 +107,23 @@ export function ParkingPass({ booking, onClose }: ParkingPassProps) {
           )}
         </div>
 
-        <button
-          onClick={handleDownload}
-          disabled={!imgSrc}
-          className="btn btn-primary w-full flex items-center justify-center gap-2 print:hidden"
-        >
-          <DownloadSimple weight="bold" className="w-4 h-4" />{' '}
-          {t('pass.download')}
-        </button>
+        <div className="flex gap-2 print:hidden">
+          <button
+            onClick={handleDownload}
+            disabled={!imgSrc}
+            className="btn btn-primary flex-1 flex items-center justify-center gap-2"
+          >
+            <DownloadSimple weight="bold" className="w-4 h-4" />{' '}
+            {t('pass.download')}
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="btn btn-secondary flex items-center justify-center gap-2 px-4"
+            title="Print booking confirmation"
+          >
+            <Printer weight="bold" className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

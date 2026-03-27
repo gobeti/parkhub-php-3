@@ -19,8 +19,10 @@ let mockUser: any = {
 vi.mock('react-router-dom', () => ({
   Outlet: () => <div data-testid="outlet">Page content</div>,
   NavLink: ({ to, children, end, onClick, className, ...props }: any) => {
-    const cls = typeof className === 'function' ? className({ isActive: to === '/' && end }) : className;
-    return <a href={to} onClick={onClick} className={cls} {...props}>{children}</a>;
+    const isActive = to === '/' && end;
+    const cls = typeof className === 'function' ? className({ isActive }) : className;
+    const rendered = typeof children === 'function' ? children({ isActive }) : children;
+    return <a href={to} onClick={onClick} className={cls} {...props}>{rendered}</a>;
   },
   useNavigate: () => mockNavigate,
   useLocation: () => ({ pathname: '/' }),
@@ -55,6 +57,8 @@ vi.mock('react-i18next', () => ({
         'nav.absences': 'Absences',
         'nav.team': 'Team',
         'nav.calendar': 'Calendar',
+        'nav.map': 'Map',
+        'nav.history': 'History',
         'nav.credits': 'Credits',
         'nav.notifications': 'Notifications',
         'nav.profile': 'Profile',
@@ -76,37 +80,52 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('framer-motion', () => ({
   motion: {
-    div: React.forwardRef(({ children, initial, animate, exit, transition, whileHover, whileTap, variants, ...props }: any, ref: any) => (
+    div: React.forwardRef(({ children, initial, animate, exit, transition, whileHover, whileTap, variants, layoutId, ...props }: any, ref: any) => (
       <div ref={ref} {...props}>{children}</div>
     )),
     aside: React.forwardRef(({ children, initial, animate, exit, transition, ...props }: any, ref: any) => (
       <aside ref={ref} {...props}>{children}</aside>
     )),
+    button: React.forwardRef(({ children, initial, animate, exit, transition, whileHover, whileTap, ...props }: any, ref: any) => (
+      <button ref={ref} {...props}>{children}</button>
+    )),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-vi.mock('@phosphor-icons/react', () => ({
-  House: (props: any) => <span data-testid="icon-house" {...props} />,
-  CalendarCheck: (props: any) => <span data-testid="icon-calendar-check" {...props} />,
-  Car: (props: any) => <span data-testid="icon-car" {...props} />,
-  Calendar: (props: any) => <span data-testid="icon-calendar" {...props} />,
-  CalendarX: (props: any) => <span data-testid="icon-calendar-x" {...props} />,
-  Coins: (props: any) => <span data-testid="icon-coins" {...props} />,
-  UserCircle: (props: any) => <span data-testid="icon-user" {...props} />,
-  Users: (props: any) => <span data-testid="icon-users" {...props} />,
-  Bell: (props: any) => <span data-testid="icon-bell" {...props} />,
-  GearSix: (props: any) => <span data-testid="icon-gear" {...props} />,
-  SignOut: (props: any) => <span data-testid="icon-signout" {...props} />,
-  List: (props: any) => <span data-testid="icon-list" {...props} />,
-  X: (props: any) => <span data-testid="icon-x" {...props} />,
-  CarSimple: (props: any) => <span data-testid="icon-car-simple" {...props} />,
-  SunDim: (props: any) => <span data-testid="icon-sun" {...props} />,
-  Moon: (props: any) => <span data-testid="icon-moon" {...props} />,
-  CalendarPlus: (props: any) => <span data-testid="icon-calendar-plus" {...props} />,
-  Translate: (props: any) => <span data-testid="icon-translate" {...props} />,
-  Star: (props: any) => <span data-testid="icon-star" {...props} />,
-}));
+vi.mock('@phosphor-icons/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@phosphor-icons/react')>();
+  const icon = (props: any) => <span {...props} />;
+  return {
+    ...actual,
+    House: icon,
+    CalendarCheck: icon,
+    Car: icon,
+    Calendar: icon,
+    CalendarX: icon,
+    Coins: icon,
+    UserCircle: icon,
+    Users: icon,
+    Bell: icon,
+    GearSix: icon,
+    SignOut: icon,
+    List: icon,
+    X: icon,
+    CarSimple: icon,
+    SunDim: icon,
+    Moon: icon,
+    CalendarPlus: icon,
+    Translate: icon,
+    Star: icon,
+    Palette: icon,
+    Check: icon,
+    CheckCircle: icon,
+    Globe: icon,
+    CaretDown: icon,
+    MapPin: icon,
+    ClockCounterClockwise: icon,
+  };
+});
 
 import { Layout } from './Layout';
 

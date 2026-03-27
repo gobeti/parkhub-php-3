@@ -1,29 +1,23 @@
-import { useState, useCallback, useEffect, useRef, type ElementType } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   House, CalendarCheck, Car, Calendar, CalendarX, Coins, UserCircle, Users, Bell,
   GearSix, SignOut, List, X, CarSimple, SunDim, Moon, Translate, Star, Globe, CaretDown, MapPin,
-  ClockCounterClockwise, Queue, Ticket,
+  ClockCounterClockwise,
 } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { CommandPalette } from './CommandPalette';
+import { NotificationCenter } from './NotificationCenter';
 import { ThemeSwitcher, ThemeSwitcherFab } from './ThemeSwitcher';
 import { Breadcrumb } from './ui/Breadcrumb';
 import { NotificationBadge } from './ui/NotificationBadge';
 import { languages } from '../i18n/index';
 
-type NavItem = {
-  to: string;
-  icon: ElementType;
-  key: string;
-  end?: boolean;
-};
-
-const NAV_ITEMS: readonly NavItem[] = [
+const NAV_ITEMS = [
   { to: '/', icon: House, key: 'dashboard', end: true },
   { to: '/bookings', icon: CalendarCheck, key: 'bookings' },
   { to: '/vehicles', icon: Car, key: 'vehicles' },
@@ -33,8 +27,6 @@ const NAV_ITEMS: readonly NavItem[] = [
   { to: '/calendar', icon: Calendar, key: 'calendar' },
   { to: '/map', icon: MapPin, key: 'map' },
   { to: '/history', icon: ClockCounterClockwise, key: 'history' },
-  { to: '/waitlist', icon: Queue, key: 'waitlist' },
-  { to: '/passes', icon: Ticket, key: 'passes' },
   { to: '/credits', icon: Coins, key: 'credits' },
   { to: '/notifications', icon: Bell, key: 'notifications' },
   { to: '/translations', icon: Translate, key: 'translations' },
@@ -233,13 +225,16 @@ export function Layout() {
                 <span className="font-bold text-surface-900 dark:text-white">ParkHub</span>
               </div>
             </div>
-            <button
-              onClick={() => setTheme(resolved === 'dark' ? 'light' : 'dark')}
-              className="btn btn-ghost btn-icon"
-              aria-label={resolved === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
-            >
-              {resolved === 'dark' ? <SunDim weight="fill" className="w-5 h-5" /> : <Moon weight="fill" className="w-5 h-5" />}
-            </button>
+            <div className="flex items-center gap-1">
+              <NotificationCenter />
+              <button
+                onClick={() => setTheme(resolved === 'dark' ? 'light' : 'dark')}
+                className="btn btn-ghost btn-icon"
+                aria-label={resolved === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
+              >
+                {resolved === 'dark' ? <SunDim weight="fill" className="w-5 h-5" /> : <Moon weight="fill" className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -328,7 +323,11 @@ export function Layout() {
         </AnimatePresence>
 
         <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full">
-          <Breadcrumb />
+          <div className="hidden lg:flex justify-between items-center mb-2">
+            <Breadcrumb />
+            <NotificationCenter />
+          </div>
+          <div className="lg:hidden"><Breadcrumb /></div>
           <Outlet />
         </main>
       </div>

@@ -347,28 +347,6 @@ export const api = {
   },
   getBookingStats: () => request<PersonalParkingStats>('/api/v1/bookings/stats'),
 
-  // ── Enhanced Waitlist ──
-  subscribeWaitlist: (lotId: string, priority?: number) =>
-    request('/api/v1/lots/' + lotId + '/waitlist/subscribe', {
-      method: 'POST', body: JSON.stringify({ priority: priority ?? 3 }),
-    }),
-  getLotWaitlist: (lotId: string) =>
-    request<WaitlistResponse>(`/api/v1/lots/${lotId}/waitlist`),
-  leaveWaitlist: (lotId: string) =>
-    request(`/api/v1/lots/${lotId}/waitlist`, { method: 'DELETE' }),
-  acceptWaitlistOffer: (lotId: string, entryId: string) =>
-    request(`/api/v1/lots/${lotId}/waitlist/${entryId}/accept`, { method: 'POST' }),
-  declineWaitlistOffer: (lotId: string, entryId: string) =>
-    request(`/api/v1/lots/${lotId}/waitlist/${entryId}/decline`, { method: 'POST' }),
-
-  // ── Parking Pass ──
-  getBookingPass: (bookingId: string) =>
-    request<ParkingPassData>(`/api/v1/bookings/${bookingId}/pass`),
-  verifyPass: (code: string) =>
-    request<PassVerification>(`/api/v1/pass/verify/${code}`),
-  getMyPasses: () =>
-    request<ParkingPassData[]>('/api/v1/me/passes'),
-
   // ── Geofencing ──
   geofenceCheckIn: (latitude: number, longitude: number) =>
     request<GeofenceCheckInResponse>('/api/v1/geofence/check-in', {
@@ -381,36 +359,34 @@ export const api = {
       method: 'PUT', body: JSON.stringify(data),
     }),
 
-  // ── RBAC ──
-  listRoles: () => request<any[]>('/api/v1/admin/roles'),
-  createRole: (data: { name: string; description?: string | null; permissions: string[] }) =>
-    request<any>('/api/v1/admin/roles', { method: 'POST', body: JSON.stringify(data) }),
-  updateRole: (id: string, data: { name?: string; description?: string | null; permissions?: string[] }) =>
-    request<any>(`/api/v1/admin/roles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteRole: (id: string) =>
-    request<void>(`/api/v1/admin/roles/${id}`, { method: 'DELETE' }),
-  listPermissions: () => request<any[]>('/api/v1/admin/permissions'),
-  getUserRoles: (userId: string) => request<any>(`/api/v1/admin/users/${userId}/roles`),
-  assignUserRoles: (userId: string, roleIds: string[]) =>
-    request<any>(`/api/v1/admin/users/${userId}/roles`, { method: 'PUT', body: JSON.stringify({ role_ids: roleIds }) }),
+  // ── Absence Approval ──
+  submitAbsenceRequest: (data: { absence_type: string; start_date: string; end_date: string; reason: string }) =>
+    request<AbsenceApprovalRequest>('/api/v1/absences/requests', { method: 'POST', body: JSON.stringify(data) }),
+  myAbsenceRequests: () => request<AbsenceApprovalRequest[]>('/api/v1/absences/my'),
+  pendingAbsenceRequests: () => request<AbsenceApprovalRequest[]>('/api/v1/admin/absences/pending'),
+  approveAbsenceRequest: (id: string, comment?: string) =>
+    request<AbsenceApprovalRequest>(`/api/v1/admin/absences/${id}/approve`, {
+      method: 'PUT', body: JSON.stringify({ comment }),
+    }),
+  rejectAbsenceRequest: (id: string, reason: string) =>
+    request<AbsenceApprovalRequest>(`/api/v1/admin/absences/${id}/reject`, {
+      method: 'PUT', body: JSON.stringify({ reason }),
+    }),
 
-  // ── Parking Zones with Pricing ──
-  getZonePricing: (lotId: string) => request<any[]>(`/api/v1/lots/${lotId}/zones/pricing`),
-  createZoneWithPricing: (lotId: string, data: { name: string; tier: string; description?: string; pricing_multiplier?: number; max_capacity?: number }) =>
-    request<any>(`/api/v1/lots/${lotId}/zones/pricing`, { method: 'POST', body: JSON.stringify(data) }),
-  updateZonePricing: (zoneId: string, data: { tier?: string; pricing_multiplier?: number; max_capacity?: number }) =>
-    request<any>(`/api/v1/admin/zones/${zoneId}/pricing`, { method: 'PUT', body: JSON.stringify(data) }),
+  // ── Calendar Drag Reschedule ──
+  rescheduleBooking: (id: string, newStart: string, newEnd: string) =>
+    request<RescheduleResponse>(`/api/v1/bookings/${id}/reschedule`, {
+      method: 'PUT', body: JSON.stringify({ new_start: newStart, new_end: newEnd }),
+    }),
 
-  // ── Enhanced Audit Export ──
-  exportAuditLogEnhanced: (params: { format: string; action?: string; user_id?: string; from?: string; to?: string }) => {
-    const qs = new URLSearchParams();
-    qs.set('format', params.format);
-    if (params.action) qs.set('action', params.action);
-    if (params.user_id) qs.set('user_id', params.user_id);
-    if (params.from) qs.set('from', params.from);
-    if (params.to) qs.set('to', params.to);
-    return `/api/v1/admin/audit-log/export/enhanced?${qs}`;
-  },
+  // ── Admin Widgets ──
+  getWidgetLayout: () => request<WidgetLayoutResponse>('/api/v1/admin/widgets'),
+  saveWidgetLayout: (widgets: WidgetEntryData[]) =>
+    request<WidgetLayoutResponse>('/api/v1/admin/widgets', {
+      method: 'PUT', body: JSON.stringify({ widgets }),
+    }),
+  getWidgetData: (widgetId: string) =>
+    request<WidgetDataResponse>(`/api/v1/admin/widgets/data/${widgetId}`),
 };
 
 // ── Types ──
@@ -963,51 +939,51 @@ export interface GeofenceConfig {
   enabled: boolean;
 }
 
-// ── Enhanced Waitlist ──
-export interface WaitlistEntryData {
-  id: string;
-  user_id: string;
-  lot_id: string;
-  created_at: string;
-  notified_at: string | null;
-  status: 'waiting' | 'offered' | 'accepted' | 'declined' | 'expired';
-  offer_expires_at: string | null;
-  accepted_booking_id: string | null;
-}
-
-export interface WaitlistPosition {
-  entry: WaitlistEntryData;
-  position: number;
-  total_ahead: number;
-  estimated_wait_minutes: number | null;
-}
-
-export interface WaitlistResponse {
-  total: number;
-  entries: WaitlistPosition[];
-}
-
-// ── Parking Pass ──
-export interface ParkingPassData {
-  id: string;
+// ── Calendar Drag Reschedule ──
+export interface RescheduleResponse {
   booking_id: string;
+  old_start: string;
+  old_end: string;
+  new_start: string;
+  new_end: string;
+  slot_id: string;
+  lot_id: string;
+  success: boolean;
+  message: string;
+}
+
+// ── Absence Approval ──
+export interface AbsenceApprovalRequest {
+  id: string;
   user_id: string;
   user_name: string;
-  lot_name: string;
-  slot_number: string;
-  valid_from: string;
-  valid_until: string;
-  verification_code: string;
-  qr_data: string;
-  status: 'active' | 'expired' | 'revoked' | 'used';
+  absence_type: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewer_id?: string;
+  reviewer_comment?: string;
   created_at: string;
+  reviewed_at?: string;
 }
 
-export interface PassVerification {
-  valid: boolean;
-  status: string;
-  lot_name: string | null;
-  slot_number: string | null;
-  valid_from: string | null;
-  valid_until: string | null;
+// ── Admin Widgets ──
+export interface WidgetEntryData {
+  id: string;
+  widget_type: string;
+  position: { x: number; y: number; w: number; h: number };
+  visible: boolean;
+}
+
+export interface WidgetLayoutResponse {
+  user_id: string;
+  widgets: WidgetEntryData[];
+}
+
+export interface WidgetDataResponse {
+  widget_id: string;
+  widget_type: string;
+  title: string;
+  data: Record<string, unknown>;
 }

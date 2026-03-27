@@ -334,6 +334,31 @@ export const api = {
   updateTenant: (id: string, data: CreateTenantRequest) =>
     request<TenantInfo>(`/api/v1/admin/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
+  // ── Parking History ──
+  getBookingHistory: (params?: { lot_id?: string; from?: string; to?: string; page?: number; per_page?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.lot_id) qs.set('lot_id', params.lot_id);
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.per_page) qs.set('per_page', String(params.per_page));
+    const q = qs.toString();
+    return request<BookingHistoryResponse>(`/api/v1/bookings/history${q ? `?${q}` : ''}`);
+  },
+  getBookingStats: () => request<PersonalParkingStats>('/api/v1/bookings/stats'),
+
+  // ── Geofencing ──
+  geofenceCheckIn: (latitude: number, longitude: number) =>
+    request<GeofenceCheckInResponse>('/api/v1/geofence/check-in', {
+      method: 'POST', body: JSON.stringify({ latitude, longitude }),
+    }),
+  getLotGeofence: (lotId: string) =>
+    request<GeofenceConfig>(`/api/v1/lots/${lotId}/geofence`),
+  adminSetGeofence: (lotId: string, data: { center_lat: number; center_lng: number; radius_meters: number; enabled?: boolean }) =>
+    request<GeofenceConfig>(`/api/v1/admin/lots/${lotId}/geofence`, {
+      method: 'PUT', body: JSON.stringify(data),
+    }),
+
   // ── Absence Approval ──
   submitAbsenceRequest: (data: { absence_type: string; start_date: string; end_date: string; reason: string }) =>
     request<AbsenceApprovalRequest>('/api/v1/absences/requests', { method: 'POST', body: JSON.stringify(data) }),
@@ -875,6 +900,58 @@ export interface PaginatedAuditLog {
   total_pages: number;
 }
 
+// ── Parking History ──
+export interface BookingHistoryResponse {
+  items: Booking[];
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface MonthlyTrend {
+  month: string;
+  bookings: number;
+}
+
+export interface PersonalParkingStats {
+  total_bookings: number;
+  favorite_lot: string | null;
+  avg_duration_minutes: number;
+  busiest_day: string | null;
+  credits_spent: number;
+  monthly_trend: MonthlyTrend[];
+}
+
+// ── Geofencing ──
+export interface GeofenceCheckInResponse {
+  checked_in: boolean;
+  booking_id: string | null;
+  lot_name: string | null;
+  message: string;
+}
+
+export interface GeofenceConfig {
+  lot_id: string;
+  center_lat: number;
+  center_lng: number;
+  radius_meters: number;
+  enabled: boolean;
+}
+
+// ── Calendar Drag Reschedule ──
+export interface RescheduleResponse {
+  booking_id: string;
+  old_start: string;
+  old_end: string;
+  new_start: string;
+  new_end: string;
+  slot_id: string;
+  lot_id: string;
+  success: boolean;
+  message: string;
+}
+
 // ── Absence Approval ──
 export interface AbsenceApprovalRequest {
   id: string;
@@ -889,13 +966,6 @@ export interface AbsenceApprovalRequest {
   reviewer_comment?: string;
   created_at: string;
   reviewed_at?: string;
-}
-
-// ── Calendar Drag Reschedule ──
-export interface RescheduleResponse {
-  success: boolean;
-  message: string;
-  booking?: any;
 }
 
 // ── Admin Widgets ──
@@ -913,5 +983,7 @@ export interface WidgetLayoutResponse {
 
 export interface WidgetDataResponse {
   widget_id: string;
-  data: any;
+  widget_type: string;
+  title: string;
+  data: Record<string, unknown>;
 }
