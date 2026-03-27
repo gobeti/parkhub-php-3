@@ -63,8 +63,19 @@ const AdminFleetPage = lazy(() => import('./views/AdminFleet'), 'AdminFleetPage'
 const AdminAccessiblePage = lazy(() => import('./views/AdminAccessible'), 'AdminAccessiblePage');
 const AdminMaintenancePage = lazy(() => import('./views/AdminMaintenance'), 'AdminMaintenancePage');
 const AdminBillingPage = lazy(() => import('./views/AdminBilling'), 'AdminBillingPage');
+const VisitorsPage = lazy(() => import('./views/Visitors'), 'VisitorsPage');
+const AdminVisitorsPage = lazy(() => import('./views/Visitors'), 'AdminVisitorsPage');
+const EVChargingPage = lazy(() => import('./views/EVCharging'), 'EVChargingPage');
+const AdminChargersPage = lazy(() => import('./views/EVCharging'), 'AdminChargersPage');
+const ParkingHistoryPage = lazy(() => import('./views/ParkingHistory'), 'ParkingHistoryPage');
 const AbsenceApprovalPage = lazy(() => import('./views/AbsenceApproval'), 'AbsenceApprovalPage');
 const AdminDashboardPage = lazy(() => import('./views/AdminDashboard'), 'AdminDashboardPage');
+const AdminPluginsPage = lazy(() => import('./views/AdminPlugins'), 'AdminPluginsPage');
+const AdminCompliancePage = lazy(() => import('./views/AdminCompliance'), 'AdminCompliancePage');
+const AdminSSOPage = lazy(() => import('./views/AdminSSO'), 'AdminSSOPage');
+const AdminWebhooksPage = lazy(() => import('./views/AdminWebhooks'), 'AdminWebhooksPage');
+const AdminRolesPage = lazy(() => import('./views/AdminRoles'), 'AdminRolesPage');
+const AdminZonesPage = lazy(() => import('./views/AdminZones'), 'AdminZonesPage');
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -143,6 +154,9 @@ function AnimatedRoutes() {
           <Route path="team" element={<SuspenseRoute><TeamPage /></SuspenseRoute>} />
           <Route path="notifications" element={<SuspenseRoute><NotificationsPage /></SuspenseRoute>} />
           <Route path="calendar" element={<SuspenseRoute><CalendarPage /></SuspenseRoute>} />
+          <Route path="visitors" element={<SuspenseRoute><VisitorsPage /></SuspenseRoute>} />
+          <Route path="ev-charging" element={<SuspenseRoute><EVChargingPage /></SuspenseRoute>} />
+          <Route path="history" element={<SuspenseRoute><ParkingHistoryPage /></SuspenseRoute>} />
           <Route path="absence-approval" element={<SuspenseRoute><AbsenceApprovalPage /></SuspenseRoute>} />
           <Route path="map" element={<SuspenseRoute><MapViewPage /></SuspenseRoute>} />
           <Route path="translations" element={<SuspenseRoute><TranslationsPage /></SuspenseRoute>} />
@@ -163,7 +177,15 @@ function AnimatedRoutes() {
             <Route path="accessible" element={<SuspenseRoute><AdminAccessiblePage /></SuspenseRoute>} />
             <Route path="maintenance" element={<SuspenseRoute><AdminMaintenancePage /></SuspenseRoute>} />
             <Route path="billing" element={<SuspenseRoute><AdminBillingPage /></SuspenseRoute>} />
-            <Route path="dashboard-widgets" element={<SuspenseRoute><AdminDashboardPage /></SuspenseRoute>} />
+            <Route path="visitors" element={<SuspenseRoute><AdminVisitorsPage /></SuspenseRoute>} />
+            <Route path="chargers" element={<SuspenseRoute><AdminChargersPage /></SuspenseRoute>} />
+            <Route path="widgets" element={<SuspenseRoute><AdminDashboardPage /></SuspenseRoute>} />
+            <Route path="plugins" element={<SuspenseRoute><AdminPluginsPage /></SuspenseRoute>} />
+            <Route path="compliance" element={<SuspenseRoute><AdminCompliancePage /></SuspenseRoute>} />
+            <Route path="sso" element={<SuspenseRoute><AdminSSOPage /></SuspenseRoute>} />
+            <Route path="webhooks" element={<SuspenseRoute><AdminWebhooksPage /></SuspenseRoute>} />
+            <Route path="roles" element={<SuspenseRoute><AdminRolesPage /></SuspenseRoute>} />
+            <Route path="zones" element={<SuspenseRoute><AdminZonesPage /></SuspenseRoute>} />
           </Route>
         </Route>
         <Route path="*" element={<SuspenseRoute><NotFoundPage /></SuspenseRoute>} />

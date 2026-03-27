@@ -2,7 +2,9 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  ChartBar, GearSix, Users, Megaphone, ChartLine, MapPin, Translate, PresentationChart, Gauge, Buildings, ClockCounterClockwise, Database, Car, Wheelchair, Wrench, CurrencyDollar, SquaresFour,
+  ChartBar, GearSix, Users, Megaphone, ChartLine, MapPin, Translate, PresentationChart, Gauge,
+  Buildings, ClockCounterClockwise, Database, Car, Wheelchair, Wrench, CurrencyDollar, UserPlus, Lightning,
+  PuzzlePiece, GraphicsCard, ShieldCheck, LockKey, MapTrifold,
 } from '@phosphor-icons/react';
 
 function AdminNav() {
@@ -26,7 +28,13 @@ function AdminNav() {
     { name: t('admin.accessible', 'Accessible'), path: '/admin/accessible', icon: Wheelchair },
     { name: t('admin.maintenance', 'Maintenance'), path: '/admin/maintenance', icon: Wrench },
     { name: t('admin.billing', 'Billing'), path: '/admin/billing', icon: CurrencyDollar },
-    { name: t('admin.dashboardWidgets', 'Widgets'), path: '/admin/dashboard-widgets', icon: SquaresFour },
+    { name: t('admin.visitors', 'Visitors'), path: '/admin/visitors', icon: UserPlus },
+    { name: t('admin.chargers', 'EV Chargers'), path: '/admin/chargers', icon: Lightning },
+    { name: t('admin.plugins', 'Plugins'), path: '/admin/plugins', icon: PuzzlePiece },
+    { name: t('compliance.title', 'Compliance'), path: '/admin/compliance', icon: ShieldCheck },
+    { name: t('rbac.title', 'Roles'), path: '/admin/roles', icon: LockKey },
+    { name: t('parkingZones.title', 'Zones'), path: '/admin/zones', icon: MapTrifold },
+    { name: 'GraphQL', path: '/api/v1/graphql/playground', icon: GraphicsCard },
   ];
 
   function isActive(path: string) {

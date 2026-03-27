@@ -5,7 +5,6 @@ import {
   X,
 } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
 import { api, type AbsenceEntry, type AbsencePattern } from '../api/client';
 import { ABSENCE_CONFIG, type AbsenceType } from '../constants/absenceConfig';
@@ -274,7 +273,7 @@ export function AbsencesPage() {
 function AddAbsenceModal({ onClose, onAdd, t }: {
   onClose: () => void;
   onAdd: (type: AbsenceType, start: string, end: string, note: string) => void;
-  t: TFunction;
+  t: (key: string, fallback?: string) => string;
 }) {
   const [type, setType] = useState<AbsenceType>('homeoffice');
   const [startDate, setStartDate] = useState('');

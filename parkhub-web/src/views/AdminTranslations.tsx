@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
+import { createColumnHelper } from '@tanstack/react-table';
 import {
   Translate, SpinnerGap, Check, X, Clock, Eye,
   ThumbsUp, ThumbsDown, ChatCircleDots, ArrowsClockwise,
@@ -101,7 +101,7 @@ export function AdminTranslationsPage() {
 
   const pendingCount = proposals.filter(p => p.status === 'pending').length;
 
-  const columns = useMemo<ColumnDef<TranslationProposal, any>[]>(() => [
+  const columns = useMemo(() => [
     columnHelper.accessor('key', {
       header: () => t('translations.keyLabel'),
       cell: info => (
@@ -156,14 +156,11 @@ export function AdminTranslationsPage() {
     }),
     columnHelper.accessor('status', {
       header: () => t('admin.status'),
-      cell: info => {
-        const status = info.getValue() as ProposalStatus;
-        return (
-          <span className={`badge ${STATUS_COLORS[status]}`}>
-            {STATUS_ICONS[status]} {status}
-          </span>
-        );
-      },
+      cell: info => (
+        <span className={`badge ${STATUS_COLORS[info.getValue()]}`}>
+          {STATUS_ICONS[info.getValue()]} {info.getValue()}
+        </span>
+      ),
       enableSorting: true,
     }),
     columnHelper.display({

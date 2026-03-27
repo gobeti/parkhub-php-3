@@ -21,7 +21,7 @@
 
 <p align="center">
   <strong>Ihre Daten. Ihr Server. Ihre Kontrolle.</strong><br>
-  The on-premise parking management platform that runs anywhere -- shared hosting, VPS, Docker, or Kubernetes.<br>
+  The on-premise parking management runtime for the canonical ParkHub product -- optimized for shared hosting, VPS, Docker, and Kubernetes.<br>
   Built with Laravel 12, React 19, and Tailwind CSS 4. Zero cloud. Zero tracking. 100% GDPR compliant by design.
 </p>
 
@@ -35,6 +35,14 @@
   <a href="docs/SECURITY.md">Security</a> &nbsp;|&nbsp;
   <a href="CHANGELOG.md">Changelog</a>
 </p>
+
+---
+
+## Product Model
+
+ParkHub is one product with multiple runtimes. This PHP edition shares the same core product model as the Rust edition, while keeping a PHP-first deployment story: Laravel, shared hosting compatibility, and conventional web stack flexibility.
+
+Not every advanced module is equally hardened or equally enabled by default across runtimes. Treat the shared booking, admin, compliance, and theme surfaces as the core product line; treat advanced integrations, pass/check-in surfaces, and enterprise modules as optional and runtime-sensitive.
 
 ---
 
@@ -118,7 +126,7 @@ php artisan test                      # Run 1,565 PHPUnit tests
 
 ### Core Highlights
 
-- **Full booking lifecycle** -- One-tap quick booking, recurring reservations, guest bookings, swap requests, waitlists, automatic no-show release, QR code check-in
+- **Full booking lifecycle** -- One-tap quick booking, recurring reservations, guest bookings, swap requests, waitlists, automatic no-show release
 - **Automatic pricing** -- Hourly rate x duration, 19% German VAT, daily max cap, monthly passes, dynamic pricing
 - **Visual lot editor** -- Per-lot zones, slot types (standard, compact, handicap, EV, VIP, motorcycle), real-time occupancy, public lobby display
 - **Interactive map** -- Leaflet-based map view with color-coded availability markers
@@ -126,9 +134,21 @@ php artisan test                      # Run 1,565 PHPUnit tests
 - **Vehicle management** -- Photo upload, German licence plate city-code lookup (400+ codes)
 - **Absence tracking** -- Homeoffice, vacation, sick leave with iCal import/export and team overview
 - **10 languages** -- EN, DE, FR, ES, IT, PT, TR, PL, JA, ZH with runtime hot-loading
-- **12 switchable themes** -- Classic, Glass, Bento, Brutalist, Neon, Warm, Wabi-Sabi, Scandinavian, Cyberpunk, Terracotta, Oceanic, Art Deco
+- **12 switchable themes** -- theme switching is part of the product contract, but the exact runtime theme set is still being pulled onto a shared semantic registry and parity gate
 - **PWA** -- Installable as native app, service worker for offline capability, Command Palette (Ctrl+K)
 - **Observability** -- Prometheus metrics at `/api/metrics`, health endpoints, structured logging
+
+### Auth Contract
+
+- **Core auth** -- login, registration, password reset, RBAC, 2FA/TOTP, session management
+- **Integration auth** -- OAuth providers such as Google and GitHub
+- **Enterprise identity** -- SAML/SSO and similar flows remain optional and runtime-sensitive
+
+### Theme Contract
+
+- **Shared product surface** -- themes are a core ParkHub surface, not decorative runtime extras
+- **Semantic parity first** -- theme switching must preserve state clarity, hierarchy, contrast, and critical controls across runtimes
+- **Registry alignment in progress** -- the current PHP frontend exposes a different concrete theme inventory than the public README previously claimed, so public naming is gated until both runtimes match the shared registry
 
 ### Security
 
@@ -149,6 +169,18 @@ php artisan test                      # Run 1,565 PHPUnit tests
 - CSV export, PDF invoices, admin reports
 - Custom branding, announcements, outbound webhooks
 - Multi-tenant support for enterprise deployments
+
+### Notification Contract
+
+- **Core notifications** -- in-app notifications plus transactional email
+- **Advanced notifications** -- Web Push via VAPID where configured
+- **Gated channels** -- SMS/WhatsApp preference surfaces exist, but delivery remains gated unless explicitly proven operational in the active runtime
+
+### Guest and Pass Contract
+
+- **Core guest flow** -- guest bookings and host-visible guest handling
+- **Advanced pass flow** -- digital passes, QR generation, visitor pre-registration, and check-in surfaces
+- **Runtime-sensitive surfaces** -- QR/check-in/public verification flows should be treated as advanced and runtime-sensitive, not as unconditional baseline behavior
 
 ### Legal Compliance
 
@@ -269,7 +301,7 @@ ParkHub organizes functionality into **67 runtime-toggleable modules** across fi
 
 ParkHub PHP is designed for maximum deployment flexibility. It runs on 3 EUR/month shared hosting (Strato, IONOS, All-Inkl) with just PHP and MySQL, scales up to Docker Compose and Kubernetes, and supports PostgreSQL for cloud-native PaaS platforms like Render and Railway.
 
-The same React 19 frontend is shared with the [Rust edition](https://github.com/nash87/parkhub-rust), making both backends fully interchangeable.
+The same React 19 frontend is shared with the [Rust edition](https://github.com/nash87/parkhub-rust), and both editions are intended to stay aligned under the same ParkHub product model. Deployment tradeoffs and advanced module hardening can still differ by runtime.
 
 For a deep dive into the directory layout, controllers, middleware, database schema, and frontend internals, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
