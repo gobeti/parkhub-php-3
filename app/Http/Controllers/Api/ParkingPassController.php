@@ -119,26 +119,18 @@ class ParkingPassController extends Controller
     }
 
     /**
-     * Generate a simple QR-like SVG placeholder (in production, use a QR library).
+     * Generate a real QR code SVG using chillerlan/php-qrcode.
      */
     private function generateQrSvg(string $data): string
     {
-        $hash = md5($data);
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="200">';
-        $svg .= '<rect width="100" height="100" fill="white"/>';
+        $options = new \chillerlan\QRCode\QROptions([
+            'outputType' => \chillerlan\QRCode\QRCode::OUTPUT_MARKUP_SVG,
+            'svgViewBoxSize' => 200,
+            'addQuietzone' => true,
+            'quietzoneSize' => 2,
+            'scale' => 5,
+        ]);
 
-        // Generate a deterministic pattern from the hash
-        for ($i = 0; $i < 32; $i++) {
-            $val = hexdec($hash[$i]);
-            $x = ($i % 8) * 10 + 10;
-            $y = intdiv($i, 8) * 10 + 10;
-            if ($val > 7) {
-                $svg .= sprintf('<rect x="%d" y="%d" width="8" height="8" fill="black"/>', $x, $y);
-            }
-        }
-
-        $svg .= '</svg>';
-
-        return $svg;
+        return (new \chillerlan\QRCode\QRCode($options))->render($data);
     }
 }
