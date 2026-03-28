@@ -111,7 +111,7 @@ function LoadingSplash() {
 /** Fetch /api/v1/theme on mount and apply use-case CSS theme + load translation overrides */
 function useThemeLoader() {
   useEffect(() => {
-    fetch('/api/v1/theme')
+    fetch('/api/v1/theme', { credentials: 'include' })
       .then(r => r.json())
       .then(res => {
         const key = res?.data?.use_case?.key;
