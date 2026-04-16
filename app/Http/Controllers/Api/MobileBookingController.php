@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -36,8 +38,10 @@ class MobileBookingController extends Controller
         $bookingCounts = $this->activeBookingCounts();
 
         $lots = Lot::all()->map(function ($lot) use ($lat, $lng, $bookingCounts) {
-            $lotLat = $lot->latitude ?? 0;
-            $lotLng = $lot->longitude ?? 0;
+            // latitude / longitude arrive as DECIMAL(9,6) strings from the
+            // DB driver; cast explicitly so strict_types doesn't reject them.
+            $lotLat = (float) ($lot->latitude ?? 0);
+            $lotLng = (float) ($lot->longitude ?? 0);
             $distance = $this->haversineDistance($lat, $lng, $lotLat, $lotLng);
 
             $totalSlots = $lot->total_slots ?? 0;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -180,10 +182,12 @@ class UserController extends Controller
 
         foreach ($bookings as $b) {
             $uid = $b->id.'@parkhub';
-            $start = gmdate('Ymd\THis\Z', strtotime($b->start_time));
+            // start_time / end_time arrive as Carbon via the datetime cast;
+            // `->timestamp` gives the Unix int strict_types wants.
+            $start = gmdate('Ymd\THis\Z', $b->start_time->timestamp);
             $end = $b->end_time
-                ? gmdate('Ymd\THis\Z', strtotime($b->end_time))
-                : gmdate('Ymd\THis\Z', strtotime($b->start_time) + 3600);
+                ? gmdate('Ymd\THis\Z', $b->end_time->timestamp)
+                : gmdate('Ymd\THis\Z', $b->start_time->timestamp + 3600);
 
             $summary = "Parking: {$b->slot_number} ({$b->lot_name})";
             $location = $b->lot_name;
