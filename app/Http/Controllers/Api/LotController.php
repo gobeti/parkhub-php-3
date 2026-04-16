@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -64,7 +66,7 @@ class LotController extends Controller
                 $slots[] = [
                     'id' => Str::uuid()->toString(),
                     'lot_id' => $lot->id,
-                    'slot_number' => str_pad($i, 3, '0', STR_PAD_LEFT),
+                    'slot_number' => str_pad((string) $i, 3, '0', STR_PAD_LEFT),
                     'status' => 'available',
                     'created_at' => now(),
                     'updated_at' => now(),
