@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mail;
 
 use App\Models\Booking;
@@ -44,12 +46,12 @@ class BookingConfirmation extends Mailable implements ShouldQueue
         $lot = e($this->booking->lot_name ?? '—');
         $slot = e($this->booking->slot_number ?? '—');
         $plate = e($this->booking->vehicle_plate ?? '—');
-        $start = $this->booking->start_time
-            ? date('d.m.Y H:i', strtotime($this->booking->start_time))
-            : '—';
-        $end = $this->booking->end_time
-            ? date('d.m.Y H:i', strtotime($this->booking->end_time))
-            : '—';
+        // `start_time` / `end_time` are Eloquent datetime casts → Carbon
+        // instances at runtime. Use Carbon's native ->format() instead of
+        // feeding the stringified value through strtotime(); strict_types
+        // was blocking on the implicit `Carbon::__toString` roundtrip.
+        $start = $this->booking->start_time?->format('d.m.Y H:i') ?? '—';
+        $end = $this->booking->end_time?->format('d.m.Y H:i') ?? '—';
         $bookingId = e($this->booking->id);
 
         return <<<HTML

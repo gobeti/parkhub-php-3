@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mail;
 
 use App\Models\Booking;
@@ -42,9 +44,9 @@ class BookingReminderMail extends Mailable
         $name = e($this->recipient->name);
         $lot = e($this->booking->lot_name ?? '—');
         $slot = e($this->booking->slot_number ?? '—');
-        $start = $this->booking->start_time
-            ? date('d.m.Y H:i', strtotime($this->booking->start_time))
-            : '—';
+        // start_time is an Eloquent datetime cast → Carbon at runtime;
+        // use ->format() directly so this is strict_types-safe.
+        $start = $this->booking->start_time?->format('d.m.Y H:i') ?? '—';
 
         return <<<HTML
 <!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>
