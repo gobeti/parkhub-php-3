@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ParkingLot extends Model
 {
-    use HasFactory, HasUuids;
+    use BelongsToTenant, HasFactory, HasUuids;
 
     protected $fillable = ['name', 'address', 'latitude', 'longitude', 'center_lat', 'center_lng', 'geofence_radius_m', 'total_slots', 'available_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency', 'operating_hours', 'dynamic_pricing_rules', 'tenant_id'];
 
