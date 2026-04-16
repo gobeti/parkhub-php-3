@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -108,7 +110,7 @@ class ICalController extends Controller
         ]);
     }
 
-    private function formatIcalDate($date): string
+    private function formatIcalDate(mixed $date): string
     {
         return Carbon::parse($date)->utc()->format('Ymd\THis\Z');
     }
