@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Events\BookingCancelled;
@@ -860,10 +862,14 @@ class BookingController extends Controller
 
         foreach ($bookings as $b) {
             $uid = $b->id.'@parkhub';
-            $start = gmdate('Ymd\THis\Z', strtotime($b->start_time));
+            // start_time / end_time are Carbon casts → use ->timestamp
+            // instead of stringifying through strtotime(), both for
+            // strict_types correctness and to dodge the double-timezone
+            // roundtrip that the parse-string-back detour used to incur.
+            $start = gmdate('Ymd\THis\Z', $b->start_time->timestamp);
             $end = $b->end_time
-                ? gmdate('Ymd\THis\Z', strtotime($b->end_time))
-                : gmdate('Ymd\THis\Z', strtotime($b->start_time) + 3600);
+                ? gmdate('Ymd\THis\Z', $b->end_time->timestamp)
+                : gmdate('Ymd\THis\Z', $b->start_time->timestamp + 3600);
             $summary = "Parking: {$b->slot_number} ({$b->lot_name})";
             $location = $b->lot_name ?? '';
             $description = $b->vehicle_plate ? "Vehicle: {$b->vehicle_plate}" : '';

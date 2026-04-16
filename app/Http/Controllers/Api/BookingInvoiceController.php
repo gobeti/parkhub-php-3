@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -87,12 +89,15 @@ class BookingInvoiceController extends Controller
         $zipCity = Setting::get('impressum_zip_city', '');
         $email = Setting::get('impressum_email', '');
 
-        $start = $booking->start_time ? strtotime($booking->start_time) : 0;
-        $end = $booking->end_time ? strtotime($booking->end_time) : $start + 3600;
+        // Carbon casts on the Booking model expose start_time / end_time as
+        // Carbon instances; use their API directly instead of stringifying
+        // through strtotime() so strict_types doesn't reject the coercion.
+        $start = $booking->start_time?->timestamp ?? 0;
+        $end = $booking->end_time?->timestamp ?? ($start + 3600);
         $hours = max(1, round(($end - $start) / 3600, 2));
 
-        $startFmt = $start ? date('d.m.Y H:i', $start) : '-';
-        $endFmt = $end ? date('d.m.Y H:i', $end) : '-';
+        $startFmt = $booking->start_time?->format('d.m.Y H:i') ?? '-';
+        $endFmt = $booking->end_time?->format('d.m.Y H:i') ?? '-';
         $dateNow = date('d.m.Y');
 
         $shortId = strtoupper(substr(str_replace('-', '', $booking->id), 0, 8));
