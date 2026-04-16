@@ -9,6 +9,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Legal templates for BFSG + EU AI Act** in `legal/`:
+  - `bfsg-barrierefreiheit-template.md` — Accessibility Statement template per § 14 BFSG (in force since 2025-06-28), covering EN 301 549 / WCAG 2.1 AA scope, current a11y features, feedback path, Schlichtungsstelle BGG + Bundesfachstelle contact details.
+  - `ai-act-transparency-template.md` — AI Act Art. 50 transparency template for the planned Occupancy Forecast (T-1717) + optional Dashboard narrative module. Classifies them as limited-risk (not high-risk Annex III), documents data basis, confidence intervals, opt-out, 90-day inference logging.
+- Both templates are mirrored into `parkhub-rust/legal/` so a single source stays in sync across the two implementations.
+
 ### Security
 - **Stripe webhook fails closed when `STRIPE_WEBHOOK_SECRET` is not configured** (`StripeController::webhook`). The previous flow skipped HMAC verification entirely when the secret was empty, so an operator who forgot to set it accepted every unsigned payload and could be tricked into granting credits. The endpoint now logs an error and returns `503` until a secret is present. `.env.example` documents the requirement.
 - **All GitHub Actions in `.github/workflows/` are now pinned to full commit SHAs** (v-tag kept as trailing comment) — SLSA L3 + GitHub's own security guide require SHA pins because a tag can be rewritten by the action author to point at malicious code. Covers 23 distinct actions across 10 workflow files.
