@@ -9,6 +9,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security / Type Safety
+- **`declare(strict_types=1)` rolled out across 19 bootstrap-tier files**: all nine `app/Http/Middleware/*.php`, three `app/Events/*.php`, two `app/Providers/*.php`, four `app/Console/Commands/*.php`, and `app/Jobs/AggregateOccupancyStatsJob.php`. These are the files with zero Carbon / Eloquent `extends Model` / `strtotime` / `date(...)` usage, so flipping strict type coercion on is safe. An earlier bulk-attempt across all 171 app files surfaced ~60 genuine Carbon→string coercion bugs in the Mail + Model + Service layers; that layer stays on loose types for now and migrates file-by-file as those bugs get fixed properly.
+- **Carbon→`strtotime` bug found and fixed**: `AggregateOccupancyStatsJob::handle` called `str_pad($hour, 2, ...)` with `$hour` as an `int`. Loose types silently stringified it; strict types caught the mismatch. Fixed with an explicit `(string) $hour` cast — the kind of latent coercion bug `declare(strict_types=1)` is supposed to expose.
+
 ### Changed
 - **Laravel 12 → 13.5** upgrade. Laravel 13 was released on 2026-03-17; we were one major behind. The upgrade rolled every Symfony 7.4 component up to 8.0 in lock-step and pruned a handful of leftover `sentry/*` packages that survived the earlier Sentry revert. Verified end-to-end: `composer audit` clean, `vendor/bin/pint --test` green, `vendor/bin/phpstan analyse` green at the existing level, `php artisan test` passes 1 689 / 1 689 assertions across Feature + Unit + Simulation (small/campus/enterprise 30-day).
 - **laravel/pint 1.24 → 1.29** (bundled upgrade to stay at current stable).

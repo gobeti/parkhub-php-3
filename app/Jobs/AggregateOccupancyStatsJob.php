@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\Booking;
@@ -51,7 +53,7 @@ class AggregateOccupancyStatsJob implements ShouldQueue
         $hourlyOccupancy = [];
 
         for ($hour = 0; $hour < 24; $hour++) {
-            $timepoint = $date.' '.str_pad($hour, 2, '0', STR_PAD_LEFT).':30:00';
+            $timepoint = $date.' '.str_pad((string) $hour, 2, '0', STR_PAD_LEFT).':30:00';
 
             $occupied = $bookingsForDay->filter(function ($b) use ($timepoint) {
                 return $b->start_time <= $timepoint && $b->end_time >= $timepoint;
