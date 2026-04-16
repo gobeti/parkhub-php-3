@@ -64,6 +64,12 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "openapi:dump": [
+            "bash scripts/dump-openapi.sh"
+        ],
+        "openapi:drift": [
+            "bash scripts/diff-openapi.sh docs/openapi/rust.json docs/openapi/php.json"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
