@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\Zone;
+use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -87,14 +88,17 @@ class LobbyDisplayController extends Controller
             return [];
         }
 
-        // Count occupied slots per zone in a single query
-        $occupiedByZone = DB::table('bookings')
+        // Count occupied slots per zone in a single query. Raw
+        // DB::table bypasses the Eloquent BelongsToTenant scope, so
+        // apply the tenant filter explicitly when the flag is on.
+        $bookingsQ = DB::table('bookings')
             ->join('parking_slots', 'bookings.slot_id', '=', 'parking_slots.id')
             ->where('bookings.lot_id', $lotId)
             ->whereIn('bookings.status', ['confirmed', 'active'])
             ->where('bookings.start_time', '<=', $now)
             ->where('bookings.end_time', '>=', $now)
-            ->whereNotNull('parking_slots.zone_id')
+            ->whereNotNull('parking_slots.zone_id');
+        $occupiedByZone = TenantScope::applyTo($bookingsQ, 'bookings')
             ->select('parking_slots.zone_id', DB::raw('COUNT(*) as occupied'))
             ->groupBy('parking_slots.zone_id')
             ->pluck('occupied', 'zone_id');
