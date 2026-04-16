@@ -11,6 +11,7 @@ use App\Models\Notification;
 use App\Models\ParkingLot;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -225,11 +226,22 @@ class WidgetController extends Controller
 
     private function evChargingStatus(): array
     {
-        // EV charging widget data — simplified
+        // EV charging widget data — simplified. parking_slots has no
+        // tenant_id column of its own; the tenant scope lives on the
+        // parent parking_lots row, so when multi-tenant is on we join
+        // through and filter there.
         try {
-            $evSlots = DB::table('parking_slots')
-                ->where('slot_type', 'electric')
-                ->selectRaw("count(*) as total, sum(case when status = 'available' then 1 else 0 end) as available")
+            $slotsQ = DB::table('parking_slots')
+                ->where('slot_type', 'electric');
+
+            if (TenantScope::currentId() !== null) {
+                $slotsQ = $slotsQ
+                    ->join('parking_lots', 'parking_slots.lot_id', '=', 'parking_lots.id');
+                $slotsQ = TenantScope::applyTo($slotsQ, 'parking_lots');
+            }
+
+            $evSlots = $slotsQ
+                ->selectRaw("count(*) as total, sum(case when parking_slots.status = 'available' then 1 else 0 end) as available")
                 ->first();
         } catch (\Exception $e) {
             $evSlots = (object) ['total' => 0, 'available' => 0];
