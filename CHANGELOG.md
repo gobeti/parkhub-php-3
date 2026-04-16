@@ -11,6 +11,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Security
 - **Stripe webhook fails closed when `STRIPE_WEBHOOK_SECRET` is not configured** (`StripeController::webhook`). The previous flow skipped HMAC verification entirely when the secret was empty, so an operator who forgot to set it accepted every unsigned payload and could be tricked into granting credits. The endpoint now logs an error and returns `503` until a secret is present. `.env.example` documents the requirement.
+- **All GitHub Actions in `.github/workflows/` are now pinned to full commit SHAs** (v-tag kept as trailing comment) — SLSA L3 + GitHub's own security guide require SHA pins because a tag can be rewritten by the action author to point at malicious code. Covers 23 distinct actions across 10 workflow files.
 
 ---
 
