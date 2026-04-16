@@ -6,8 +6,10 @@ parameters:
     paths:
         - app/
 
-    # Level 0 with baseline — increase incrementally as errors are fixed.
-    level: 0
+    # Level 1 with baseline. Raised from 0 after the declare(strict_types=1)
+    # migration landed across all 171 app/ files — increase further as
+    # baseline errors are resolved.
+    level: 1
 
     # Exclude generated/cache files
     excludePaths:
