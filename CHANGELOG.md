@@ -7,6 +7,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Security
+- **Stripe webhook fails closed when `STRIPE_WEBHOOK_SECRET` is not configured** (`StripeController::webhook`). The previous flow skipped HMAC verification entirely when the secret was empty, so an operator who forgot to set it accepted every unsigned payload and could be tricked into granting credits. The endpoint now logs an error and returns `503` until a secret is present. `.env.example` documents the requirement.
+
+---
+
 ## [4.12.0] - 2026-04-16
 
 ### Added

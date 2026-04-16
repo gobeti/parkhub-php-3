@@ -91,22 +91,33 @@ class PaymentController extends Controller
     /**
      * POST /api/v1/payments/webhook
      * Handles Stripe webhook events with signature verification.
+     *
+     * Fails closed: an unset STRIPE_WEBHOOK_SECRET rejects the request with 503
+     * so unsigned payloads can never reach downstream handlers.
      */
     public function webhook(Request $request): JsonResponse
     {
         $webhookSecret = config('services.stripe.webhook_secret');
 
-        if ($webhookSecret) {
-            $payload = $request->getContent();
-            $sigHeader = $request->header('Stripe-Signature', '');
+        if (! $webhookSecret) {
+            Log::error('Stripe webhook rejected: STRIPE_WEBHOOK_SECRET not configured', [
+                'ip' => $request->ip(),
+            ]);
 
-            if (! $this->verifyStripeSignature($payload, $sigHeader, $webhookSecret)) {
-                Log::warning('Stripe webhook signature verification failed', [
-                    'ip' => $request->ip(),
-                ]);
+            return response()->json([
+                'error' => 'Webhook signature verification is not configured on this server',
+            ], 503);
+        }
 
-                return response()->json(['error' => 'Invalid signature'], 403);
-            }
+        $payload = $request->getContent();
+        $sigHeader = $request->header('Stripe-Signature', '');
+
+        if (! $this->verifyStripeSignature($payload, $sigHeader, $webhookSecret)) {
+            Log::warning('Stripe webhook signature verification failed', [
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json(['error' => 'Invalid signature'], 403);
         }
 
         Log::info('Stripe webhook received', [

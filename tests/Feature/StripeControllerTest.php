@@ -140,17 +140,17 @@ class StripeControllerTest extends TestCase
             ->assertJsonPath('data.publishable_key', 'pk_test_xxx');
     }
 
-    public function test_webhook_accepts_valid_payload(): void
+    public function test_webhook_rejects_request_when_secret_not_configured(): void
     {
-        config(['services.stripe.webhook_secret' => null]); // No verification
+        config(['services.stripe.webhook_secret' => null]);
 
         $response = $this->postJson('/api/v1/payments/webhook', [
             'type' => 'checkout.session.completed',
             'data' => ['object' => ['id' => 'cs_test_123']],
         ]);
 
-        $response->assertStatus(200)
-            ->assertJsonPath('data.received', true);
+        $response->assertStatus(503)
+            ->assertJsonPath('error.message', 'Webhook signature verification is not configured on this server');
     }
 
     public function test_webhook_rejects_bad_signature(): void
@@ -260,7 +260,8 @@ class StripeControllerTest extends TestCase
 
     public function test_webhook_grants_credits_on_completed_session(): void
     {
-        config(['services.stripe.webhook_secret' => null]);
+        $secret = 'whsec_grant_test';
+        config(['services.stripe.webhook_secret' => $secret]);
 
         $user = User::factory()->create(['credits_balance' => 5]);
 
@@ -275,16 +276,31 @@ class StripeControllerTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->postJson('/api/v1/payments/webhook', [
+        $payload = json_encode([
             'type' => 'checkout.session.completed',
             'data' => ['object' => ['id' => 'cs_grant_test']],
-        ])->assertStatus(200);
+        ]);
+        $timestamp = time();
+        $sig = hash_hmac('sha256', "{$timestamp}.{$payload}", $secret);
 
-        // Credits should be incremented
+        $response = $this->call(
+            'POST',
+            '/api/v1/payments/webhook',
+            [],
+            [],
+            [],
+            [
+                'HTTP_Stripe-Signature' => "t={$timestamp},v1={$sig}",
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            $payload,
+        );
+
+        $response->assertStatus(200);
+
         $user->refresh();
         $this->assertEquals(25, $user->credits_balance);
 
-        // Payment status should be completed
         $payment = DB::table('stripe_payments')->where('id', 'cs_grant_test')->first();
         $this->assertEquals('completed', $payment->status);
     }

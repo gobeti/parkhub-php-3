@@ -130,21 +130,30 @@ class StripeController extends Controller
     /**
      * POST /api/v1/payments/webhook
      *
-     * Handle Stripe webhook events. Verifies signature when secret is configured.
+     * Handle Stripe webhook events. Fails closed: a missing webhook secret
+     * rejects the request with 503 so unsigned payloads can never grant credits.
      */
     public function webhook(Request $request): JsonResponse
     {
         $webhookSecret = config('services.stripe.webhook_secret');
         $payload = $request->getContent();
 
-        if ($webhookSecret) {
-            $sigHeader = $request->header('Stripe-Signature', '');
+        if (! $webhookSecret) {
+            Log::error('Stripe webhook rejected: STRIPE_WEBHOOK_SECRET not configured', [
+                'ip' => $request->ip(),
+            ]);
 
-            if (! $this->verifyStripeSignature($payload, $sigHeader, $webhookSecret)) {
-                Log::warning('Stripe webhook signature verification failed', ['ip' => $request->ip()]);
+            return response()->json([
+                'error' => 'Webhook signature verification is not configured on this server',
+            ], 503);
+        }
 
-                return response()->json(['error' => 'Invalid signature'], 403);
-            }
+        $sigHeader = $request->header('Stripe-Signature', '');
+
+        if (! $this->verifyStripeSignature($payload, $sigHeader, $webhookSecret)) {
+            Log::warning('Stripe webhook signature verification failed', ['ip' => $request->ip()]);
+
+            return response()->json(['error' => 'Invalid signature'], 403);
         }
 
         $event = json_decode($payload, true);
