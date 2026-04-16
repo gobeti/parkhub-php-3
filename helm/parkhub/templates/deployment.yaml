@@ -31,6 +31,12 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      # Give Apache + php-fpm up to 45s to finish in-flight requests on
+      # SIGTERM. The preStop hook sleeps longer than the readinessProbe
+      # periodSeconds so kube-proxy pulls this pod out of the Service
+      # endpoints list before the container starts refusing new
+      # connections.
+      terminationGracePeriodSeconds: 45
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -41,6 +47,10 @@ spec:
             - name: http
               containerPort: {{ .Values.config.port }}
               protocol: TCP
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 15 && apache2ctl graceful-stop"]
           livenessProbe:
             httpGet:
               path: /api/v1/health/live

@@ -9,6 +9,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Helm chart**: added `terminationGracePeriodSeconds: 45` and a `preStop: sleep 15 && apache2ctl graceful-stop` hook. kube-proxy now has time to de-register the pod from the Service endpoints list before Apache stops accepting requests; `apache2ctl graceful-stop` lets in-flight PHP requests finish instead of being cut off mid-response.
+
 ### Added
 - **Legal templates for BFSG + EU AI Act** in `legal/`:
   - `bfsg-barrierefreiheit-template.md` — Accessibility Statement template per § 14 BFSG (in force since 2025-06-28), covering EN 301 549 / WCAG 2.1 AA scope, current a11y features, feedback path, Schlichtungsstelle BGG + Bundesfachstelle contact details.
