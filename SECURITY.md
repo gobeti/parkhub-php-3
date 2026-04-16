@@ -80,6 +80,52 @@ Researchers are credited in release notes unless anonymity is requested.
 - All state-changing requests require valid authentication
 - No cookie-based CSRF vulnerability surface
 
+## Kubernetes Hardening (recommended)
+
+The bundled Helm chart (`helm/parkhub/`) already sets:
+- `runAsNonRoot: true`, `runAsUser: 33` (www-data)
+- `allowPrivilegeEscalation: false`
+- `capabilities: drop: [ALL]`
+
+For full PSS-restricted compliance, operators should additionally set
+`securityContext.readOnlyRootFilesystem: true` and mount `emptyDir` volumes
+at the paths Laravel writes to:
+
+```yaml
+securityContext:
+  readOnlyRootFilesystem: true
+
+extraVolumes:
+  - name: storage
+    emptyDir: {}
+  - name: bootstrap-cache
+    emptyDir: {}
+  - name: apache-run
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+
+extraVolumeMounts:
+  - { name: storage,         mountPath: /var/www/html/storage }
+  - { name: bootstrap-cache, mountPath: /var/www/html/bootstrap/cache }
+  - { name: apache-run,      mountPath: /var/run/apache2 }
+  - { name: tmp,             mountPath: /tmp }
+```
+
+The chart ships with these opt-in because a naive `readOnlyRootFilesystem: true`
+without the matching emptyDir mounts crashes Apache during `php artisan
+config:cache`. A follow-up will wire these through the chart's values so the
+full hardening can be enabled with a single flag.
+
+## Supply Chain
+
+- **`composer audit`** runs on every push and nightly in `.github/workflows/security.yml`.
+- **`npm audit --omit=dev`** runs nightly; production JS dependencies are kept on known-clean versions.
+- **`roave/security-advisories`** is a `require-dev` dependency, which blocks `composer install` from bringing in a Composer package that has a published CVE.
+- **Trivy** filesystem scan (`vuln,misconfig`) runs on every push and nightly, uploading SARIF to the GitHub Security tab.
+- **`trufflehog`** secret scan runs on every push over the full git history; it reports only verified/unknown credentials to keep false positives low.
+- **Docker images** are built with `provenance: mode=max, sbom: true` and signed via `actions/attest-build-provenance`, giving SLSA L3 attestations downloadable from the release assets.
+
 ## Full Security Documentation
 
 See [docs/SECURITY.md](docs/SECURITY.md) for the complete security architecture, OWASP Top 10
