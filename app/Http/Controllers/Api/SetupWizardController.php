@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -130,7 +132,7 @@ class SetupWizardController extends Controller
             for ($s = 1; $s <= $slotsPerFloor; $s++) {
                 ParkingSlot::create([
                     'lot_id' => $lot->id,
-                    'slot_number' => "F{$f}-".str_pad($s, 3, '0', STR_PAD_LEFT),
+                    'slot_number' => "F{$f}-".str_pad((string) $s, 3, '0', STR_PAD_LEFT),
                     'status' => 'available',
                     'zone_id' => $zone->id,
                 ]);
