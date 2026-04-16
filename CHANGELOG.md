@@ -10,6 +10,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- **Laravel 12 → 13.5** upgrade. Laravel 13 was released on 2026-03-17; we were one major behind. The upgrade rolled every Symfony 7.4 component up to 8.0 in lock-step and pruned a handful of leftover `sentry/*` packages that survived the earlier Sentry revert. Verified end-to-end: `composer audit` clean, `vendor/bin/pint --test` green, `vendor/bin/phpstan analyse` green at the existing level, `php artisan test` passes 1 689 / 1 689 assertions across Feature + Unit + Simulation (small/campus/enterprise 30-day).
+- **laravel/pint 1.24 → 1.29** (bundled upgrade to stay at current stable).
 - **Helm chart**: added `terminationGracePeriodSeconds: 45` and a `preStop: sleep 15 && apache2ctl graceful-stop` hook. kube-proxy now has time to de-register the pod from the Service endpoints list before Apache stops accepting requests; `apache2ctl graceful-stop` lets in-flight PHP requests finish instead of being cut off mid-response.
 
 ### Added
