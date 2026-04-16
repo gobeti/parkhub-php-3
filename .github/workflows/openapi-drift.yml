@@ -1,0 +1,64 @@
+name: OpenAPI Drift
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'routes/**'
+      - 'config/scramble.php'
+      - 'docs/openapi/**'
+      - 'scripts/dump-openapi.sh'
+      - 'scripts/diff-openapi.sh'
+      - '.github/workflows/openapi-drift.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: openapi-drift-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Scramble spec drift check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache composer
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install composer deps
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Create env for scramble export
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Regenerate PHP OpenAPI snapshot
+        run: ./scripts/dump-openapi.sh
+
+      - name: Fail if committed snapshot drifted from regenerated one
+        run: |
+          if ! git diff --exit-code docs/openapi/php.json; then
+            echo "::error::docs/openapi/php.json is out of sync with the code."
+            echo "Run ./scripts/dump-openapi.sh locally and commit the updated snapshot."
+            exit 1
+          fi
+          echo "PHP OpenAPI snapshot matches the current code."
