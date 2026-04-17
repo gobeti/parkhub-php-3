@@ -56,6 +56,17 @@ export async function loginViaUi(page: Page): Promise<void> {
 
   await submit.click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30_000 });
+  // WebKit / mobile-safari commits Set-Cookie noticeably later than Chromium,
+  // which races with the caller's subsequent page.goto('/protected-route').
+  // Poll the browser context until the server-issued cookie is actually present.
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    const cookies = await page.context().cookies();
+    if (cookies.some((c) => c.name === 'laravel_session' || c.name === 'XSRF-TOKEN' || c.name === 'parkhub_token')) {
+      return;
+    }
+    await page.waitForTimeout(100);
+  }
 }
 
 /** All public frontend routes (no auth needed). */
