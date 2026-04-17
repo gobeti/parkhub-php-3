@@ -1,0 +1,55 @@
+# parkhub-php — pre-commit hooks
+#
+# Install once:
+#   pip install --user pre-commit && pre-commit install
+#
+# Then every `git commit` runs these checks; `pre-commit run --all-files`
+# runs them across the repo.
+#
+# Hook revs are SHA-pinned (same discipline as .github/workflows/*.yml).
+# To bump: `pre-commit autoupdate --freeze` (or manually via `gh api
+# repos/<owner>/<repo>/tags`).
+---
+repos:
+  # Basics: whitespace, EOL, YAML/JSON sanity — upstream v6.0.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(phpstan-baseline\.neon|\.phpunit\.result\.cache|docs/openapi/.*\.json)$
+      - id: end-of-file-fixer
+        exclude: ^(phpstan-baseline\.neon|\.phpunit\.result\.cache|docs/openapi/.*\.json)$
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: ^helm/.*/templates/
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Laravel Pint — official upstream hook — frozen: v1.29.0
+  - repo: https://github.com/laravel/pint
+    rev: bdec963f53172c5e36330f3a400604c69bf02d39
+    hooks:
+      - id: pint
+        args: [--test]
+
+  # PHPStan — runs locally via composer vendor; only on PHP changes
+  - repo: local
+    hooks:
+      - id: phpstan
+        name: PHPStan static analysis
+        language: system
+        entry: ./vendor/bin/phpstan analyse --memory-limit=512M --no-progress
+        pass_filenames: false
+        files: \.php$
+        stages: [pre-push]   # too slow for every commit — run on push
+
+      - id: composer-validate
+        name: composer validate
+        language: system
+        entry: composer validate --strict
+        pass_filenames: false
+        files: ^composer\.(json|lock)$
