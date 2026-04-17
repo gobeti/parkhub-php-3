@@ -70,6 +70,17 @@
         "openapi:drift": [
             "bash scripts/diff-openapi.sh docs/openapi/rust.json docs/openapi/php.json"
         ],
+        "lint": [
+            "vendor/bin/pint --test",
+            "vendor/bin/phpstan analyse --memory-limit=2G --no-progress"
+        ],
+        "ci": [
+            "@php artisan config:clear --ansi",
+            "@composer lint",
+            "@php artisan test --testsuite=Feature",
+            "@composer openapi:dump",
+            "bash -c 'git diff --exit-code docs/openapi/php.json || { echo \"openapi snapshot drift — commit the regenerated docs/openapi/php.json\"; exit 1; }'"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
