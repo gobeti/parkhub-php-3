@@ -46,10 +46,16 @@ jobs:
       - name: Install composer deps
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Create env for scramble export
+      - name: Create env + seed DB for scramble export
         run: |
           cp .env.example .env
           php artisan key:generate
+          # Scramble walks Eloquent models at export time, which
+          # triggers SQLite schema introspection and needs a real
+          # database file + applied migrations.
+          mkdir -p database
+          touch database/database.sqlite
+          php artisan migrate --graceful --force
 
       - name: Regenerate PHP OpenAPI snapshot
         run: ./scripts/dump-openapi.sh
