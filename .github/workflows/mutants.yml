@@ -1,0 +1,63 @@
+name: Mutation Testing
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: mutants-${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  infection:
+    name: infection-php sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up PHP (xdebug for coverage)
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
+        with:
+          php-version: '8.4'
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Cache composer
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install composer deps
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install infection
+        run: composer require --dev infection/infection --no-interaction
+
+      - name: Create env + seed DB
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          mkdir -p database
+          touch database/database.sqlite
+          php artisan migrate --graceful --force
+
+      - name: Run infection
+        run: vendor/bin/infection --min-msi=50 --min-covered-msi=60 --threads=4 || true
+
+      - name: Upload infection report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: infection-report
+          path: |
+            infection.log
+            infection-summary.log
+            infection.json
+          retention-days: 30
+          if-no-files-found: warn

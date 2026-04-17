@@ -1,0 +1,37 @@
+{
+  // infection-php config — run with `vendor/bin/infection`.
+  //
+  // https://infection.github.io/
+  //
+  // Mirrors the parkhub-rust `.cargo/mutants.toml` approach: scope the
+  // sweep to hand-written validation + rules + middleware where a
+  // missed mutant is a real coverage gap, not the generated Eloquent
+  // or scaffold code.
+  $schema: "vendor/infection/infection/resources/schema.json",
+  source: {
+    directories: [
+      "app/Http/Middleware",
+      "app/Http/Requests",
+      "app/Models/Scopes",
+      "app/Models/Concerns",
+      "app/Rules",
+      "app/Support",
+    ],
+    excludes: [
+      "tests",
+      "resources",
+      "database/migrations",
+    ],
+  },
+  logs: {
+    text: "infection.log",
+    summary: "infection-summary.log",
+    json: "infection.json",
+  },
+  // Fail the job only when the mutation score drops below this floor.
+  // Starts generous; tighten as the "normal" MSI settles after a few
+  // reports land.
+  minMsi: 50,
+  minCoveredMsi: 60,
+  timeout: 60,
+}
