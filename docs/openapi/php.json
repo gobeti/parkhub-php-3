@@ -6779,7 +6779,7 @@
                 }
               }
             },
-            "description": "Return via toArray() to respect $hidden\n\n\n\n`UserResource`"
+            "description": "`UserResource`"
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
@@ -20396,7 +20396,7 @@
                 }
               }
             },
-            "description": "Return via toArray() to respect $hidden\n\n\n\n`UserResource`"
+            "description": "`UserResource`"
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"

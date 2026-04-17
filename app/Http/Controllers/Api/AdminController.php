@@ -18,17 +18,18 @@ use App\Models\GuestBooking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\User;
+use App\Services\Admin\AdminUserManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
+    public function __construct(private readonly AdminUserManagementService $users) {}
+
     public function users(Request $request): JsonResponse
     {
         $perPage = min((int) request('per_page', 20), 100);
-        $users = User::paginate($perPage);
+        $users = $this->users->listUsers($perPage);
 
         return response()->json([
             'success' => true,
@@ -45,73 +46,33 @@ class AdminController extends Controller
 
     public function updateUser(UpdateUserRequest $request, string $id)
     {
-
         $user = User::findOrFail($id);
-        $data = $request->only(['name', 'email', 'is_active', 'department']);
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
-        }
-        $user->update($data);
-        // Handle role separately — it's excluded from $fillable to prevent mass-assignment escalation
-        $roleChanged = false;
-        if ($request->filled('role') && $user->role !== $request->role) {
-            $user->role = $request->role;
-            $user->save();
-            $roleChanged = true;
+        $result = $this->users->updateUser($user, $request->validated());
+
+        // Rotate the acting admin's session when the target's privileges
+        // changed — defense-in-depth to complement the token invalidation
+        // that already happened inside the service.
+        if (($result['role_changed'] || $result['password_changed']) && $request->hasSession()) {
+            $request->session()->regenerate();
         }
 
-        // Privilege change on the target user: invalidate their existing
-        // tokens so the new role can't be bypassed by a stale session, and
-        // rotate the acting admin's session ID for defense-in-depth.
-        if ($roleChanged || $request->filled('password')) {
-            $user->tokens()->delete();
-            if ($request->hasSession()) {
-                $request->session()->regenerate();
-            }
-        }
-
-        // Return via toArray() to respect $hidden
-        return UserResource::make($user->fresh());
+        return UserResource::make($result['user']);
     }
 
     public function deleteUser(Request $request, string $id): JsonResponse
     {
+        $target = User::findOrFail($id);
 
-        if ($id === $request->user()->id) {
+        if (! $this->users->deleteUser($target, $request->user())) {
             return response()->json(['error' => 'Cannot delete your own account'], 400);
         }
-        User::findOrFail($id)->delete();
 
         return response()->json(['message' => 'User deleted']);
     }
 
     public function importUsers(ImportUsersRequest $request): JsonResponse
     {
-
-        $imported = 0;
-        $usersCollection = collect($request->users);
-
-        // Batch-check existing usernames + emails in 2 queries instead of N queries (closes #59)
-        $existingUsernames = User::whereIn('username', $usersCollection->pluck('username'))->pluck('username');
-        $existingEmails = User::whereIn('email', $usersCollection->pluck('email'))->pluck('email');
-
-        $toImport = $usersCollection->reject(fn ($u) => $existingUsernames->contains($u['username']) || $existingEmails->contains($u['email'])
-        );
-
-        foreach ($toImport as $userData) {
-            $user = User::create([
-                'username' => $userData['username'],
-                'email' => $userData['email'],
-                'password' => Hash::make($userData['password'] ?? Str::random(16)),
-                'name' => $userData['name'] ?? $userData['username'],
-                'is_active' => true,
-                'department' => $userData['department'] ?? null,
-                'preferences' => ['language' => 'en', 'theme' => 'system'],
-            ]);
-            $user->role = $userData['role'] ?? 'user';
-            $user->save();
-            $imported++;
-        }
+        $imported = $this->users->importUsers($request->validated()['users']);
 
         return response()->json(['imported' => $imported]);
     }
@@ -277,54 +238,14 @@ class AdminController extends Controller
      */
     public function bulkAction(BulkUserActionRequest $request): JsonResponse
     {
-        $action = $request->action;
-        $userIds = $request->user_ids;
-        $currentUserId = $request->user()->id;
-        $results = [];
+        $summary = $this->users->bulkAction(
+            action: (string) $request->action,
+            userIds: (array) $request->user_ids,
+            actor: $request->user(),
+            role: $request->filled('role') ? (string) $request->role : null,
+            ip: $request->ip(),
+        );
 
-        foreach ($userIds as $userId) {
-            if ($userId === $currentUserId && in_array($action, ['deactivate', 'delete'])) {
-                $results[] = ['user_id' => $userId, 'status' => 'skipped', 'reason' => 'Cannot perform this action on yourself'];
-
-                continue;
-            }
-
-            $user = User::find($userId);
-            if (! $user) {
-                $results[] = ['user_id' => $userId, 'status' => 'failed', 'reason' => 'User not found'];
-
-                continue;
-            }
-
-            match ($action) {
-                'activate' => $user->update(['is_active' => true]),
-                'deactivate' => $user->update(['is_active' => false]),
-                'change_role' => (function () use ($user, $request) {
-                    $user->role = $request->role;
-                    $user->save();
-                    // Privilege change — kill existing sessions so the new
-                    // role applies immediately on next login.
-                    $user->tokens()->delete();
-                })(),
-                'delete' => $user->delete(),
-            };
-
-            $results[] = ['user_id' => $userId, 'status' => 'success'];
-        }
-
-        AuditLog::log([
-            'user_id' => $currentUserId,
-            'username' => $request->user()->username,
-            'action' => 'admin_bulk_'.$action,
-            'details' => ['count' => count($userIds)],
-            'ip_address' => $request->ip(),
-        ]);
-
-        return response()->json([
-            'action' => $action,
-            'results' => $results,
-            'total' => count($results),
-            'successful' => count(array_filter($results, fn ($r) => $r['status'] === 'success')),
-        ]);
+        return response()->json($summary);
     }
 }

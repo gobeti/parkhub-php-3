@@ -8,8 +8,8 @@ use App\Http\Concerns\ValidatesExternalUrls;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreWebhookV2Request;
 use App\Http\Requests\UpdateWebhookV2Request;
+use App\Services\Webhook\WebhookDispatchService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
 
 /**
  * Webhooks v2 controller — CRUD, test, and delivery log endpoints.
@@ -29,16 +29,16 @@ class WebhookV2Controller extends Controller
 {
     use ValidatesExternalUrls;
 
+    public function __construct(private readonly WebhookDispatchService $dispatcher) {}
+
     /**
      * List all v2 webhooks.
      */
     public function index(): JsonResponse
     {
-        $webhooks = $this->loadWebhooks();
-
         return response()->json([
             'success' => true,
-            'data' => $webhooks,
+            'data' => $this->dispatcher->list(),
         ]);
     }
 
@@ -47,13 +47,10 @@ class WebhookV2Controller extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $webhook = collect($this->loadWebhooks())->firstWhere('id', $id);
+        $webhook = $this->dispatcher->find($id);
 
         if (! $webhook) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => 'Webhook not found'],
-            ], 404);
+            return $this->notFound();
         }
 
         return response()->json([
@@ -67,29 +64,12 @@ class WebhookV2Controller extends Controller
      */
     public function store(StoreWebhookV2Request $request): JsonResponse
     {
-        $url = $request->input('url');
+        $url = (string) $request->input('url');
         if (! $this->isExternalUrl($url)) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => 'URL must be a valid external (non-private) HTTP(S) address'],
-            ], 422);
+            return $this->invalidUrl();
         }
 
-        $webhooks = $this->loadWebhooks();
-
-        $webhook = [
-            'id' => 'wh-'.Str::random(12),
-            'url' => $url,
-            'secret' => 'whsec_'.Str::random(32),
-            'events' => $request->input('events'),
-            'active' => $request->boolean('active', true),
-            'description' => $request->input('description'),
-            'created_at' => now()->toIso8601String(),
-            'updated_at' => now()->toIso8601String(),
-        ];
-
-        $webhooks[] = $webhook;
-        $this->saveWebhooks($webhooks);
+        $webhook = $this->dispatcher->create($request->validated());
 
         return response()->json([
             'success' => true,
@@ -102,32 +82,18 @@ class WebhookV2Controller extends Controller
      */
     public function update(UpdateWebhookV2Request $request, string $id): JsonResponse
     {
-        $webhooks = $this->loadWebhooks();
-        $index = collect($webhooks)->search(fn ($w) => $w['id'] === $id);
+        $existing = $this->dispatcher->find($id);
 
-        if ($index === false) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => 'Webhook not found'],
-            ], 404);
+        if (! $existing) {
+            return $this->notFound();
         }
 
-        $webhook = $webhooks[$index];
-        $newUrl = $request->input('url', $webhook['url']);
-        if ($newUrl !== $webhook['url'] && ! $this->isExternalUrl($newUrl)) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => 'URL must be a valid external (non-private) HTTP(S) address'],
-            ], 422);
+        $newUrl = (string) $request->input('url', $existing['url']);
+        if ($newUrl !== $existing['url'] && ! $this->isExternalUrl($newUrl)) {
+            return $this->invalidUrl();
         }
-        $webhook['url'] = $newUrl;
-        $webhook['events'] = $request->input('events', $webhook['events']);
-        $webhook['description'] = $request->input('description', $webhook['description']);
-        $webhook['active'] = $request->boolean('active', $webhook['active']);
-        $webhook['updated_at'] = now()->toIso8601String();
 
-        $webhooks[$index] = $webhook;
-        $this->saveWebhooks($webhooks);
+        $webhook = $this->dispatcher->update($id, $request->validated());
 
         return response()->json([
             'success' => true,
@@ -140,20 +106,9 @@ class WebhookV2Controller extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $webhooks = $this->loadWebhooks();
-        $filtered = collect($webhooks)->reject(fn ($w) => $w['id'] === $id)->values()->toArray();
-
-        if (count($filtered) === count($webhooks)) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => 'Webhook not found'],
-            ], 404);
+        if (! $this->dispatcher->delete($id)) {
+            return $this->notFound();
         }
-
-        $this->saveWebhooks($filtered);
-
-        // Clean up deliveries
-        $this->deleteDeliveries($id);
 
         return response()->json(['success' => true, 'message' => 'Webhook deleted']);
     }
@@ -163,73 +118,21 @@ class WebhookV2Controller extends Controller
      */
     public function test(string $id): JsonResponse
     {
-        $webhook = collect($this->loadWebhooks())->firstWhere('id', $id);
+        $webhook = $this->dispatcher->find($id);
 
         if (! $webhook) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => 'Webhook not found'],
-            ], 404);
+            return $this->notFound();
         }
 
-        $payload = json_encode([
-            'event' => 'test.ping',
-            'timestamp' => now()->toIso8601String(),
-            'data' => ['message' => 'This is a test event from ParkHub'],
-        ]);
-
-        $signature = hash_hmac('sha256', $payload, $webhook['secret']);
-        $success = false;
-        $statusCode = null;
-        $error = null;
-
-        try {
-            $ch = curl_init($webhook['url']);
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => $payload,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 15,
-                CURLOPT_CONNECTTIMEOUT => 5,
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/json',
-                    'X-ParkHub-Signature: sha256='.$signature,
-                    'X-ParkHub-Event: test.ping',
-                    'X-ParkHub-Delivery: '.Str::uuid(),
-                    'User-Agent: ParkHub-Webhooks/2.0',
-                ],
-            ]);
-            $response = curl_exec($ch);
-            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $success = $statusCode >= 200 && $statusCode < 300;
-
-            if (curl_errno($ch)) {
-                $error = curl_error($ch);
-                $success = false;
-            }
-            curl_close($ch);
-        } catch (\Throwable $e) {
-            $error = $e->getMessage();
-        }
-
-        // Record delivery
-        $this->recordDelivery($id, [
-            'id' => 'del-'.Str::random(12),
-            'event_type' => 'test.ping',
-            'status_code' => $statusCode,
-            'success' => $success,
-            'attempt' => 1,
-            'error' => $error,
-            'delivered_at' => now()->toIso8601String(),
-        ]);
+        $result = $this->dispatcher->dispatch(
+            $webhook,
+            'test.ping',
+            ['message' => 'This is a test event from ParkHub'],
+        );
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'success' => $success,
-                'status_code' => $statusCode,
-                'error' => $error,
-            ],
+            'data' => $result,
         ]);
     }
 
@@ -238,76 +141,31 @@ class WebhookV2Controller extends Controller
      */
     public function deliveries(string $id): JsonResponse
     {
-        $webhook = collect($this->loadWebhooks())->firstWhere('id', $id);
+        $webhook = $this->dispatcher->find($id);
 
         if (! $webhook) {
-            return response()->json([
-                'success' => false,
-                'error' => ['message' => 'Webhook not found'],
-            ], 404);
+            return $this->notFound();
         }
-
-        $deliveries = $this->loadDeliveries($id);
 
         return response()->json([
             'success' => true,
-            'data' => $deliveries,
+            'data' => $this->dispatcher->deliveries($id),
         ]);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    private function loadWebhooks(): array
+    private function notFound(): JsonResponse
     {
-        $path = storage_path('app/webhooks_v2.json');
-
-        if (! file_exists($path)) {
-            return [];
-        }
-
-        return json_decode(file_get_contents($path), true) ?: [];
+        return response()->json([
+            'success' => false,
+            'error' => ['message' => 'Webhook not found'],
+        ], 404);
     }
 
-    private function saveWebhooks(array $webhooks): void
+    private function invalidUrl(): JsonResponse
     {
-        $path = storage_path('app/webhooks_v2.json');
-        $dir = dirname($path);
-
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        file_put_contents($path, json_encode(array_values($webhooks), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    }
-
-    private function loadDeliveries(string $webhookId): array
-    {
-        $path = storage_path("app/webhook_deliveries_{$webhookId}.json");
-
-        if (! file_exists($path)) {
-            return [];
-        }
-
-        return json_decode(file_get_contents($path), true) ?: [];
-    }
-
-    private function recordDelivery(string $webhookId, array $delivery): void
-    {
-        $deliveries = $this->loadDeliveries($webhookId);
-        array_unshift($deliveries, $delivery);
-        // Keep last 100 deliveries
-        $deliveries = array_slice($deliveries, 0, 100);
-
-        $path = storage_path("app/webhook_deliveries_{$webhookId}.json");
-        file_put_contents($path, json_encode($deliveries, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    }
-
-    private function deleteDeliveries(string $webhookId): void
-    {
-        $path = storage_path("app/webhook_deliveries_{$webhookId}.json");
-
-        if (file_exists($path)) {
-            unlink($path);
-        }
+        return response()->json([
+            'success' => false,
+            'error' => ['message' => 'URL must be a valid external (non-private) HTTP(S) address'],
+        ], 422);
     }
 }
