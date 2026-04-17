@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVehicleRequest;
 use App\Http\Requests\UpdateVehicleRequest;
+use App\Http\Requests\UploadVehiclePhotoRequest;
 use App\Http\Resources\VehicleResource;
 use App\Models\Vehicle;
 use Illuminate\Http\JsonResponse;
@@ -53,14 +54,9 @@ class VehicleController extends Controller
         return response()->json(['message' => 'Deleted']);
     }
 
-    public function uploadPhoto(Request $request, string $id): JsonResponse
+    public function uploadPhoto(UploadVehiclePhotoRequest $request, string $id): JsonResponse
     {
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
-
-        $request->validate([
-            'photo' => 'required_without:photo_base64|image|mimes:jpeg,png,gif,webp|max:5120',
-            'photo_base64' => 'required_without:photo|string|max:8388608', // 8 MB base64 cap
-        ]);
 
         if ($request->hasFile('photo')) {
             $imageData = file_get_contents($request->file('photo')->getRealPath());
