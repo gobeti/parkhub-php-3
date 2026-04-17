@@ -13,6 +13,12 @@ parameters:
 			path: app/Http/Controllers/Api/AbsenceApprovalController.php
 
 		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Absence\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/AbsenceApprovalController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
@@ -21,6 +27,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$username\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/AbsenceController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Absence\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/Api/AbsenceController.php
 
@@ -73,6 +85,18 @@ parameters:
 			path: app/Http/Controllers/Api/AdminAnalyticsController.php
 
 		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 5
+			path: app/Http/Controllers/Api/AdminAnalyticsController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/AdminAnalyticsController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 2
@@ -87,6 +111,12 @@ parameters:
 		-
 			message: '#^Match expression does not handle remaining value\: mixed$#'
 			identifier: match.unhandled
+			count: 1
+			path: app/Http/Controllers/Api/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,App\\Models\\GuestBooking\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/Api/AdminController.php
 
@@ -135,6 +165,12 @@ parameters:
 		-
 			message: '#^Match expression does not handle remaining value\: mixed$#'
 			identifier: match.unhandled
+			count: 1
+			path: app/Http/Controllers/Api/AdminReportController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/Api/AdminReportController.php
 
@@ -379,6 +415,12 @@ parameters:
 			path: app/Http/Controllers/Api/FleetController.php
 
 		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Vehicle\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/FleetController.php
+
+		-
 			message: '#^Method Illuminate\\Database\\Eloquent\\Model\:\:only\(\) invoked with 5 parameters, 1 required\.$#'
 			identifier: arguments.count
 			count: 1
@@ -418,6 +460,12 @@ parameters:
 			message: '#^Cannot call method toISOString\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 2
+			path: app/Http/Controllers/Api/LotController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
 			path: app/Http/Controllers/Api/LotController.php
 
 		-
@@ -535,6 +583,12 @@ parameters:
 			path: app/Http/Controllers/Api/ParkingHistoryController.php
 
 		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/ParkingHistoryController.php
+
+		-
 			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -579,6 +633,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$start_time\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/ParkingPassController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\ParkingPass\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/Api/ParkingPassController.php
 
@@ -655,6 +715,18 @@ parameters:
 			path: app/Http/Controllers/Api/SharingController.php
 
 		-
+			message: '#^Parameter \#1 \$boolean of function abort_unless expects bool, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Api/SseController.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\Api\\SseController\:\:pollBookingEvents\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Api/SseController.php
+
+		-
 			message: '#^PHPDoc tag @var with type class\-string is not subtype of native type ''\\\\Stripe\\\\Checkout…''\.$#'
 			identifier: varTag.nativeType
 			count: 1
@@ -669,6 +741,18 @@ parameters:
 		-
 			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Api/TeamController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Absence\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/TeamController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/Api/TeamController.php
 
@@ -753,6 +837,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/WidgetController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/Api/WidgetController.php
 
@@ -1621,6 +1711,18 @@ parameters:
 			path: app/Jobs/AutoReleaseBookingsJob.php
 
 		-
+			message: '#^Parameter \#2 \$lot of class App\\Mail\\WaitlistSlotAvailableMail constructor expects App\\Models\\ParkingLot, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/AutoReleaseBookingsJob.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of function in_array expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/ExpandRecurringBookingsJob.php
+
+		-
 			message: '#^Relation ''user'' is not found in App\\Models\\RecurringBooking model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -1635,6 +1737,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Jobs/SendBookingReminderJob.php
+
+		-
+			message: '#^Parameter \#2 \$recipient of class App\\Mail\\BookingReminderMail constructor expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Jobs/SendBookingReminderJob.php
 

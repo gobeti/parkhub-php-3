@@ -6,9 +6,10 @@ parameters:
     paths:
         - app/
 
-    # Level 4 with baseline. Each step raises the bar for new code;
+    # Level 5 with baseline. Each step raises the bar for new code;
     # pre-existing findings land in phpstan-baseline.neon.
-    level: 4
+    # Level 5 adds: check types of arguments passed to methods and functions.
+    level: 5
 
     # Exclude generated/cache files
     excludePaths:
