@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreMaintenanceWindowRequest;
+use App\Http\Requests\UpdateMaintenanceWindowRequest;
 use App\Models\Booking;
 use App\Models\MaintenanceWindow;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class MaintenanceController extends Controller
 {
@@ -28,15 +29,9 @@ class MaintenanceController extends Controller
     /**
      * POST /api/v1/admin/maintenance — create a maintenance window.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreMaintenanceWindowRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'lot_id' => 'required|uuid|exists:parking_lots,id',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
-            'reason' => 'required|string|max:500',
-            'affected_slots' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         // Check for booking overlaps
         $overlap = $this->hasBookingOverlap(
@@ -77,17 +72,11 @@ class MaintenanceController extends Controller
     /**
      * PUT /api/v1/admin/maintenance/{id} — update a maintenance window.
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateMaintenanceWindowRequest $request, string $id): JsonResponse
     {
         $window = MaintenanceWindow::findOrFail($id);
 
-        $validated = $request->validate([
-            'lot_id' => 'sometimes|uuid|exists:parking_lots,id',
-            'start_time' => 'sometimes|date',
-            'end_time' => 'sometimes|date',
-            'reason' => 'sometimes|string|max:500',
-            'affected_slots' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         if (isset($validated['affected_slots'])) {
             if (! empty($validated['affected_slots'])) {

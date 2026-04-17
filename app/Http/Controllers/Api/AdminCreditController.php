@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GrantCreditsRequest;
+use App\Http\Requests\RefillAllCreditsRequest;
+use App\Http\Requests\UpdateUserQuotaRequest;
 use App\Models\AuditLog;
 use App\Models\CreditTransaction;
 use App\Models\User;
@@ -12,12 +15,9 @@ use Illuminate\Http\Request;
 
 class AdminCreditController extends Controller
 {
-    public function updateUserQuota(Request $request, string $id)
+    public function updateUserQuota(UpdateUserQuotaRequest $request, string $id)
     {
-
-        $validated = $request->validate([
-            'monthly_quota' => 'required|integer|min:0|max:999',
-        ]);
+        $validated = $request->validated();
 
         $user = User::findOrFail($id);
         $oldQuota = $user->credits_monthly_quota;
@@ -48,13 +48,9 @@ class AdminCreditController extends Controller
         ]);
     }
 
-    public function grantCredits(Request $request, string $id)
+    public function grantCredits(GrantCreditsRequest $request, string $id)
     {
-
-        $validated = $request->validate([
-            'amount' => 'required|integer|min:1|max:1000',
-            'description' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $user = User::findOrFail($id);
         $user->increment('credits_balance', $validated['amount']);
@@ -98,11 +94,9 @@ class AdminCreditController extends Controller
         ]);
     }
 
-    public function refillAllCredits(Request $request)
+    public function refillAllCredits(RefillAllCreditsRequest $request)
     {
-        $validated = $request->validate([
-            'amount' => 'nullable|integer|min:1|max:1000',
-        ]);
+        $validated = $request->validated();
 
         $amount = $validated['amount'] ?? null;
         $adminId = $request->user()->id;

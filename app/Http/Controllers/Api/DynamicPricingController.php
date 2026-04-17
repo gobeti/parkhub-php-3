@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateDynamicPricingRequest;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use Illuminate\Http\JsonResponse;
@@ -82,19 +83,8 @@ class DynamicPricingController extends Controller
      * PUT /api/v1/admin/lots/{id}/pricing/dynamic
      * Admin: update pricing rules for a lot.
      */
-    public function adminUpdate(Request $request, string $id): JsonResponse
+    public function adminUpdate(UpdateDynamicPricingRequest $request, string $id): JsonResponse
     {
-        $this->requireAdmin($request);
-
-        $request->validate([
-            'enabled' => 'sometimes|boolean',
-            'base_price' => 'sometimes|numeric|min:0',
-            'surge_multiplier' => 'sometimes|numeric|min:1|max:10',
-            'discount_multiplier' => 'sometimes|numeric|min:0.1|max:1',
-            'surge_threshold' => 'sometimes|integer|min:1|max:100',
-            'discount_threshold' => 'sometimes|integer|min:0|max:99',
-        ]);
-
         $lot = ParkingLot::findOrFail($id);
         $current = array_merge($this->defaultRules, $lot->dynamic_pricing_rules ?? []);
         $updated = array_merge($current, $request->only([

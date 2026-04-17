@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DisableTwoFactorRequest;
+use App\Http\Requests\VerifyTwoFactorRequest;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -69,12 +71,8 @@ class TwoFactorController extends Controller
     /**
      * Verify a TOTP code and enable 2FA.
      */
-    public function verify(Request $request): JsonResponse
+    public function verify(VerifyTwoFactorRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string|size:6',
-        ]);
-
         $user = $request->user();
 
         if ($user->two_factor_enabled) {
@@ -102,6 +100,12 @@ class TwoFactorController extends Controller
 
         $user->update(['two_factor_enabled' => true]);
 
+        // Enabling 2FA is a privilege change — rotate the session ID so a
+        // previously-captured cookie cannot ride the new privilege level.
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,
@@ -115,12 +119,8 @@ class TwoFactorController extends Controller
     /**
      * Disable 2FA (requires password confirmation).
      */
-    public function disable(Request $request): JsonResponse
+    public function disable(DisableTwoFactorRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
-
         $user = $request->user();
 
         if (! $user->two_factor_enabled) {
@@ -141,6 +141,11 @@ class TwoFactorController extends Controller
             'two_factor_secret' => null,
             'two_factor_enabled' => false,
         ]);
+
+        // Disabling 2FA is a privilege change — rotate the session ID.
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         AuditLog::log([
             'user_id' => $user->id,

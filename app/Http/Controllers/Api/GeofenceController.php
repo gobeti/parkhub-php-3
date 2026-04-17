@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GeofenceCheckInRequest;
+use App\Http\Requests\UpdateGeofenceRequest;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class GeofenceController extends Controller
 {
@@ -18,12 +19,9 @@ class GeofenceController extends Controller
      * Uses the haversine formula to calculate distance between
      * user's coordinates and the lot's geofence center.
      */
-    public function checkIn(Request $request): JsonResponse
+    public function checkIn(GeofenceCheckInRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ]);
+        $validated = $request->validated();
 
         $userLat = (float) $validated['latitude'];
         $userLng = (float) $validated['longitude'];
@@ -96,14 +94,9 @@ class GeofenceController extends Controller
     /**
      * PUT /api/v1/admin/lots/{id}/geofence — admin set geofence config.
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateGeofenceRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'center_lat' => 'required|numeric|between:-90,90',
-            'center_lng' => 'required|numeric|between:-180,180',
-            'radius_meters' => 'required|integer|min:10|max:10000',
-            'enabled' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $lot = ParkingLot::findOrFail($id);
 
