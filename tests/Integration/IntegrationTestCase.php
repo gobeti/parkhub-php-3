@@ -27,8 +27,12 @@ abstract class IntegrationTestCase extends TestCase
         parent::setUp();
         $this->seed();
 
+        // Fixed, non-faker usernames so these users never collide with the
+        // BookingSimulation seeders' faker-generated usernames when both
+        // test suites run in the same process (T-1735).
         $this->adminUser = User::factory()->create([
             'role' => 'admin',
+            'username' => 'integration-admin-'.uniqid('', true),
             'name' => 'Integration Admin',
             'email' => 'admin-integration@parkhub.test',
             'password' => bcrypt('AdminPass123'),
@@ -39,6 +43,7 @@ abstract class IntegrationTestCase extends TestCase
 
         $this->regularUser = User::factory()->create([
             'role' => 'user',
+            'username' => 'integration-user-'.uniqid('', true),
             'name' => 'Integration User',
             'email' => 'user-integration@parkhub.test',
             'password' => bcrypt('UserPass123'),
