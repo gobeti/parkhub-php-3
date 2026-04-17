@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ToggleAccessibleSlotRequest;
+use App\Http\Requests\UpdateAccessibilityNeedsRequest;
 use App\Models\Booking;
 use App\Models\ParkingSlot;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class AccessibleParkingController extends Controller
 {
@@ -36,13 +37,11 @@ class AccessibleParkingController extends Controller
     /**
      * PUT /api/v1/admin/lots/{id}/slots/{slot}/accessible — toggle accessible flag.
      */
-    public function toggleAccessible(Request $request, string $id, string $slot): JsonResponse
+    public function toggleAccessible(ToggleAccessibleSlotRequest $request, string $id, string $slot): JsonResponse
     {
         $parkingSlot = ParkingSlot::where('lot_id', $id)->where('id', $slot)->firstOrFail();
 
-        $validated = $request->validate([
-            'is_accessible' => 'required|boolean',
-        ]);
+        $validated = $request->validated();
 
         $parkingSlot->update(['is_accessible' => $validated['is_accessible']]);
 
@@ -94,11 +93,9 @@ class AccessibleParkingController extends Controller
     /**
      * PUT /api/v1/users/me/accessibility-needs — update user's accessibility needs.
      */
-    public function updateNeeds(Request $request): JsonResponse
+    public function updateNeeds(UpdateAccessibilityNeedsRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'accessibility_needs' => 'required|string|in:none,wheelchair,reduced_mobility,visual,hearing',
-        ]);
+        $validated = $request->validated();
 
         $request->user()->update(['accessibility_needs' => $validated['accessibility_needs']]);
 

@@ -6,9 +6,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Concerns\ValidatesExternalUrls;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ImportSettingsBackupRequest;
 use App\Http\Requests\ResetDatabaseRequest;
 use App\Http\Requests\UpdateBrandingRequest;
 use App\Http\Requests\UpdateSettingsRequest;
+use App\Http\Requests\UploadBrandingLogoRequest;
 use App\Models\Absence;
 use App\Models\AuditLog;
 use App\Models\Booking;
@@ -110,10 +112,8 @@ class AdminSettingsController extends Controller
         return response()->json(['message' => 'Branding updated']);
     }
 
-    public function uploadBrandingLogo(Request $request): JsonResponse
+    public function uploadBrandingLogo(UploadBrandingLogoRequest $request): JsonResponse
     {
-
-        $request->validate(['logo' => 'required|image|mimes:jpeg,png,gif,svg,webp|max:2048']);
         $path = $request->file('logo')->store('branding', 'public');
         Setting::set('logo_url', '/storage/'.$path);
 
@@ -402,12 +402,8 @@ class AdminSettingsController extends Controller
      * POST /api/v1/admin/restore
      * Restore settings from a backup JSON payload.
      */
-    public function importBackup(Request $request): JsonResponse
+    public function importBackup(ImportSettingsBackupRequest $request): JsonResponse
     {
-        $request->validate([
-            'settings' => 'required|array',
-        ]);
-
         // Strip any keys not on the allowlist before writing to the settings store.
         $imported = 0;
         foreach (array_intersect_key($request->settings, array_flip(self::ALLOWED_SETTING_KEYS)) as $key => $value) {

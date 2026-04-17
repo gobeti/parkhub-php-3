@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateOperatingHoursRequest;
 use App\Models\ParkingLot;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,41 +39,9 @@ class OperatingHoursController extends Controller
      * PUT /api/v1/admin/lots/{id}/hours
      * Set operating hours for each day.
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateOperatingHoursRequest $request, string $id): JsonResponse
     {
         $this->requireAdmin($request);
-
-        $request->validate([
-            'is_24h' => 'sometimes|boolean',
-            'monday' => 'sometimes|array',
-            'monday.open' => 'sometimes|date_format:H:i',
-            'monday.close' => 'sometimes|date_format:H:i',
-            'monday.closed' => 'sometimes|boolean',
-            'tuesday' => 'sometimes|array',
-            'tuesday.open' => 'sometimes|date_format:H:i',
-            'tuesday.close' => 'sometimes|date_format:H:i',
-            'tuesday.closed' => 'sometimes|boolean',
-            'wednesday' => 'sometimes|array',
-            'wednesday.open' => 'sometimes|date_format:H:i',
-            'wednesday.close' => 'sometimes|date_format:H:i',
-            'wednesday.closed' => 'sometimes|boolean',
-            'thursday' => 'sometimes|array',
-            'thursday.open' => 'sometimes|date_format:H:i',
-            'thursday.close' => 'sometimes|date_format:H:i',
-            'thursday.closed' => 'sometimes|boolean',
-            'friday' => 'sometimes|array',
-            'friday.open' => 'sometimes|date_format:H:i',
-            'friday.close' => 'sometimes|date_format:H:i',
-            'friday.closed' => 'sometimes|boolean',
-            'saturday' => 'sometimes|array',
-            'saturday.open' => 'sometimes|date_format:H:i',
-            'saturday.close' => 'sometimes|date_format:H:i',
-            'saturday.closed' => 'sometimes|boolean',
-            'sunday' => 'sometimes|array',
-            'sunday.open' => 'sometimes|date_format:H:i',
-            'sunday.close' => 'sometimes|date_format:H:i',
-            'sunday.closed' => 'sometimes|boolean',
-        ]);
 
         $lot = ParkingLot::findOrFail($id);
         $current = $lot->operating_hours ?? [];

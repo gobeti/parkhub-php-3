@@ -5,24 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RescheduleBookingRequest;
 use App\Models\Booking;
 use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class RescheduleController extends Controller
 {
     /**
      * PUT /api/v1/bookings/{id}/reschedule — drag-to-reschedule with conflict check.
      */
-    public function reschedule(Request $request, string $id): JsonResponse
+    public function reschedule(RescheduleBookingRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'new_start' => 'required|date',
-            'new_end' => 'required|date|after:new_start',
-        ]);
-
         $booking = Booking::where('user_id', $request->user()->id)
             ->whereIn('status', ['confirmed', 'active'])
             ->findOrFail($id);

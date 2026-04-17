@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreParkingZoneRequest;
+use App\Http\Requests\UpdateParkingZonePricingRequest;
 use App\Models\Zone;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class ParkingZoneController extends Controller
 {
@@ -46,17 +47,8 @@ class ParkingZoneController extends Controller
     /**
      * POST /api/v1/lots/{lotId}/zones/pricing — create a zone with pricing tier.
      */
-    public function store(Request $request, string $lotId): JsonResponse
+    public function store(StoreParkingZoneRequest $request, string $lotId): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'color' => 'nullable|string|max:20',
-            'tier' => 'required|string|in:economy,standard,premium,vip',
-            'pricing_multiplier' => 'nullable|numeric|min:0.1|max:10.0',
-            'max_capacity' => 'nullable|integer|min:1',
-        ]);
-
         $this->ensurePricingColumns();
 
         $tier = $request->input('tier', 'standard');
@@ -81,14 +73,8 @@ class ParkingZoneController extends Controller
     /**
      * PUT /api/v1/admin/zones/{id}/pricing — update zone pricing tier.
      */
-    public function updatePricing(Request $request, string $id): JsonResponse
+    public function updatePricing(UpdateParkingZonePricingRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'tier' => 'sometimes|required|string|in:economy,standard,premium,vip',
-            'pricing_multiplier' => 'nullable|numeric|min:0.1|max:10.0',
-            'max_capacity' => 'nullable|integer|min:1',
-        ]);
-
         $this->ensurePricingColumns();
 
         $zone = Zone::findOrFail($id);

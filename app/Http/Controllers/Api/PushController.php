@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SubscribePushRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +18,8 @@ class PushController extends Controller
      *
      * Store a Web Push subscription for the authenticated user.
      */
-    public function subscribe(Request $request): JsonResponse
+    public function subscribe(SubscribePushRequest $request): JsonResponse
     {
-        $request->validate([
-            'endpoint' => 'required|url|max:2048',
-            'keys' => 'required|array',
-            'keys.p256dh' => 'required|string',
-            'keys.auth' => 'required|string',
-        ]);
-
         $user = $request->user();
 
         // Upsert: replace existing subscription for same endpoint

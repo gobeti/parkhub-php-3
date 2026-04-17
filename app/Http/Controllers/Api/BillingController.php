@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AllocateBillingRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BillingController extends Controller
@@ -106,14 +106,9 @@ class BillingController extends Controller
     /**
      * POST /api/v1/admin/billing/allocate — assign cost center to users.
      */
-    public function allocate(Request $request): JsonResponse
+    public function allocate(AllocateBillingRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_ids' => 'required|array|min:1',
-            'user_ids.*' => 'uuid|exists:users,id',
-            'cost_center' => 'required|string|max:100',
-            'department' => 'nullable|string|max:100',
-        ]);
+        $validated = $request->validated();
 
         $updated = User::whereIn('id', $validated['user_ids'])->update([
             'cost_center' => $validated['cost_center'],

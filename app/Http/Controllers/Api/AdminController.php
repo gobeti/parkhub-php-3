@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BulkUserActionRequest;
 use App\Http\Requests\ImportUsersRequest;
+use App\Http\Requests\UpdateParkingSlotRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\ParkingSlotResource;
@@ -253,15 +255,8 @@ class AdminController extends Controller
         return response()->json($query->paginate($request->get('per_page', 50)));
     }
 
-    public function updateSlot(Request $request, string $id)
+    public function updateSlot(UpdateParkingSlotRequest $request, string $id)
     {
-
-        $request->validate([
-            'slot_number' => 'sometimes|string|max:20',
-            'status' => 'sometimes|in:available,occupied,reserved,maintenance',
-            'reserved_for_department' => 'sometimes|nullable|string|max:255',
-            'zone_id' => 'sometimes|nullable|uuid|exists:zones,id',
-        ]);
         $slot = ParkingSlot::findOrFail($id);
         $slot->update($request->only(['slot_number', 'status', 'reserved_for_department', 'zone_id']));
 
@@ -280,15 +275,8 @@ class AdminController extends Controller
     /**
      * Bulk admin operations on users.
      */
-    public function bulkAction(Request $request): JsonResponse
+    public function bulkAction(BulkUserActionRequest $request): JsonResponse
     {
-        $request->validate([
-            'action' => 'required|string|in:activate,deactivate,change_role,delete',
-            'user_ids' => 'required|array|min:1|max:100',
-            'user_ids.*' => 'uuid|exists:users,id',
-            'role' => 'required_if:action,change_role|nullable|string|in:user,admin,premium',
-        ]);
-
         $action = $request->action;
         $userIds = $request->user_ids;
         $currentUserId = $request->user()->id;

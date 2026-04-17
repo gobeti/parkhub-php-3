@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\NearbyLotsRequest;
 use App\Models\Booking;
 use App\Models\Lot;
 use Carbon\Carbon;
@@ -23,14 +24,8 @@ class MobileBookingController extends Controller
     /**
      * GET /api/v1/mobile/nearby-lots — geolocation-based lot discovery.
      */
-    public function nearbyLots(Request $request): JsonResponse
+    public function nearbyLots(NearbyLotsRequest $request): JsonResponse
     {
-        $request->validate([
-            'lat' => 'required|numeric|between:-90,90',
-            'lng' => 'required|numeric|between:-180,180',
-            'radius' => 'nullable|numeric|min:100|max:10000',
-        ]);
-
         $lat = (float) $request->query('lat');
         $lng = (float) $request->query('lng');
         $radius = (float) ($request->query('radius', 1000));

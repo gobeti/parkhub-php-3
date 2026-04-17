@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateDesignThemeRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,12 +27,8 @@ class ThemeController extends Controller
         return response()->json(['design_theme' => $theme]);
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateDesignThemeRequest $request): JsonResponse
     {
-        $request->validate([
-            'design_theme' => ['required', 'string', 'in:'.implode(',', self::VALID_THEMES)],
-        ]);
-
         $user = $request->user();
         $prefs = $user->preferences ?? [];
         $prefs['design_theme'] = $request->input('design_theme');

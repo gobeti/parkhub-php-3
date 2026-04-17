@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BookingHistoryRequest;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use Carbon\Carbon;
@@ -17,16 +18,8 @@ class ParkingHistoryController extends Controller
     /**
      * GET /api/v1/bookings/history — paginated booking history with filters.
      */
-    public function history(Request $request): JsonResponse
+    public function history(BookingHistoryRequest $request): JsonResponse
     {
-        $request->validate([
-            'lot_id' => 'nullable|string',
-            'from' => 'nullable|date',
-            'to' => 'nullable|date',
-            'page' => 'nullable|integer|min:1',
-            'per_page' => 'nullable|integer|min:1|max:100',
-        ]);
-
         $perPage = (int) $request->query('per_page', 10);
         $page = (int) $request->query('page', 1);
 

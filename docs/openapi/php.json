@@ -184,6 +184,35 @@
         "title": "AddFavoriteRequest",
         "type": "object"
       },
+      "AllocateBillingRequest": {
+        "properties": {
+          "cost_center": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "department": {
+            "maxLength": 100,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "cost_center",
+          "user_ids"
+        ],
+        "title": "AllocateBillingRequest",
+        "type": "object"
+      },
       "Announcement": {
         "properties": {
           "active": {
@@ -674,6 +703,45 @@
           "updated_at"
         ],
         "title": "BookingResource",
+        "type": "object"
+      },
+      "BulkUserActionRequest": {
+        "properties": {
+          "action": {
+            "enum": [
+              "activate",
+              "deactivate",
+              "change_role",
+              "delete"
+            ],
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "admin",
+              "premium"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "action",
+          "user_ids"
+        ],
+        "title": "BulkUserActionRequest",
         "type": "object"
       },
       "ChangePasswordRequest": {
@@ -1232,6 +1300,22 @@
           "data"
         ],
         "title": "ImportLotsDataRequest",
+        "type": "object"
+      },
+      "ImportSettingsBackupRequest": {
+        "properties": {
+          "settings": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "title": "ImportSettingsBackupRequest",
         "type": "object"
       },
       "ImportUsersDataRequest": {
@@ -1944,6 +2028,24 @@
         "title": "RejectAbsenceRequest",
         "type": "object"
       },
+      "RescheduleBookingRequest": {
+        "properties": {
+          "new_end": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "new_start": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "new_start",
+          "new_end"
+        ],
+        "title": "RescheduleBookingRequest",
+        "type": "object"
+      },
       "ResetDatabaseRequest": {
         "properties": {
           "confirm": {
@@ -2257,6 +2359,58 @@
         "title": "StoreMaintenanceWindowRequest",
         "type": "object"
       },
+      "StoreParkingZoneRequest": {
+        "properties": {
+          "color": {
+            "maxLength": 20,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "max_capacity": {
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "pricing_multiplier": {
+            "maximum": 10,
+            "minimum": 0.1,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "economy",
+              "standard",
+              "premium",
+              "vip"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "tier"
+        ],
+        "title": "StoreParkingZoneRequest",
+        "type": "object"
+      },
       "StoreRbacRoleRequest": {
         "properties": {
           "description": {
@@ -2444,6 +2598,36 @@
         "title": "StoreWebhookRequest",
         "type": "object"
       },
+      "SubscribePushRequest": {
+        "properties": {
+          "endpoint": {
+            "format": "uri",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "keys": {
+            "properties": {
+              "auth": {
+                "type": "string"
+              },
+              "p256dh": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "p256dh",
+              "auth"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "endpoint",
+          "keys"
+        ],
+        "title": "SubscribePushRequest",
+        "type": "object"
+      },
       "SwapBookingRequest": {
         "properties": {
           "booking_id": {
@@ -2529,6 +2713,18 @@
         "title": "SwapRequestResource",
         "type": "object"
       },
+      "ToggleAccessibleSlotRequest": {
+        "properties": {
+          "is_accessible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_accessible"
+        ],
+        "title": "ToggleAccessibleSlotRequest",
+        "type": "object"
+      },
       "TranslationOverride": {
         "properties": {
           "created_at": {
@@ -2567,6 +2763,25 @@
           "updated_at"
         ],
         "title": "TranslationOverride",
+        "type": "object"
+      },
+      "UpdateAccessibilityNeedsRequest": {
+        "properties": {
+          "accessibility_needs": {
+            "enum": [
+              "none",
+              "wheelchair",
+              "reduced_mobility",
+              "visual",
+              "hearing"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessibility_needs"
+        ],
+        "title": "UpdateAccessibilityNeedsRequest",
         "type": "object"
       },
       "UpdateAnnouncementRequest": {
@@ -2651,6 +2866,26 @@
           }
         },
         "title": "UpdateBrandingRequest",
+        "type": "object"
+      },
+      "UpdateDesignThemeRequest": {
+        "properties": {
+          "design_theme": {
+            "enum": [
+              "classic",
+              "glass",
+              "bento",
+              "brutalist",
+              "neon",
+              "warm"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "design_theme"
+        ],
+        "title": "UpdateDesignThemeRequest",
         "type": "object"
       },
       "UpdateEmailSettingsRequest": {
@@ -2817,6 +3052,176 @@
           }
         },
         "title": "UpdateNotificationPreferencesRequest",
+        "type": "object"
+      },
+      "UpdateOperatingHoursRequest": {
+        "properties": {
+          "friday": {
+            "properties": {
+              "close": {
+                "type": "string"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "is_24h": {
+            "type": "boolean"
+          },
+          "monday": {
+            "properties": {
+              "close": {
+                "type": "string"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "saturday": {
+            "properties": {
+              "close": {
+                "type": "string"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "sunday": {
+            "properties": {
+              "close": {
+                "type": "string"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "thursday": {
+            "properties": {
+              "close": {
+                "type": "string"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "tuesday": {
+            "properties": {
+              "close": {
+                "type": "string"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "wednesday": {
+            "properties": {
+              "close": {
+                "type": "string"
+              },
+              "closed": {
+                "type": "boolean"
+              },
+              "open": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "title": "UpdateOperatingHoursRequest",
+        "type": "object"
+      },
+      "UpdateParkingSlotRequest": {
+        "properties": {
+          "reserved_for_department": {
+            "maxLength": 255,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slot_number": {
+            "maxLength": 20,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "occupied",
+              "reserved",
+              "maintenance"
+            ],
+            "type": "string"
+          },
+          "zone_id": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "UpdateParkingSlotRequest",
+        "type": "object"
+      },
+      "UpdateParkingZonePricingRequest": {
+        "properties": {
+          "max_capacity": {
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "pricing_multiplier": {
+            "maximum": 10,
+            "minimum": 0.1,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "tier": {
+            "enum": [
+              "economy",
+              "standard",
+              "premium",
+              "vip"
+            ],
+            "type": "string"
+          }
+        },
+        "title": "UpdateParkingZonePricingRequest",
         "type": "object"
       },
       "UpdatePreferencesRequest": {
@@ -3101,6 +3506,21 @@
           }
         },
         "title": "UpdateWebhookRequest",
+        "type": "object"
+      },
+      "UploadBrandingLogoRequest": {
+        "properties": {
+          "logo": {
+            "contentMediaType": "application/octet-stream",
+            "format": "binary",
+            "maxLength": 2048,
+            "type": "string"
+          }
+        },
+        "required": [
+          "logo"
+        ],
+        "title": "UploadBrandingLogoRequest",
         "type": "object"
       },
       "UploadVehiclePhotoRequest": {
@@ -4959,18 +5379,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "properties": {
-                  "logo": {
-                    "contentMediaType": "application/octet-stream",
-                    "format": "binary",
-                    "maxLength": 2048,
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "logo"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/UploadBrandingLogoRequest"
               }
             }
           },
@@ -5746,36 +6155,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "reserved_for_department": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "slot_number": {
-                    "maxLength": 20,
-                    "type": "string"
-                  },
-                  "status": {
-                    "enum": [
-                      "available",
-                      "occupied",
-                      "reserved",
-                      "maintenance"
-                    ],
-                    "type": "string"
-                  },
-                  "zone_id": {
-                    "format": "uuid",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateParkingSlotRequest"
               }
             }
           }
@@ -11771,32 +12151,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "cost_center": {
-                    "maxLength": 100,
-                    "type": "string"
-                  },
-                  "department": {
-                    "maxLength": 100,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "user_ids": {
-                    "items": {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "cost_center",
-                  "user_ids"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/AllocateBillingRequest"
               }
             }
           },
@@ -12340,18 +12695,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "properties": {
-                  "logo": {
-                    "contentMediaType": "application/octet-stream",
-                    "format": "binary",
-                    "maxLength": 2048,
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "logo"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/UploadBrandingLogoRequest"
               }
             }
           },
@@ -15770,110 +16114,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "friday": {
-                    "properties": {
-                      "close": {
-                        "type": "string"
-                      },
-                      "closed": {
-                        "type": "boolean"
-                      },
-                      "open": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "is_24h": {
-                    "type": "boolean"
-                  },
-                  "monday": {
-                    "properties": {
-                      "close": {
-                        "type": "string"
-                      },
-                      "closed": {
-                        "type": "boolean"
-                      },
-                      "open": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "saturday": {
-                    "properties": {
-                      "close": {
-                        "type": "string"
-                      },
-                      "closed": {
-                        "type": "boolean"
-                      },
-                      "open": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "sunday": {
-                    "properties": {
-                      "close": {
-                        "type": "string"
-                      },
-                      "closed": {
-                        "type": "boolean"
-                      },
-                      "open": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "thursday": {
-                    "properties": {
-                      "close": {
-                        "type": "string"
-                      },
-                      "closed": {
-                        "type": "boolean"
-                      },
-                      "open": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "tuesday": {
-                    "properties": {
-                      "close": {
-                        "type": "string"
-                      },
-                      "closed": {
-                        "type": "boolean"
-                      },
-                      "open": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "wednesday": {
-                    "properties": {
-                      "close": {
-                        "type": "string"
-                      },
-                      "closed": {
-                        "type": "boolean"
-                      },
-                      "open": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateOperatingHoursRequest"
               }
             }
           }
@@ -16058,15 +16299,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "is_accessible": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "is_accessible"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ToggleAccessibleSlotRequest"
               }
             }
           },
@@ -18418,19 +18651,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "settings": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "settings"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ImportSettingsBackupRequest"
               }
             }
           },
@@ -19279,36 +19500,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "reserved_for_department": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "slot_number": {
-                    "maxLength": 20,
-                    "type": "string"
-                  },
-                  "status": {
-                    "enum": [
-                      "available",
-                      "occupied",
-                      "reserved",
-                      "maintenance"
-                    ],
-                    "type": "string"
-                  },
-                  "zone_id": {
-                    "format": "uuid",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateParkingSlotRequest"
               }
             }
           }
@@ -19524,42 +19716,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "action": {
-                    "enum": [
-                      "activate",
-                      "deactivate",
-                      "change_role",
-                      "delete"
-                    ],
-                    "type": "string"
-                  },
-                  "role": {
-                    "enum": [
-                      "user",
-                      "admin",
-                      "premium"
-                    ],
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "user_ids": {
-                    "items": {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    "maxItems": 100,
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "action",
-                  "user_ids"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/BulkUserActionRequest"
               }
             }
           },
@@ -20573,33 +20730,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "max_capacity": {
-                    "minimum": 1,
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "pricing_multiplier": {
-                    "maximum": 10,
-                    "minimum": 0.1,
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  },
-                  "tier": {
-                    "enum": [
-                      "economy",
-                      "standard",
-                      "premium",
-                      "vip"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateParkingZonePricingRequest"
               }
             }
           }
@@ -24080,21 +24211,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "new_end": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "new_start": {
-                    "format": "date-time",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "new_start",
-                  "new_end"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/RescheduleBookingRequest"
               }
             }
           },
@@ -28660,55 +28777,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "color": {
-                    "maxLength": 20,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "description": {
-                    "maxLength": 500,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "max_capacity": {
-                    "minimum": 1,
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "name": {
-                    "maxLength": 100,
-                    "type": "string"
-                  },
-                  "pricing_multiplier": {
-                    "maximum": 10,
-                    "minimum": 0.1,
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  },
-                  "tier": {
-                    "enum": [
-                      "economy",
-                      "standard",
-                      "premium",
-                      "vip"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name",
-                  "tier"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreParkingZoneRequest"
               }
             }
           },
@@ -30884,18 +30953,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "design_theme": {
-                    "enum": [
-                      ""
-                    ],
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "design_theme"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateDesignThemeRequest"
               }
             }
           },
@@ -31081,33 +31139,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "endpoint": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "type": "string"
-                  },
-                  "keys": {
-                    "properties": {
-                      "auth": {
-                        "type": "string"
-                      },
-                      "p256dh": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "p256dh",
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "endpoint",
-                  "keys"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/SubscribePushRequest"
               }
             }
           },
@@ -34649,22 +34681,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "accessibility_needs": {
-                    "enum": [
-                      "none",
-                      "wheelchair",
-                      "reduced_mobility",
-                      "visual",
-                      "hearing"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "accessibility_needs"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateAccessibilityNeedsRequest"
               }
             }
           },
