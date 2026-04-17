@@ -133,76 +133,10 @@ parameters:
 			path: app/Http/Controllers/Api/AdminReportController.php
 
 		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 1
-			path: app/Services/Reports/ReportExportService.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 2
-			path: app/Services/Reports/ReportExportService.php
-
-		-
 			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Http/Controllers/Api/ApiVersionController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$action\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$details\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ip_address\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$target_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$target_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$username\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/AuditLogController.php
-
-		-
-			message: '#^Call to function is_array\(\) with string\|null will always evaluate to false\.$#'
-			identifier: function.impossibleType
-			count: 3
-			path: app/Http/Controllers/Api/AuditLogController.php
 
 		-
 			message: '#^Call to function method_exists\(\) with Laravel\\Sanctum\\PersonalAccessToken and ''delete'' will always evaluate to true\.$#'
@@ -289,30 +223,6 @@ parameters:
 			path: app/Http/Controllers/Api/BookingController.php
 
 		-
-			message: '#^Relation ''requester'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingSwapController.php
-
-		-
-			message: '#^Relation ''requesterBooking'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingSwapController.php
-
-		-
-			message: '#^Relation ''target'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingSwapController.php
-
-		-
-			message: '#^Relation ''targetBooking'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingSwapController.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 4
@@ -335,6 +245,30 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 2
 			path: app/Http/Controllers/Api/BookingInvoiceController.php
+
+		-
+			message: '#^Relation ''requester'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
+
+		-
+			message: '#^Relation ''requesterBooking'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
+
+		-
+			message: '#^Relation ''target'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
+
+		-
+			message: '#^Relation ''targetBooking'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
 
 		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
@@ -661,18 +595,6 @@ parameters:
 			path: app/Http/Controllers/Api/UserController.php
 
 		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: app/Services/User/UserAccountService.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Services/User/UserAccountService.php
-
-		-
 			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
@@ -755,3 +677,51 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Mail/BookingReminderMail.php
+
+		-
+			message: '#^Call to function is_array\(\) with string\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 2
+			path: app/Services/Audit/AuditLogQueryService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\<string, mixed\>, Closure\(App\\Models\\AuditLog\)\: array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/Audit/AuditLogQueryService.php
+
+		-
+			message: '#^Parameter \#1 \$e of method App\\Services\\Audit\\AuditLogQueryService\:\:csvRow\(\) expects App\\Models\\AuditLog, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Audit/AuditLogQueryService.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Services/Audit/AuditLogQueryService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Services/Reports/ReportExportService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Services/Reports/ReportExportService.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Services/User/UserAccountService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/User/UserAccountService.php

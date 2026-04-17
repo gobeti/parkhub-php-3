@@ -12122,26 +12122,16 @@
                           "type": "array"
                         },
                         "page": {
-                          "type": [
-                            "object",
-                            "null"
-                          ]
+                          "type": "integer"
                         },
                         "per_page": {
-                          "type": [
-                            "object",
-                            "null"
-                          ]
+                          "type": "integer"
                         },
                         "total": {
-                          "minimum": 0,
                           "type": "integer"
                         },
                         "total_pages": {
-                          "type": [
-                            "object",
-                            "null"
-                          ]
+                          "type": "integer"
                         }
                       },
                       "required": [
@@ -12244,7 +12234,7 @@
                 }
               }
             },
-            "description": "CSV (default)\n\nReturn a simplified text/plain representation for PDF\n(full PDF rendering requires a library like dompdf — keep it lightweight)",
+            "description": "",
             "headers": {
               "Transfer-Encoding": {
                 "required": true,
