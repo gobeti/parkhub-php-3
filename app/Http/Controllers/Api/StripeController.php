@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateStripeCheckoutRequest;
+use App\Services\Stripe\StripeWebhookOutcome;
+use App\Services\Stripe\StripeWebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -131,59 +133,19 @@ class StripeController extends Controller
      * Handle Stripe webhook events. Fails closed: a missing webhook secret
      * rejects the request with 503 so unsigned payloads can never grant credits.
      */
-    public function webhook(Request $request): JsonResponse
+    public function webhook(Request $request, StripeWebhookService $service): JsonResponse
     {
-        $webhookSecret = config('services.stripe.webhook_secret');
-        $payload = $request->getContent();
+        $sigHeader = (string) $request->header('Stripe-Signature', '');
 
-        if (! $webhookSecret) {
-            Log::error('Stripe webhook rejected: STRIPE_WEBHOOK_SECRET not configured', [
-                'ip' => $request->ip(),
-            ]);
+        $result = $service->process($request->getContent(), $sigHeader, $request->ip());
 
-            return response()->json([
+        return match ($result->outcome) {
+            StripeWebhookOutcome::Received => response()->json(['received' => true]),
+            StripeWebhookOutcome::InvalidSignature => response()->json(['error' => 'Invalid signature'], 403),
+            StripeWebhookOutcome::NotConfigured => response()->json([
                 'error' => 'Webhook signature verification is not configured on this server',
-            ], 503);
-        }
-
-        $sigHeader = $request->header('Stripe-Signature', '');
-
-        if (! $this->verifyStripeSignature($payload, $sigHeader, $webhookSecret)) {
-            Log::warning('Stripe webhook signature verification failed', ['ip' => $request->ip()]);
-
-            return response()->json(['error' => 'Invalid signature'], 403);
-        }
-
-        $event = json_decode($payload, true);
-        $type = $event['type'] ?? 'unknown';
-        $object = $event['data']['object'] ?? [];
-
-        Log::info('Stripe webhook received', ['type' => $type, 'id' => $object['id'] ?? null]);
-
-        if ($type === 'checkout.session.completed') {
-            $sessionId = $object['id'] ?? null;
-
-            if ($sessionId) {
-                $payment = DB::table('stripe_payments')->where('id', $sessionId)->first();
-
-                if ($payment && $payment->status === 'pending') {
-                    DB::table('stripe_payments')
-                        ->where('id', $sessionId)
-                        ->update([
-                            'status' => 'completed',
-                            'completed_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-
-                    // Grant credits to user
-                    DB::table('users')
-                        ->where('id', $payment->user_id)
-                        ->increment('credits_balance', $payment->credits);
-                }
-            }
-        }
-
-        return response()->json(['received' => true]);
+            ], 503),
+        };
     }
 
     /**
@@ -235,36 +197,5 @@ class StripeController extends Controller
             'error' => null,
             'meta' => null,
         ]);
-    }
-
-    /**
-     * Verify Stripe webhook signature (v1 scheme).
-     */
-    private function verifyStripeSignature(string $payload, string $sigHeader, string $secret): bool
-    {
-        if (empty($sigHeader)) {
-            return false;
-        }
-
-        $parts = collect(explode(',', $sigHeader))->mapWithKeys(function ($part) {
-            $pair = explode('=', trim($part), 2);
-
-            return count($pair) === 2 ? [$pair[0] => $pair[1]] : [];
-        });
-
-        $timestamp = $parts->get('t');
-        $signature = $parts->get('v1');
-
-        if (! $timestamp || ! $signature) {
-            return false;
-        }
-
-        if (abs(time() - (int) $timestamp) > 300) {
-            return false;
-        }
-
-        $expectedSignature = hash_hmac('sha256', "{$timestamp}.{$payload}", $secret);
-
-        return hash_equals($expectedSignature, $signature);
     }
 }

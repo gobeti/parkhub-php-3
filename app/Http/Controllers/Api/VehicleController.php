@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateVehicleRequest;
 use App\Http\Requests\UploadVehiclePhotoRequest;
 use App\Http\Resources\VehicleResource;
 use App\Models\Vehicle;
+use App\Services\Vehicle\VehicleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,20 +23,20 @@ class VehicleController extends Controller
         return VehicleResource::collection(Vehicle::where('user_id', $request->user()->id)->get());
     }
 
-    public function store(StoreVehicleRequest $request)
+    public function store(StoreVehicleRequest $request, VehicleService $service)
     {
-        $vehicle = Vehicle::create(array_merge(
+        $vehicle = $service->create(
             $request->only(['plate', 'make', 'model', 'color', 'is_default']),
-            ['user_id' => $request->user()->id]
-        ));
+            $request->user(),
+        );
 
         return VehicleResource::make($vehicle)->response()->setStatusCode(201);
     }
 
-    public function update(UpdateVehicleRequest $request, string $id)
+    public function update(UpdateVehicleRequest $request, VehicleService $service, string $id)
     {
         $vehicle = Vehicle::where('user_id', $request->user()->id)->findOrFail($id);
-        $vehicle->update($request->only(['plate', 'make', 'model', 'color', 'is_default']));
+        $service->update($vehicle, $request->only(['plate', 'make', 'model', 'color', 'is_default']));
 
         return VehicleResource::make($vehicle);
     }
