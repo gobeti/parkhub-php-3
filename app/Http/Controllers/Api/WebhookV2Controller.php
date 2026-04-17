@@ -6,8 +6,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Concerns\ValidatesExternalUrls;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreWebhookV2Request;
+use App\Http\Requests\UpdateWebhookV2Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 /**
@@ -64,16 +65,8 @@ class WebhookV2Controller extends Controller
     /**
      * Create a new v2 webhook.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreWebhookV2Request $request): JsonResponse
     {
-        $request->validate([
-            'url' => 'required|url|max:2048',
-            'events' => 'required|array|min:1',
-            'events.*' => 'string',
-            'description' => 'nullable|string|max:500',
-            'active' => 'boolean',
-        ]);
-
         $url = $request->input('url');
         if (! $this->isExternalUrl($url)) {
             return response()->json([
@@ -107,16 +100,8 @@ class WebhookV2Controller extends Controller
     /**
      * Update an existing v2 webhook.
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateWebhookV2Request $request, string $id): JsonResponse
     {
-        $request->validate([
-            'url' => 'sometimes|url|max:2048',
-            'events' => 'sometimes|array|min:1',
-            'events.*' => 'string',
-            'description' => 'nullable|string|max:500',
-            'active' => 'boolean',
-        ]);
-
         $webhooks = $this->loadWebhooks();
         $index = collect($webhooks)->search(fn ($w) => $w['id'] === $id);
 

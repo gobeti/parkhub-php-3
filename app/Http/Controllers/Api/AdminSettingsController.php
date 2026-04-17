@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Concerns\ValidatesExternalUrls;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ResetDatabaseRequest;
+use App\Http\Requests\UpdateBrandingRequest;
 use App\Http\Requests\UpdateSettingsRequest;
 use App\Models\Absence;
 use App\Models\AuditLog;
@@ -91,15 +93,8 @@ class AdminSettingsController extends Controller
         ]);
     }
 
-    public function updateBranding(Request $request): JsonResponse
+    public function updateBranding(UpdateBrandingRequest $request): JsonResponse
     {
-
-        $request->validate([
-            'company_name' => 'sometimes|string|max:255',
-            'primary_color' => ['sometimes', 'string', 'max:7', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'logo_url' => 'sometimes|nullable|string|max:2048',
-            'use_case' => 'sometimes|string|in:company,residential,shared,rental,personal',
-        ]);
         foreach (['company_name', 'primary_color', 'logo_url', 'use_case'] as $key) {
             if ($request->has($key)) {
                 Setting::set('brand_'.$key, $request->input($key));
@@ -364,10 +359,8 @@ class AdminSettingsController extends Controller
         ]);
     }
 
-    public function resetDatabase(Request $request)
+    public function resetDatabase(ResetDatabaseRequest $request)
     {
-
-        $request->validate(['confirm' => 'required|in:RESET']);
         // Delete all user data but keep admin account
         $admin = $request->user();
         Booking::query()->delete();

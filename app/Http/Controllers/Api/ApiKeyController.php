@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreApiKeyRequest;
 use App\Models\AuditLog;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -15,15 +16,8 @@ class ApiKeyController extends Controller
     /**
      * Create a named API key with optional expiry and scoped abilities.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreApiKeyRequest $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'expires_at' => 'sometimes|nullable|date|after:now',
-            'abilities' => 'sometimes|array',
-            'abilities.*' => 'string|max:100',
-        ]);
-
         $abilities = $request->input('abilities', ['*']);
         $expiresAt = $request->input('expires_at') ? Carbon::parse($request->expires_at) : null;
 

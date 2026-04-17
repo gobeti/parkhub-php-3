@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\WaitlistSubscribeRequest;
 use App\Http\Resources\WaitlistEntryResource;
 use App\Models\Booking;
 use App\Models\ParkingLot;
@@ -69,13 +70,9 @@ class WaitlistController extends Controller
     /**
      * POST /api/v1/lots/{lotId}/waitlist/subscribe — join with priority.
      */
-    public function subscribe(Request $request, string $lotId): JsonResponse
+    public function subscribe(WaitlistSubscribeRequest $request, string $lotId): JsonResponse
     {
         $lot = ParkingLot::findOrFail($lotId);
-
-        $request->validate([
-            'priority' => 'nullable|integer|min:1|max:5',
-        ]);
 
         $existing = WaitlistEntry::where('user_id', $request->user()->id)
             ->where('lot_id', $lot->id)

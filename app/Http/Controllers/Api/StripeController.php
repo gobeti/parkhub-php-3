@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateStripeCheckoutRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +21,8 @@ class StripeController extends Controller
      * Create a Stripe Checkout Session for purchasing credits.
      * Falls back to a stub if Stripe SDK is not available.
      */
-    public function createCheckout(Request $request): JsonResponse
+    public function createCheckout(CreateStripeCheckoutRequest $request): JsonResponse
     {
-        $request->validate([
-            'credits' => 'required|integer|min:1|max:10000',
-            'price_per_credit' => 'nullable|numeric|min:0.01',
-        ]);
-
         $credits = $request->integer('credits');
         $pricePerCredit = $request->float('price_per_credit', 1.00);
         $amount = (int) round($credits * $pricePerCredit * 100); // cents
