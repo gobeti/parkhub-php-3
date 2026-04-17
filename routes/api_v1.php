@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\NotificationPreferencesController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\SecurityReportController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SlotController;
 use App\Http\Controllers\Api\SystemController;
@@ -78,6 +79,15 @@ Route::get('/modules', [ModuleController::class, 'index']);
 
 // Discovery / handshake endpoint (public)
 Route::get('/discover', [PublicController::class, 'discover']);
+
+// Security reports (CSP violations + NEL). Unauthenticated by design —
+// browsers don't attach cookies to beacon/Reporting-API POSTs. Rate limited
+// at 10 req/min/IP to prevent log flooding. Paired with the
+// Reporting-Endpoints + NEL response headers set in SecurityHeaders.
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/security/csp-report', [SecurityReportController::class, 'cspReport']);
+    Route::post('/security/nel-report', [SecurityReportController::class, 'nelReport']);
+});
 
 // ── Map module (public — must be before /lots/{id} catch-all) ────────────────
 module_routes('map', 'map.php');

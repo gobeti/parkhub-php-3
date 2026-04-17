@@ -127,6 +127,17 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // Browser-reported security events (CSP violations, NEL errors).
+        // Daily rotation, 30-day retention. Written by
+        // App\Http\Controllers\Api\SecurityReportController.
+        'security-reports' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security-reports.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];
