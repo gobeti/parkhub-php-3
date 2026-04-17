@@ -93,6 +93,19 @@ class User extends Authenticatable
         return in_array($this->role, ['admin', 'superadmin']);
     }
 
+    /**
+     * Platform-level admin: `superadmin` role with no `tenant_id`.
+     *
+     * Platform admins are allowed to see cross-tenant aggregates in
+     * admin analytics / reports; regular tenant admins (role `admin`
+     * or `superadmin` scoped to a specific `tenant_id`) are confined
+     * to their own tenant's rows via the `BelongsToTenantScope`.
+     */
+    public function isPlatformAdmin(): bool
+    {
+        return $this->role === 'superadmin' && empty($this->tenant_id);
+    }
+
     public function isPremium(): bool
     {
         return $this->role === 'premium';

@@ -11517,7 +11517,7 @@
     },
     "/v1/admin/analytics/overview": {
       "get": {
-        "description": "Comprehensive analytics dashboard with daily bookings (30d),\nrevenue by day, peak hours, top lots, user growth (12mo),\nand average booking duration.",
+        "description": "Comprehensive analytics dashboard with daily bookings (30d),\nrevenue by day, peak hours, top lots, user growth (12mo),\nand average booking duration.\n\nTenant safety: every Eloquent model here (`Booking`, `User`,\n`ParkingLot`) carries the `BelongsToTenant` global scope, and\nwe *additionally* pin an explicit `tenant_id` predicate via\n`->when(TenantScope::currentId(), ...)` on every query so the\npredicate is visible in the SQL even if someone later drops\nthe trait or chains `withoutGlobalScope(...)`. Platform admins\n(superadmin + no tenant_id) have `current_tenant` unbound by\nthe `TenantScope` middleware so `currentId()` returns null and\nboth guards no-op — they see cross-tenant rollups as intended.",
         "operationId": "adminAnalytics.overview",
         "responses": {
           "200": {

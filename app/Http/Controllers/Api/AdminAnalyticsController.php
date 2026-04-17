@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\User;
+use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -19,13 +20,28 @@ class AdminAnalyticsController extends Controller
      * Comprehensive analytics dashboard with daily bookings (30d),
      * revenue by day, peak hours, top lots, user growth (12mo),
      * and average booking duration.
+     *
+     * Tenant safety: every Eloquent model here (`Booking`, `User`,
+     * `ParkingLot`) carries the `BelongsToTenant` global scope, and
+     * we *additionally* pin an explicit `tenant_id` predicate via
+     * `->when(TenantScope::currentId(), ...)` on every query so the
+     * predicate is visible in the SQL even if someone later drops
+     * the trait or chains `withoutGlobalScope(...)`. Platform admins
+     * (superadmin + no tenant_id) have `current_tenant` unbound by
+     * the `TenantScope` middleware so `currentId()` returns null and
+     * both guards no-op — they see cross-tenant rollups as intended.
      */
     public function overview(): JsonResponse
     {
         $driver = DB::getDriverName();
+        $tenantId = TenantScope::currentId();
+        $scopeBookings = static fn ($q) => $q->when($tenantId !== null, fn ($qq) => $qq->where('tenant_id', $tenantId));
+        $scopeBookingsQualified = static fn ($q) => $q->when($tenantId !== null, fn ($qq) => $qq->where('bookings.tenant_id', $tenantId));
+        $scopeUsers = static fn ($q) => $q->when($tenantId !== null, fn ($qq) => $qq->where('tenant_id', $tenantId));
 
         // 1. Daily bookings (last 30 days)
         $dailyBookings = Booking::where('start_time', '>=', now()->subDays(30))
+            ->tap($scopeBookings)
             ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -36,6 +52,7 @@ class AdminAnalyticsController extends Controller
         $revenueByDay = Booking::where('start_time', '>=', now()->subDays(30))
             ->whereNotNull('total_price')
             ->where('status', '!=', 'cancelled')
+            ->tap($scopeBookings)
             ->selectRaw('DATE(start_time) as date, SUM(total_price) as revenue, COUNT(*) as bookings')
             ->groupBy('date')
             ->orderBy('date')
@@ -49,18 +66,21 @@ class AdminAnalyticsController extends Controller
         // 3. Peak hours (24 bins — bookings grouped by hour of day, last 30 days)
         if ($driver === 'sqlite') {
             $peakHours = Booking::where('start_time', '>=', now()->subDays(30))
+                ->tap($scopeBookings)
                 ->selectRaw('CAST(strftime("%H", start_time) AS INTEGER) as hour, COUNT(*) as count')
                 ->groupBy('hour')
                 ->orderBy('hour')
                 ->get();
         } elseif ($driver === 'pgsql') {
             $peakHours = Booking::where('start_time', '>=', now()->subDays(30))
+                ->tap($scopeBookings)
                 ->selectRaw('EXTRACT(HOUR FROM start_time)::integer as hour, COUNT(*) as count')
                 ->groupBy('hour')
                 ->orderBy('hour')
                 ->get();
         } else {
             $peakHours = Booking::where('start_time', '>=', now()->subDays(30))
+                ->tap($scopeBookings)
                 ->selectRaw('HOUR(start_time) as hour, COUNT(*) as count')
                 ->groupBy('hour')
                 ->orderBy('hour')
@@ -75,7 +95,11 @@ class AdminAnalyticsController extends Controller
         }
 
         // 4. Top lots by booking count (last 30 days)
+        // Bookings carry the tenant predicate via BelongsToTenantScope; we also
+        // qualify the filter explicitly on the bookings table so the join result
+        // can't pull in parking_lots rows owned by another tenant.
         $topLots = Booking::where('bookings.start_time', '>=', now()->subDays(30))
+            ->tap($scopeBookingsQualified)
             ->join('parking_lots', 'bookings.lot_id', '=', 'parking_lots.id')
             ->selectRaw('parking_lots.id, parking_lots.name, COUNT(*) as booking_count, COALESCE(SUM(bookings.total_price), 0) as revenue')
             ->groupBy('parking_lots.id', 'parking_lots.name')
@@ -92,18 +116,21 @@ class AdminAnalyticsController extends Controller
         // 5. User growth (last 12 months)
         if ($driver === 'sqlite') {
             $userGrowth = User::where('created_at', '>=', now()->subMonths(12))
+                ->tap($scopeUsers)
                 ->selectRaw("strftime('%Y-%m', created_at) as month, COUNT(*) as new_users")
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get();
         } elseif ($driver === 'pgsql') {
             $userGrowth = User::where('created_at', '>=', now()->subMonths(12))
+                ->tap($scopeUsers)
                 ->selectRaw("to_char(created_at, 'YYYY-MM') as month, COUNT(*) as new_users")
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get();
         } else {
             $userGrowth = User::where('created_at', '>=', now()->subMonths(12))
+                ->tap($scopeUsers)
                 ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as new_users")
                 ->groupBy('month')
                 ->orderBy('month')
@@ -120,18 +147,21 @@ class AdminAnalyticsController extends Controller
             $avgDuration = Booking::where('start_time', '>=', now()->subDays(30))
                 ->whereNotNull('start_time')
                 ->whereNotNull('end_time')
+                ->tap($scopeBookings)
                 ->selectRaw('AVG((julianday(end_time) - julianday(start_time)) * 24) as avg_hours')
                 ->value('avg_hours');
         } elseif ($driver === 'pgsql') {
             $avgDuration = Booking::where('start_time', '>=', now()->subDays(30))
                 ->whereNotNull('start_time')
                 ->whereNotNull('end_time')
+                ->tap($scopeBookings)
                 ->selectRaw('AVG(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600) as avg_hours')
                 ->value('avg_hours');
         } else {
             $avgDuration = Booking::where('start_time', '>=', now()->subDays(30))
                 ->whereNotNull('start_time')
                 ->whereNotNull('end_time')
+                ->tap($scopeBookings)
                 ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, start_time, end_time) / 3600) as avg_hours')
                 ->value('avg_hours');
         }
@@ -143,8 +173,8 @@ class AdminAnalyticsController extends Controller
             'top_lots' => $topLots,
             'user_growth' => $userGrowthData,
             'avg_duration_hours' => $avgDuration ? round((float) $avgDuration, 2) : 0,
-            'total_users' => User::count(),
-            'total_lots' => ParkingLot::count(),
+            'total_users' => User::query()->tap($scopeUsers)->count(),
+            'total_lots' => ParkingLot::query()->tap(static fn ($q) => $q->when($tenantId !== null, fn ($qq) => $qq->where('tenant_id', $tenantId)))->count(),
         ]);
     }
 
@@ -157,10 +187,13 @@ class AdminAnalyticsController extends Controller
     public function occupancy(): JsonResponse
     {
         $driver = DB::getDriverName();
+        $tenantId = TenantScope::currentId();
+        $scopeBookings = static fn ($q) => $q->when($tenantId !== null, fn ($qq) => $qq->where('tenant_id', $tenantId));
 
         if ($driver === 'sqlite') {
             $rows = Booking::where('start_time', '>=', now()->subDays(7))
                 ->whereIn('status', ['confirmed', 'active', 'completed'])
+                ->tap($scopeBookings)
                 ->selectRaw('CAST(strftime("%H", start_time) AS INTEGER) as hour, COUNT(*) as count')
                 ->groupBy('hour')
                 ->orderBy('hour')
@@ -168,6 +201,7 @@ class AdminAnalyticsController extends Controller
         } elseif ($driver === 'pgsql') {
             $rows = Booking::where('start_time', '>=', now()->subDays(7))
                 ->whereIn('status', ['confirmed', 'active', 'completed'])
+                ->tap($scopeBookings)
                 ->selectRaw('EXTRACT(HOUR FROM start_time)::integer as hour, COUNT(*) as count')
                 ->groupBy('hour')
                 ->orderBy('hour')
@@ -175,6 +209,7 @@ class AdminAnalyticsController extends Controller
         } else {
             $rows = Booking::where('start_time', '>=', now()->subDays(7))
                 ->whereIn('status', ['confirmed', 'active', 'completed'])
+                ->tap($scopeBookings)
                 ->selectRaw('HOUR(start_time) as hour, COUNT(*) as count')
                 ->groupBy('hour')
                 ->orderBy('hour')
@@ -201,9 +236,12 @@ class AdminAnalyticsController extends Controller
      */
     public function revenue(): JsonResponse
     {
+        $tenantId = TenantScope::currentId();
+
         $rows = Booking::where('start_time', '>=', now()->subDays(30))
             ->whereNotNull('total_price')
             ->where('status', '!=', 'cancelled')
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
             ->selectRaw('DATE(start_time) as date, SUM(total_price) as revenue, COUNT(*) as bookings')
             ->groupBy('date')
             ->orderBy('date')
@@ -229,7 +267,11 @@ class AdminAnalyticsController extends Controller
      */
     public function popularLots(): JsonResponse
     {
-        $lots = Booking::join('parking_lots', 'bookings.lot_id', '=', 'parking_lots.id')
+        $tenantId = TenantScope::currentId();
+
+        $lots = Booking::query()
+            ->when($tenantId !== null, fn ($q) => $q->where('bookings.tenant_id', $tenantId))
+            ->join('parking_lots', 'bookings.lot_id', '=', 'parking_lots.id')
             ->selectRaw('parking_lots.id, parking_lots.name, COUNT(*) as booking_count, COALESCE(SUM(bookings.total_price), 0) as revenue')
             ->groupBy('parking_lots.id', 'parking_lots.name')
             ->orderByDesc('booking_count')

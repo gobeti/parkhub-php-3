@@ -13,6 +13,7 @@ use App\Models\ParkingLot;
 use App\Policies\AbsencePolicy;
 use App\Policies\BookingPolicy;
 use App\Policies\ParkingLotPolicy;
+use App\Support\TenantScope;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -60,47 +61,66 @@ class AppServiceProvider extends ServiceProvider
      * a full Playwright suite — which funnels every test through the
      * loginViaUi helper from the same localhost IP — doesn't cascade into
      * 429s after the first 5 tests.
+     *
+     * Tenant safety: every bucket key is namespaced by the current tenant
+     * via `TenantScope::rateLimitKey()`. Pre-auth endpoints fall back to
+     * the request host so `tenant-a.park.example` and `tenant-b.park.example`
+     * can't exhaust each other's buckets from a shared IP. When multi-tenant
+     * mode is off the namespace is a constant `'default'`, so bucket keys
+     * stay stable across the feature flag flip.
      */
     private function configureRateLimiting(): void
     {
         $disabled = (bool) config('app.disable_rate_limits', false);
         $limit = static fn (int $normal): int => $disabled ? 100_000 : $normal;
 
+        // Tenant-namespaced per-IP key — prevents a shared-IP attacker on
+        // tenant A from burning through tenant B's quota.
+        $byTenantIp = static fn (Request $request): string => 't:'.TenantScope::rateLimitKey($request->getHost()).':ip:'.$request->ip();
+
+        // Tenant-namespaced per-user (fallback to IP) key.
+        $byTenantUser = static function (Request $request): string {
+            $tenantKey = TenantScope::rateLimitKey($request->getHost());
+            $actor = $request->user()?->id ?: $request->ip();
+
+            return 't:'.$tenantKey.':u:'.$actor;
+        };
+
         // Auth endpoints: 5 attempts per minute per IP (brute-force protection)
-        RateLimiter::for('auth', function (Request $request) use ($limit) {
-            return Limit::perMinute($limit(5))->by($request->ip());
+        RateLimiter::for('auth', function (Request $request) use ($limit, $byTenantIp) {
+            return Limit::perMinute($limit(5))->by($byTenantIp($request));
         });
 
         // Password reset: 3 attempts per 15 minutes per IP
-        RateLimiter::for('password-reset', function (Request $request) use ($disabled) {
+        RateLimiter::for('password-reset', function (Request $request) use ($disabled, $byTenantIp) {
             return $disabled
-                ? Limit::perMinute(100_000)->by($request->ip())
-                : Limit::perMinutes(15, 3)->by($request->ip());
+                ? Limit::perMinute(100_000)->by($byTenantIp($request))
+                : Limit::perMinutes(15, 3)->by($byTenantIp($request));
         });
 
         // Demo reset: 2 per minute per IP (heavy DB operation)
-        RateLimiter::for('demo-action', function (Request $request) use ($limit) {
-            return Limit::perMinute($limit(2))->by($request->ip());
+        RateLimiter::for('demo-action', function (Request $request) use ($limit, $byTenantIp) {
+            return Limit::perMinute($limit(2))->by($byTenantIp($request));
         });
 
         // Setup mutations: 3 per minute per IP
-        RateLimiter::for('setup', function (Request $request) use ($limit) {
-            return Limit::perMinute($limit(3))->by($request->ip());
+        RateLimiter::for('setup', function (Request $request) use ($limit, $byTenantIp) {
+            return Limit::perMinute($limit(3))->by($byTenantIp($request));
         });
 
         // Payment endpoints: 10 per minute per user (prevent abuse)
-        RateLimiter::for('payments', function (Request $request) use ($limit) {
-            return Limit::perMinute($limit(10))->by($request->user()?->id ?: $request->ip());
+        RateLimiter::for('payments', function (Request $request) use ($limit, $byTenantUser) {
+            return Limit::perMinute($limit(10))->by($byTenantUser($request));
         });
 
         // Lobby display: 10 per minute per IP (public kiosk polling)
-        RateLimiter::for('lobby-display', function (Request $request) use ($limit) {
-            return Limit::perMinute($limit(10))->by($request->ip());
+        RateLimiter::for('lobby-display', function (Request $request) use ($limit, $byTenantIp) {
+            return Limit::perMinute($limit(10))->by($byTenantIp($request));
         });
 
         // Authenticated API: 120 per minute per user (or IP if unauthenticated)
-        RateLimiter::for('api', function (Request $request) use ($limit) {
-            return Limit::perMinute($limit(120))->by($request->user()?->id ?: $request->ip());
+        RateLimiter::for('api', function (Request $request) use ($limit, $byTenantUser) {
+            return Limit::perMinute($limit(120))->by($byTenantUser($request));
         });
     }
 }

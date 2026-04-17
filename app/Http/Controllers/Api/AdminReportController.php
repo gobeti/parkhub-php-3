@@ -13,12 +13,24 @@ use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\User;
+use App\Support\TenantScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Every admin report/export method below is defense-in-depth scoped to
+ * the current tenant via `->when(TenantScope::currentId(), ...)` on top
+ * of the `BelongsToTenant` global scope. When `MODULE_MULTI_TENANT` is
+ * off (or the caller is a platform super-admin with no tenant bound)
+ * `currentId()` returns null and the `when()` chain is a no-op, so
+ * unscoped global aggregates still flow to platform admins as intended.
+ * Tables without a `tenant_id` column (`parking_slots`, `absences`) are
+ * scoped transitively through their owning relation (`lot`, `user`)
+ * with `whereHas`.
+ */
 class AdminReportController extends Controller
 {
     /**
@@ -39,22 +51,47 @@ class AdminReportController extends Controller
     {
 
         $now = now();
+        $tenantId = TenantScope::currentId();
+
         $activeBookings = Booking::whereIn('status', ['confirmed', 'active'])
-            ->where('start_time', '<=', $now)->where('end_time', '>=', $now)->count();
-        $totalSlots = ParkingSlot::count();
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->count();
+
+        // parking_slots has no tenant_id; scope via parent lot when a tenant is bound.
+        $totalSlots = ParkingSlot::query()
+            ->when(
+                $tenantId !== null,
+                fn ($q) => $q->whereHas('lot', fn ($lq) => $lq->where('tenant_id', $tenantId))
+            )
+            ->count();
 
         return response()->json([
-            'total_users' => User::count(),
-            'total_lots' => ParkingLot::count(),
+            'total_users' => User::query()
+                ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->count(),
+            'total_lots' => ParkingLot::query()
+                ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->count(),
             'total_slots' => $totalSlots,
             'available_slots' => $totalSlots - $activeBookings,
-            'total_bookings' => Booking::count(),
+            'total_bookings' => Booking::query()
+                ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->count(),
             'active_bookings' => $activeBookings,
             'occupancy_percent' => $totalSlots > 0 ? round(($activeBookings / $totalSlots) * 100) : 0,
             'homeoffice_today' => Absence::where('absence_type', 'homeoffice')
                 ->where('start_date', '<=', $now->toDateString())
-                ->where('end_date', '>=', $now->toDateString())->count(),
-            'total_bookings_today' => Booking::whereDate('start_time', $now->toDateString())->count(),
+                ->where('end_date', '>=', $now->toDateString())
+                ->when(
+                    $tenantId !== null,
+                    fn ($q) => $q->whereHas('user', fn ($uq) => $uq->where('tenant_id', $tenantId))
+                )
+                ->count(),
+            'total_bookings_today' => Booking::whereDate('start_time', $now->toDateString())
+                ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->count(),
         ]);
     }
 
@@ -64,8 +101,10 @@ class AdminReportController extends Controller
 
         // Use DB-agnostic expressions: DAYOFWEEK (MySQL) vs strftime (SQLite)
         $driver = DB::getDriverName();
+        $tenantId = TenantScope::currentId();
 
-        $query = Booking::where('start_time', '>=', now()->subDays($days));
+        $query = Booking::where('start_time', '>=', now()->subDays($days))
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId));
 
         if ($driver === 'sqlite') {
             $bookings = $query
@@ -94,8 +133,10 @@ class AdminReportController extends Controller
 
         $days = (int) $request->get('days', 30);
         $since = now()->subDays($days);
+        $tenantId = TenantScope::currentId();
 
-        $baseQuery = Booking::where('created_at', '>=', $since);
+        $baseQuery = Booking::where('created_at', '>=', $since)
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId));
 
         $totalBookings = (clone $baseQuery)->count();
 
@@ -150,20 +191,14 @@ class AdminReportController extends Controller
 
         $days = (int) $request->get('days', 7);
         $startDate = now()->subDays($days - 1)->toDateString();
+        $tenantId = TenantScope::currentId();
 
-        // Single GROUP BY query instead of N individual count queries
-        $driver = DB::getDriverName();
-        if ($driver === 'sqlite') {
-            $counts = Booking::where('start_time', '>=', $startDate)
-                ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
-                ->groupBy('date')
-                ->pluck('count', 'date');
-        } else {
-            $counts = Booking::where('start_time', '>=', $startDate)
-                ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
-                ->groupBy('date')
-                ->pluck('count', 'date');
-        }
+        // Single GROUP BY query instead of N individual count queries.
+        $counts = Booking::where('start_time', '>=', $startDate)
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->pluck('count', 'date');
 
         $labels = [];
         $bookingCounts = [];
@@ -176,10 +211,16 @@ class AdminReportController extends Controller
         return response()->json([
             'booking_trend' => ['labels' => $labels, 'data' => $bookingCounts],
             'occupancy_now' => [
-                'total' => ParkingSlot::count(),
+                'total' => ParkingSlot::query()
+                    ->when(
+                        $tenantId !== null,
+                        fn ($q) => $q->whereHas('lot', fn ($lq) => $lq->where('tenant_id', $tenantId))
+                    )
+                    ->count(),
                 'occupied' => Booking::whereIn('status', ['confirmed', 'active'])
                     ->where('start_time', '<=', now())
                     ->where('end_time', '>=', now())
+                    ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
                     ->count(),
             ],
         ]);
@@ -189,13 +230,23 @@ class AdminReportController extends Controller
     {
 
         $headers = ['ID', 'User', 'Lot', 'Slot', 'Vehicle', 'Start', 'End', 'Status', 'Type'];
+        $tenantId = TenantScope::currentId();
 
-        return response()->streamDownload(function () use ($headers) {
+        // Tenant filter MUST be applied to the query builder before the cursor
+        // is opened — every row the generator emits flows through the CSV.
+        // BelongsToTenantScope handles this when the flag is on; we also pin
+        // an explicit predicate so a future withoutGlobalScope(...) wouldn't
+        // silently leak cross-tenant rows into the export.
+        $query = Booking::with('user')
+            ->orderBy('start_time', 'desc')
+            ->when($tenantId !== null, fn ($q) => $q->where('bookings.tenant_id', $tenantId));
+
+        return response()->streamDownload(function () use ($headers, $query) {
             $output = fopen('php://output', 'w');
             fputcsv($output, $headers);
 
             // Stream using cursor to avoid loading all bookings into memory
-            foreach (Booking::with('user')->orderBy('start_time', 'desc')->cursor() as $b) {
+            foreach ($query->cursor() as $b) {
                 fputcsv($output, [
                     $b->id,
                     $this->csvSafe($b->user?->name ?? 'Guest'),
@@ -222,6 +273,7 @@ class AdminReportController extends Controller
     {
         $groupBy = $request->get('group_by', 'day');
         $driver = DB::getDriverName();
+        $tenantId = TenantScope::currentId();
 
         $dateExpr = match ($groupBy) {
             'day' => $driver === 'sqlite'
@@ -238,6 +290,7 @@ class AdminReportController extends Controller
         $data = Booking::whereBetween('start_time', [$request->start, $request->end.' 23:59:59'])
             ->whereNotNull('total_price')
             ->where('status', '!=', 'cancelled')
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
             ->selectRaw("{$dateExpr} as period, SUM(total_price) as total_revenue, COUNT(*) as booking_count")
             ->groupBy('period')
             ->orderBy('period')
@@ -258,13 +311,20 @@ class AdminReportController extends Controller
      */
     public function occupancy(OccupancyReportRequest $request): JsonResponse
     {
-        $totalSlots = ParkingSlot::count();
+        $tenantId = TenantScope::currentId();
+        $totalSlots = ParkingSlot::query()
+            ->when(
+                $tenantId !== null,
+                fn ($q) => $q->whereHas('lot', fn ($lq) => $lq->where('tenant_id', $tenantId))
+            )
+            ->count();
         if ($totalSlots === 0) {
             return response()->json(['data' => [], 'total_slots' => 0]);
         }
 
         $data = Booking::whereBetween('start_time', [$request->start, $request->end.' 23:59:59'])
             ->whereIn('status', ['confirmed', 'active', 'completed'])
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
             ->selectRaw('DATE(start_time) as date, COUNT(DISTINCT slot_id) as occupied_slots')
             ->groupBy('date')
             ->orderBy('date')
@@ -289,14 +349,17 @@ class AdminReportController extends Controller
     {
         $days = (int) $request->get('days', 30);
         $since = now()->subDays($days);
+        $tenantId = TenantScope::currentId();
 
         $registrations = User::where('created_at', '>=', $since)
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('count', 'date');
 
         $activeUsers = Booking::where('start_time', '>=', $since)
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
             ->selectRaw('DATE(start_time) as date, COUNT(DISTINCT user_id) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -304,8 +367,12 @@ class AdminReportController extends Controller
 
         return response()->json([
             'period_days' => $days,
-            'total_users' => User::count(),
-            'new_users' => User::where('created_at', '>=', $since)->count(),
+            'total_users' => User::query()
+                ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->count(),
+            'new_users' => User::where('created_at', '>=', $since)
+                ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                ->count(),
             'registrations_by_day' => $registrations,
             'active_users_by_day' => $activeUsers,
         ]);
@@ -314,7 +381,13 @@ class AdminReportController extends Controller
     public function exportUsersCsv(Request $request): Response
     {
 
-        $users = User::orderBy('name')->get();
+        // Defense-in-depth on top of the BelongsToTenant global scope — if
+        // the trait were ever removed or a caller chained withoutGlobalScope
+        // the export would still stay inside the tenant's row set.
+        $tenantId = TenantScope::currentId();
+        $users = User::orderBy('name')
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->get();
 
         $headers = ['ID', 'Username', 'Name', 'Email', 'Role', 'Department', 'Active', 'Created'];
         $rows = $users->map(fn ($u) => [
