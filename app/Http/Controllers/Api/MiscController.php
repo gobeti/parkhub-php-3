@@ -6,6 +6,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Concerns\ValidatesExternalUrls;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PushSubscribeRequest;
+use App\Http\Requests\StoreWebhookRequest;
+use App\Http\Requests\UpdateEmailSettingsRequest;
+use App\Http\Requests\UpdateWebhookRequest;
 use App\Models\Booking;
 use App\Models\PushSubscription;
 use App\Models\Setting;
@@ -19,9 +23,8 @@ class MiscController extends Controller
     use ValidatesExternalUrls;
 
     // Push
-    public function pushSubscribe(Request $request)
+    public function pushSubscribe(PushSubscribeRequest $request)
     {
-        $request->validate(['endpoint' => 'required', 'p256dh' => 'required', 'auth' => 'required']);
         $sub = PushSubscription::updateOrCreate(
             ['user_id' => $request->user()->id, 'endpoint' => $request->endpoint],
             ['p256dh' => $request->p256dh, 'auth' => $request->auth]
@@ -47,19 +50,11 @@ class MiscController extends Controller
         ]);
     }
 
-    public function updateEmailSettings(Request $request)
+    public function updateEmailSettings(UpdateEmailSettingsRequest $request)
     {
         if (! $request->user()->isAdmin()) {
             abort(403, 'Admin access required');
         }
-        $request->validate([
-            'smtp_host' => 'sometimes|string|max:255',
-            'smtp_port' => 'sometimes|integer|between:1,65535',
-            'smtp_user' => 'sometimes|string|max:255',
-            'smtp_password' => 'sometimes|string|max:255',
-            'smtp_from' => 'sometimes|email|max:255',
-            'smtp_enabled' => 'sometimes|boolean',
-        ]);
         foreach (['smtp_host', 'smtp_port', 'smtp_user', 'smtp_from', 'smtp_enabled'] as $key) {
             if ($request->has($key)) {
                 Setting::set($key, $request->$key);
@@ -103,17 +98,11 @@ class MiscController extends Controller
         return response()->json(Webhook::all());
     }
 
-    public function createWebhook(Request $request)
+    public function createWebhook(StoreWebhookRequest $request)
     {
         if (! $request->user()->isAdmin()) {
             abort(403, 'Admin access required');
         }
-        $request->validate([
-            'url' => ['required', 'url', 'max:2048', 'regex:/^https?:\/\//'],
-            'events' => 'nullable|array',
-            'secret' => 'nullable|string|max:255',
-            'active' => 'nullable|boolean',
-        ]);
         // SSRF protection: reject private/internal IP ranges
         if (! $this->isExternalUrl($request->url)) {
             return response()->json(['error' => 'SSRF_BLOCKED', 'message' => 'Webhook URL must not target internal/private networks'], 422);
@@ -123,17 +112,11 @@ class MiscController extends Controller
         return response()->json($webhook, 201);
     }
 
-    public function updateWebhook(Request $request, string $id)
+    public function updateWebhook(UpdateWebhookRequest $request, string $id)
     {
         if (! $request->user()->isAdmin()) {
             abort(403, 'Admin access required');
         }
-        $request->validate([
-            'url' => ['sometimes', 'url', 'max:2048', 'regex:/^https?:\/\//'],
-            'events' => 'nullable|array',
-            'secret' => 'nullable|string|max:255',
-            'active' => 'nullable|boolean',
-        ]);
         if ($request->has('url') && ! $this->isExternalUrl($request->url)) {
             return response()->json(['error' => 'SSRF_BLOCKED', 'message' => 'Webhook URL must not target internal/private networks'], 422);
         }

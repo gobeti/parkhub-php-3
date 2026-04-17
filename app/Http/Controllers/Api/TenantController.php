@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreTenantRequest;
+use App\Http\Requests\UpdateTenantRequest;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class TenantController extends Controller
@@ -40,16 +41,9 @@ class TenantController extends Controller
     /**
      * POST /api/v1/admin/tenants — create a new tenant.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreTenantRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'domain' => 'nullable|string|max:255',
-            'branding' => 'nullable|array',
-            'branding.primary_color' => 'nullable|string|max:7',
-            'branding.logo_url' => 'nullable|string|max:500',
-            'branding.company_name' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $tenant = Tenant::create([
             'id' => (string) Str::uuid(),
@@ -76,18 +70,11 @@ class TenantController extends Controller
     /**
      * PUT /api/v1/admin/tenants/{id} — update a tenant.
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateTenantRequest $request, string $id): JsonResponse
     {
         $tenant = Tenant::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'domain' => 'nullable|string|max:255',
-            'branding' => 'nullable|array',
-            'branding.primary_color' => 'nullable|string|max:7',
-            'branding.logo_url' => 'nullable|string|max:500',
-            'branding.company_name' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $tenant->update([
             'name' => $validated['name'],

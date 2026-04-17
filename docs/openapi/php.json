@@ -255,6 +255,22 @@
         "title": "AnonymizeAccountRequest",
         "type": "object"
       },
+      "AssignRbacRolesRequest": {
+        "properties": {
+          "role_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "role_ids"
+        ],
+        "title": "AssignRbacRolesRequest",
+        "type": "object"
+      },
       "AuditLog": {
         "properties": {
           "action": {
@@ -1066,6 +1082,19 @@
         "title": "FlagVehicleRequest",
         "type": "object"
       },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "ForgotPasswordRequest",
+        "type": "object"
+      },
       "GeofenceCheckInRequest": {
         "properties": {
           "latitude": {
@@ -1716,6 +1745,26 @@
         "title": "ParkingSlotResource",
         "type": "object"
       },
+      "PushSubscribeRequest": {
+        "properties": {
+          "auth": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "p256dh": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint",
+          "p256dh",
+          "auth"
+        ],
+        "title": "PushSubscribeRequest",
+        "type": "object"
+      },
       "PushSubscription": {
         "properties": {
           "auth": {
@@ -1945,6 +1994,29 @@
           "accept"
         ],
         "title": "RespondSwapRequestRequest",
+        "type": "object"
+      },
+      "ReviewTranslationProposalRequest": {
+        "properties": {
+          "comment": {
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ReviewTranslationProposalRequest",
         "type": "object"
       },
       "SetLotLocationRequest": {
@@ -2185,6 +2257,42 @@
         "title": "StoreMaintenanceWindowRequest",
         "type": "object"
       },
+      "StoreRbacRoleRequest": {
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "enum": [
+                "manage_users",
+                "manage_lots",
+                "manage_bookings",
+                "view_reports",
+                "manage_settings",
+                "manage_plugins"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "permissions"
+        ],
+        "title": "StoreRbacRoleRequest",
+        "type": "object"
+      },
       "StoreRecurringBookingRequest": {
         "properties": {
           "days_of_week": {
@@ -2229,6 +2337,36 @@
         "title": "StoreRecurringBookingRequest",
         "type": "object"
       },
+      "StoreTranslationProposalRequest": {
+        "properties": {
+          "context": {
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "key": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "language": {
+            "maxLength": 10,
+            "type": "string"
+          },
+          "proposed_value": {
+            "maxLength": 5000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "key",
+          "proposed_value"
+        ],
+        "title": "StoreTranslationProposalRequest",
+        "type": "object"
+      },
       "StoreVehicleRequest": {
         "properties": {
           "color": {
@@ -2267,6 +2405,43 @@
           "plate"
         ],
         "title": "StoreVehicleRequest",
+        "type": "object"
+      },
+      "StoreWebhookRequest": {
+        "properties": {
+          "active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "secret": {
+            "maxLength": 255,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2048,
+            "pattern": "^https?:\\/\\/",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "StoreWebhookRequest",
         "type": "object"
       },
       "SwapBookingRequest": {
@@ -2478,6 +2653,37 @@
         "title": "UpdateBrandingRequest",
         "type": "object"
       },
+      "UpdateEmailSettingsRequest": {
+        "properties": {
+          "smtp_enabled": {
+            "type": "boolean"
+          },
+          "smtp_from": {
+            "format": "email",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "smtp_host": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "smtp_password": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "smtp_port": {
+            "maximum": 65535,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "smtp_user": {
+            "maxLength": 255,
+            "type": "string"
+          }
+        },
+        "title": "UpdateEmailSettingsRequest",
+        "type": "object"
+      },
       "UpdateGeofenceRequest": {
         "properties": {
           "center_lat": {
@@ -2539,6 +2745,35 @@
           }
         },
         "title": "UpdateMaintenanceWindowRequest",
+        "type": "object"
+      },
+      "UpdateMeRequest": {
+        "properties": {
+          "department": {
+            "maxLength": 255,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 50,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "UpdateMeRequest",
         "type": "object"
       },
       "UpdateNotificationPreferencesRequest": {
@@ -2627,6 +2862,38 @@
           }
         },
         "title": "UpdatePreferencesRequest",
+        "type": "object"
+      },
+      "UpdateRbacRoleRequest": {
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "enum": [
+                "manage_users",
+                "manage_lots",
+                "manage_bookings",
+                "view_reports",
+                "manage_settings",
+                "manage_plugins"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "title": "UpdateRbacRoleRequest",
         "type": "object"
       },
       "UpdateSettingsRequest": {
@@ -2800,6 +3067,40 @@
           }
         },
         "title": "UpdateVehicleRequest",
+        "type": "object"
+      },
+      "UpdateWebhookRequest": {
+        "properties": {
+          "active": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "secret": {
+            "maxLength": 255,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2048,
+            "pattern": "^https?:\\/\\/",
+            "type": "string"
+          }
+        },
+        "title": "UpdateWebhookRequest",
         "type": "object"
       },
       "UploadVehiclePhotoRequest": {
@@ -3342,6 +3643,22 @@
           "updated_at"
         ],
         "title": "Visitor",
+        "type": "object"
+      },
+      "VoteTranslationProposalRequest": {
+        "properties": {
+          "vote": {
+            "enum": [
+              "up",
+              "down"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "vote"
+        ],
+        "title": "VoteTranslationProposalRequest",
         "type": "object"
       },
       "WaitlistEntryResource": {
@@ -6071,16 +6388,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "email": {
-                    "format": "email",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "email"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
               }
             }
           },
@@ -6903,34 +7211,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "smtp_enabled": {
-                    "type": "boolean"
-                  },
-                  "smtp_from": {
-                    "format": "email",
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "smtp_host": {
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "smtp_password": {
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "smtp_port": {
-                    "maximum": 65535,
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  "smtp_user": {
-                    "maxLength": 255,
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateEmailSettingsRequest"
               }
             }
           }
@@ -8172,32 +8453,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "department": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "email": {
-                    "format": "email",
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "name": {
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "phone": {
-                    "maxLength": 50,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateMeRequest"
               }
             }
           }
@@ -8312,6 +8568,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -8503,23 +8762,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "auth": {
-                    "type": "string"
-                  },
-                  "endpoint": {
-                    "type": "string"
-                  },
-                  "p256dh": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "endpoint",
-                  "p256dh",
-                  "auth"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/PushSubscribeRequest"
               }
             }
           },
@@ -18278,34 +18521,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "description": {
-                    "maxLength": 500,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "name": {
-                    "maxLength": 100,
-                    "type": "string"
-                  },
-                  "permissions": {
-                    "items": {
-                      "enum": [
-                        ""
-                      ],
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "name",
-                  "permissions"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreRbacRoleRequest"
               }
             }
           },
@@ -18552,30 +18768,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "description": {
-                    "maxLength": 500,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "name": {
-                    "maxLength": 100,
-                    "type": "string"
-                  },
-                  "permissions": {
-                    "items": {
-                      "enum": [
-                        ""
-                      ],
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateRbacRoleRequest"
               }
             }
           }
@@ -19931,19 +20124,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "role_ids": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "role_ids"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/AssignRbacRolesRequest"
               }
             }
           },
@@ -21037,16 +21218,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "email": {
-                    "format": "email",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "email"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
               }
             }
           },
@@ -29029,32 +29201,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "department": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "email": {
-                    "format": "email",
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "name": {
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "phone": {
-                    "maxLength": 50,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateMeRequest"
               }
             }
           }
@@ -29169,6 +29316,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -30920,247 +31070,6 @@
         },
         "tags": [
           "Public"
-        ]
-      }
-    },
-    "/v1/push/subscribe": {
-      "post": {
-        "description": "Store a Web Push subscription for the authenticated user.",
-        "operationId": "push.subscribe",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "endpoint": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "type": "string"
-                  },
-                  "keys": {
-                    "properties": {
-                      "auth": {
-                        "type": "string"
-                      },
-                      "p256dh": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "p256dh",
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "endpoint",
-                  "keys"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "message": {
-                          "const": "Subscription stored",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "message"
-                      ],
-                      "type": "object"
-                    },
-                    "error": {
-                      "type": "null"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationException"
-          }
-        },
-        "summary": "POST /api/v1/push/subscribe",
-        "tags": [
-          "Push"
-        ]
-      }
-    },
-    "/v1/push/unsubscribe": {
-      "delete": {
-        "description": "Remove all push subscriptions for the authenticated user.",
-        "operationId": "push.unsubscribe",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "message": {
-                          "const": "Unsubscribed",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "message"
-                      ],
-                      "type": "object"
-                    },
-                    "error": {
-                      "type": "null"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          }
-        },
-        "summary": "DELETE /api/v1/push/unsubscribe",
-        "tags": [
-          "Push"
-        ]
-      }
-    },
-    "/v1/push/vapid-key": {
-      "get": {
-        "description": "Return the VAPID public key so the frontend can subscribe.",
-        "operationId": "push.vapidKey",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "public_key": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "public_key"
-                      ],
-                      "type": "object"
-                    },
-                    "error": {
-                      "type": "null"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "type": "null"
-                    },
-                    "error": {
-                      "properties": {
-                        "code": {
-                          "const": "NOT_CONFIGURED",
-                          "type": "string"
-                        },
-                        "message": {
-                          "const": "Web Push not configured",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "type": "object"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "GET /api/v1/push/vapid-key",
-        "tags": [
-          "Push"
         ]
       }
     },
@@ -33267,33 +33176,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "context": {
-                    "maxLength": 1000,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "key": {
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "language": {
-                    "maxLength": 10,
-                    "type": "string"
-                  },
-                  "proposed_value": {
-                    "maxLength": 5000,
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "language",
-                  "key",
-                  "proposed_value"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreTranslationProposalRequest"
               }
             }
           },
@@ -33538,26 +33421,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "comment": {
-                    "maxLength": 1000,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "status": {
-                    "enum": [
-                      "approved",
-                      "rejected"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "status"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ReviewTranslationProposalRequest"
               }
             }
           },
@@ -33749,19 +33613,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "vote": {
-                    "enum": [
-                      "up",
-                      "down"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "vote"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/VoteTranslationProposalRequest"
               }
             }
           },
@@ -34421,32 +34273,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "department": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "email": {
-                    "format": "email",
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "name": {
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "phone": {
-                    "maxLength": 50,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateMeRequest"
               }
             }
           }
@@ -34561,6 +34388,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -34761,28 +34591,7 @@
             "$ref": "#/components/responses/AuthenticationException"
           },
           "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "error": {
-                      "const": "INVALID_PASSWORD",
-                      "type": "string"
-                    },
-                    "message": {
-                      "const": "Password confirmation failed",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -48983,381 +48792,6 @@
         ]
       }
     },
-    "/v1/webhooks": {
-      "get": {
-        "operationId": "misc.webhooks_0",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/Webhook"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      },
-      "post": {
-        "operationId": "misc.createWebhook_1",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "active": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "events": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "secret": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "url": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "pattern": "^https?:\\/\\/",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "url"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Webhook"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationException"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      }
-    },
-    "/v1/webhooks/{id}": {
-      "delete": {
-        "operationId": "misc.deleteWebhook_1",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "const": "Deleted",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      },
-      "put": {
-        "operationId": "misc.updateWebhook_0",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "active": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "events": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "secret": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "url": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "pattern": "^https?:\\/\\/",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationException"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      }
-    },
-    "/v1/webhooks/{id}/test": {
-      "post": {
-        "operationId": "misc.testWebhook",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status_code": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "status_code"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          },
-          "502": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "error"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      }
-    },
     "/vehicles": {
       "get": {
         "operationId": "vehicle.index_0",
@@ -49805,7 +49239,7 @@
     },
     "/webhooks": {
       "get": {
-        "operationId": "misc.webhooks_0",
+        "operationId": "misc.webhooks",
         "responses": {
           "200": {
             "content": {
@@ -49849,45 +49283,12 @@
         ]
       },
       "post": {
-        "operationId": "misc.createWebhook_1",
+        "operationId": "misc.createWebhook",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "active": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "events": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "secret": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "url": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "pattern": "^https?:\\/\\/",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "url"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreWebhookRequest"
               }
             }
           },
@@ -49938,7 +49339,7 @@
     },
     "/webhooks/{id}": {
       "delete": {
-        "operationId": "misc.deleteWebhook_1",
+        "operationId": "misc.deleteWebhook",
         "parameters": [
           {
             "in": "path",
@@ -49998,7 +49399,7 @@
         ]
       },
       "put": {
-        "operationId": "misc.updateWebhook_0",
+        "operationId": "misc.updateWebhook",
         "parameters": [
           {
             "in": "path",
@@ -50013,37 +49414,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "active": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "events": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "secret": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "url": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "pattern": "^https?:\\/\\/",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateWebhookRequest"
               }
             }
           }

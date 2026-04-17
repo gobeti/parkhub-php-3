@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssignRbacRolesRequest;
+use App\Http\Requests\StoreRbacRoleRequest;
+use App\Http\Requests\UpdateRbacRoleRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -73,15 +75,8 @@ class RBACController extends Controller
     /**
      * POST /api/v1/admin/roles — create a custom role.
      */
-    public function createRole(Request $request): JsonResponse
+    public function createRole(StoreRbacRoleRequest $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'permissions' => 'required|array',
-            'permissions.*' => 'string|in:'.implode(',', self::VALID_PERMISSIONS),
-        ]);
-
         $this->ensureRolesTable();
 
         if (DB::table('rbac_roles')->where('name', $request->input('name'))->exists()) {
@@ -121,15 +116,8 @@ class RBACController extends Controller
     /**
      * PUT /api/v1/admin/roles/{id} — update a role.
      */
-    public function updateRole(Request $request, string $id): JsonResponse
+    public function updateRole(UpdateRbacRoleRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'name' => 'sometimes|required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'permissions' => 'sometimes|required|array',
-            'permissions.*' => 'string|in:'.implode(',', self::VALID_PERMISSIONS),
-        ]);
-
         $this->ensureRolesTable();
 
         $role = DB::table('rbac_roles')->where('id', $id)->first();
@@ -219,13 +207,8 @@ class RBACController extends Controller
     /**
      * PUT /api/v1/admin/users/{userId}/roles — assign roles to a user.
      */
-    public function assignRoles(Request $request, string $userId): JsonResponse
+    public function assignRoles(AssignRbacRolesRequest $request, string $userId): JsonResponse
     {
-        $request->validate([
-            'role_ids' => 'required|array',
-            'role_ids.*' => 'string',
-        ]);
-
         $this->ensureRolesTable();
 
         $validRoleIds = DB::table('rbac_roles')->whereIn('id', $request->input('role_ids'))->pluck('id');

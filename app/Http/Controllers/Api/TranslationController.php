@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReviewTranslationProposalRequest;
+use App\Http\Requests\StoreTranslationProposalRequest;
+use App\Http\Requests\VoteTranslationProposalRequest;
 use App\Models\TranslationOverride;
 use App\Models\TranslationProposal;
 use App\Models\TranslationVote;
@@ -90,14 +93,9 @@ class TranslationController extends Controller
     }
 
     // POST /api/v1/translations/proposals — create a proposal
-    public function createProposal(Request $request)
+    public function createProposal(StoreTranslationProposalRequest $request)
     {
-        $validated = $request->validate([
-            'language' => 'required|string|max:10',
-            'key' => 'required|string|max:255',
-            'proposed_value' => 'required|string|max:5000',
-            'context' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
         $proposal = TranslationProposal::create([
             'language' => $validated['language'],
@@ -133,11 +131,9 @@ class TranslationController extends Controller
     }
 
     // POST /api/v1/translations/proposals/{id}/vote
-    public function vote(Request $request, string $id)
+    public function vote(VoteTranslationProposalRequest $request, string $id)
     {
-        $validated = $request->validate([
-            'vote' => 'required|in:up,down',
-        ]);
+        $validated = $request->validated();
 
         $proposal = TranslationProposal::findOrFail($id);
 
@@ -218,16 +214,13 @@ class TranslationController extends Controller
     }
 
     // PUT /api/v1/translations/proposals/{id}/review — admin approve/reject
-    public function review(Request $request, string $id)
+    public function review(ReviewTranslationProposalRequest $request, string $id)
     {
         if (! $request->user() || ! $request->user()->isAdmin()) {
             abort(403, 'Admin access required');
         }
 
-        $validated = $request->validate([
-            'status' => 'required|in:approved,rejected',
-            'comment' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
         $proposal = TranslationProposal::findOrFail($id);
 
