@@ -169,7 +169,8 @@ class MiscController extends Controller
         $signature = hash_hmac('sha256', $payload, $webhook->secret);
 
         try {
-            $response = Http::timeout(10)
+            $response = Http::timeout(15)
+                ->connectTimeout(5)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
                     'X-Webhook-Signature' => 'sha256='.$signature,

@@ -31,7 +31,8 @@ class UpdateController extends Controller
             $response = Http::withHeaders([
                 'User-Agent' => 'ParkHub-PHP',
                 'Accept' => 'application/vnd.github.v3+json',
-            ])->get('https://api.github.com/repos/'.self::GITHUB_REPO.'/releases/latest');
+            ])->timeout(15)->connectTimeout(5)
+                ->get('https://api.github.com/repos/'.self::GITHUB_REPO.'/releases/latest');
 
             if (! $response->successful()) {
                 return response()->json([
@@ -138,7 +139,8 @@ class UpdateController extends Controller
             $response = Http::withHeaders([
                 'User-Agent' => 'ParkHub-PHP',
                 'Accept' => 'application/vnd.github.v3+json',
-            ])->get('https://api.github.com/repos/'.self::GITHUB_REPO.'/releases?per_page=20');
+            ])->timeout(15)->connectTimeout(5)
+                ->get('https://api.github.com/repos/'.self::GITHUB_REPO.'/releases?per_page=20');
 
             if (! $response->successful()) {
                 return response()->json(['success' => true, 'data' => []]);

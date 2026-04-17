@@ -9,8 +9,10 @@ use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\User;
+use App\Services\CircuitBreaker;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class MetricsController extends Controller
@@ -138,6 +140,56 @@ class MetricsController extends Controller
             // Skip if table doesn't exist in test environment
         }
 
+        // ── parkhub_php_circuit_breaker_state / _events_total ──────────────
+        // State values: 0=closed, 1=half_open, 2=open. Emitted per host whose
+        // breaker has been touched since the last cache eviction.
+        $breaker = app(CircuitBreaker::class);
+        $stateValue = [
+            CircuitBreaker::STATE_CLOSED => 0,
+            CircuitBreaker::STATE_HALF_OPEN => 1,
+            CircuitBreaker::STATE_OPEN => 2,
+        ];
+
+        /** @var array<string,int> $events */
+        $events = Cache::get('cb:events', []);
+        $hosts = [];
+        foreach (array_keys($events) as $bucket) {
+            [$host] = explode('|', $bucket, 2);
+            $hosts[$host] = true;
+        }
+
+        $lines[] = '# HELP parkhub_php_circuit_breaker_state Circuit breaker state per host (0=closed, 1=half_open, 2=open)';
+        $lines[] = '# TYPE parkhub_php_circuit_breaker_state gauge';
+        foreach (array_keys($hosts) as $host) {
+            $state = $breaker->getState($host);
+            $value = $stateValue[$state] ?? 0;
+            $safe = $this->escapeLabel($host);
+            $lines[] = "parkhub_php_circuit_breaker_state{host=\"{$safe}\"} {$value}";
+        }
+        $lines[] = '';
+
+        $lines[] = '# HELP parkhub_php_circuit_breaker_events_total Circuit breaker events per host+event';
+        $lines[] = '# TYPE parkhub_php_circuit_breaker_events_total counter';
+        foreach ($events as $bucket => $count) {
+            $parts = explode('|', $bucket, 2);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            [$host, $event] = $parts;
+            $safeHost = $this->escapeLabel($host);
+            $safeEvent = $this->escapeLabel($event);
+            $lines[] = "parkhub_php_circuit_breaker_events_total{host=\"{$safeHost}\",event=\"{$safeEvent}\"} {$count}";
+        }
+        $lines[] = '';
+
         return $lines;
+    }
+
+    /**
+     * Escape a label value for Prometheus text exposition.
+     */
+    private function escapeLabel(string $value): string
+    {
+        return str_replace(['\\', '"', "\n"], ['\\\\', '\\"', '\\n'], $value);
     }
 }

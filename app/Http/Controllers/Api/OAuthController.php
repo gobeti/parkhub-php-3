@@ -264,7 +264,8 @@ class OAuthController extends Controller
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query($data),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 10,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_HTTPHEADER => array_merge([
                 'Accept: application/json',
                 'Content-Type: application/x-www-form-urlencoded',
@@ -284,7 +285,8 @@ class OAuthController extends Controller
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 10,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_HTTPHEADER => [
                 'Accept: application/json',
                 "Authorization: Bearer {$token}",
