@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RegisterVisitorRequest;
 use App\Models\Visitor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,15 +16,9 @@ class VisitorController extends Controller
     /**
      * POST /api/v1/visitors/register — register a new visitor.
      */
-    public function register(Request $request): JsonResponse
+    public function register(RegisterVisitorRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'vehicle_plate' => 'nullable|string|max:20',
-            'visit_date' => 'required|date',
-            'purpose' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         $visitor = Visitor::create([
             'host_user_id' => $request->user()->id,

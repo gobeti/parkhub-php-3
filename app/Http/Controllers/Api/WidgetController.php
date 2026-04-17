@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateWidgetLayoutRequest;
 use App\Models\Booking;
 use App\Models\MaintenanceWindow;
 use App\Models\Notification;
@@ -58,16 +59,8 @@ class WidgetController extends Controller
     /**
      * PUT /api/v1/admin/widgets — save widget layout.
      */
-    public function update(Request $request): JsonResponse
+    public function update(UpdateWidgetLayoutRequest $request): JsonResponse
     {
-        $request->validate([
-            'widgets' => 'required|array',
-            'widgets.*.id' => 'required|string',
-            'widgets.*.widget_type' => 'required|string|in:'.implode(',', self::WIDGET_TYPES),
-            'widgets.*.position' => 'required|array',
-            'widgets.*.visible' => 'required|boolean',
-        ]);
-
         $layout = [
             'user_id' => $request->user()->id,
             'widgets' => $request->input('widgets'),

@@ -705,6 +705,24 @@
         "title": "BookingResource",
         "type": "object"
       },
+      "BulkExportInvoicesRequest": {
+        "properties": {
+          "booking_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "booking_ids"
+        ],
+        "title": "BulkExportInvoicesRequest",
+        "type": "object"
+      },
       "BulkUserActionRequest": {
         "properties": {
           "action": {
@@ -2015,6 +2033,44 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "RegisterVisitorRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "purpose": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vehicle_plate": {
+            "maxLength": 20,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visit_date": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "visit_date"
+        ],
+        "title": "RegisterVisitorRequest",
+        "type": "object"
+      },
       "RejectAbsenceRequest": {
         "properties": {
           "reason": {
@@ -2291,6 +2347,47 @@
           "start_time"
         ],
         "title": "StoreBookingRequest",
+        "type": "object"
+      },
+      "StoreEvChargerRequest": {
+        "properties": {
+          "connector_type": {
+            "enum": [
+              "type2",
+              "ccs",
+              "chademo",
+              "tesla"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "location_hint": {
+            "maxLength": 255,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lot_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "power_kw": {
+            "maximum": 350,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lot_id",
+          "label",
+          "connector_type",
+          "power_kw"
+        ],
+        "title": "StoreEvChargerRequest",
         "type": "object"
       },
       "StoreGuestBookingRequest": {
@@ -3301,6 +3398,26 @@
         "title": "UpdateRbacRoleRequest",
         "type": "object"
       },
+      "UpdateRecurringBookingRequest": {
+        "properties": {
+          "end_date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          }
+        },
+        "title": "UpdateRecurringBookingRequest",
+        "type": "object"
+      },
       "UpdateSettingsRequest": {
         "properties": {
           "allow_guest_bookings": {
@@ -3506,6 +3623,56 @@
           }
         },
         "title": "UpdateWebhookRequest",
+        "type": "object"
+      },
+      "UpdateWidgetLayoutRequest": {
+        "properties": {
+          "widgets": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "position": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "visible": {
+                  "type": "boolean"
+                },
+                "widget_type": {
+                  "enum": [
+                    "occupancy_chart",
+                    "revenue_summary",
+                    "recent_bookings",
+                    "user_growth",
+                    "booking_heatmap",
+                    "active_alerts",
+                    "maintenance_status",
+                    "ev_charging_status"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "widget_type",
+                "position",
+                "visible"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "widgets"
+        ],
+        "title": "UpdateWidgetLayoutRequest",
         "type": "object"
       },
       "UploadBrandingLogoRequest": {
@@ -9343,23 +9510,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "end_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "end_time": {
-                    "type": "string"
-                  },
-                  "start_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "start_time": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateRecurringBookingRequest"
               }
             }
           }
@@ -12810,44 +12961,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "connector_type": {
-                    "enum": [
-                      "type2",
-                      "ccs",
-                      "chademo",
-                      "tesla"
-                    ],
-                    "type": "string"
-                  },
-                  "label": {
-                    "maxLength": 100,
-                    "type": "string"
-                  },
-                  "location_hint": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "lot_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "power_kw": {
-                    "maximum": 350,
-                    "minimum": 1,
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "lot_id",
-                  "label",
-                  "connector_type",
-                  "power_kw"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreEvChargerRequest"
               }
             }
           },
@@ -15901,21 +16015,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "booking_ids": {
-                    "items": {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    "maxItems": 50,
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "booking_ids"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/BulkExportInvoicesRequest"
               }
             }
           },
@@ -20420,46 +20520,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "widgets": {
-                    "items": {
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "position": {
-                          "items": {
-                            "type": "string"
-                          },
-                          "minItems": 1,
-                          "type": "array"
-                        },
-                        "visible": {
-                          "type": "boolean"
-                        },
-                        "widget_type": {
-                          "enum": [
-                            ""
-                          ],
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "widget_type",
-                        "position",
-                        "visible"
-                      ],
-                      "type": "object"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "widgets"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateWidgetLayoutRequest"
               }
             }
           },
@@ -32011,23 +32072,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "end_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "end_time": {
-                    "type": "string"
-                  },
-                  "start_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "start_time": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateRecurringBookingRequest"
               }
             }
           }
@@ -48642,41 +48687,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "email": {
-                    "format": "email",
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "name": {
-                    "maxLength": 255,
-                    "type": "string"
-                  },
-                  "purpose": {
-                    "maxLength": 500,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "vehicle_plate": {
-                    "maxLength": 20,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "visit_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name",
-                  "email",
-                  "visit_date"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/RegisterVisitorRequest"
               }
             }
           },

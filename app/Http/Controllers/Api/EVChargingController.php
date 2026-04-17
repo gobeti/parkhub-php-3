@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreEvChargerRequest;
 use App\Models\ChargingSession;
 use App\Models\EvCharger;
 use Illuminate\Http\JsonResponse;
@@ -155,15 +156,9 @@ class EVChargingController extends Controller
     /**
      * POST /api/v1/admin/chargers — create a new charger.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreEvChargerRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'lot_id' => 'required|uuid|exists:parking_lots,id',
-            'label' => 'required|string|max:100',
-            'connector_type' => 'required|in:type2,ccs,chademo,tesla',
-            'power_kw' => 'required|numeric|min:1|max:350',
-            'location_hint' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $charger = EvCharger::create([
             'lot_id' => $validated['lot_id'],

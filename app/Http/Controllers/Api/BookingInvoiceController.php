@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BulkExportInvoicesRequest;
 use App\Models\Booking;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -51,13 +52,8 @@ class BookingInvoiceController extends Controller
      * Admin bulk export: POST /api/v1/admin/invoices/bulk
      * Accepts array of booking IDs, returns a zip or combined PDF.
      */
-    public function bulkExport(Request $request)
+    public function bulkExport(BulkExportInvoicesRequest $request)
     {
-        $request->validate([
-            'booking_ids' => 'required|array|min:1|max:50',
-            'booking_ids.*' => 'uuid',
-        ]);
-
         $bookings = Booking::whereIn('id', $request->booking_ids)->get();
 
         if ($bookings->isEmpty()) {
