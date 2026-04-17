@@ -6,10 +6,10 @@ parameters:
     paths:
         - app/
 
-    # Level 1 with baseline. Raised from 0 after the declare(strict_types=1)
-    # migration landed across all 171 app/ files — increase further as
-    # baseline errors are resolved.
-    level: 1
+    # Level 2 with baseline. Raised from 1 after the strict_types migration
+    # closed; level 2 adds "unknown methods on all types (including $this)"
+    # which is where Larastan's dynamic-property checks kick in.
+    level: 2
 
     # Exclude generated/cache files
     excludePaths:
