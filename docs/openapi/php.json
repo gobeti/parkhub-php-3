@@ -29854,6 +29854,7 @@
     },
     "/v1/modules": {
       "get": {
+        "description": "Response payload (inside the global wrapper's `data` key):\n  {\n    \"modules\":     { \"bookings\": true, \"stripe\": false, ... },\n    \"module_info\": [ { name, category, description, ... }, ... ],\n    \"version\":     \"4.12.0\"\n  }",
         "operationId": "module.index",
         "responses": {
           "200": {
@@ -29861,17 +29862,44 @@
               "application/json": {
                 "schema": {
                   "properties": {
-                    "modules": {
-                      "items": {},
-                      "type": "array"
+                    "data": {
+                      "properties": {
+                        "module_info": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "modules": {
+                          "additionalProperties": {
+                            "type": "boolean"
+                          },
+                          "type": "object"
+                        },
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "modules",
+                        "module_info",
+                        "version"
+                      ],
+                      "type": "object"
                     },
-                    "version": {
-                      "type": "string"
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "modules",
-                    "version"
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
                   ],
                   "type": "object"
                 }
@@ -29880,7 +29908,150 @@
             "description": ""
           }
         },
-        "summary": "GET /api/v1/modules — list all modules with their enabled state",
+        "summary": "GET /api/v1/modules",
+        "tags": [
+          "Module"
+        ]
+      }
+    },
+    "/v1/modules/{name}": {
+      "get": {
+        "description": "Returns the single ModuleInfo-shaped record or a 404 when the\nslug is unknown.",
+        "operationId": "module.show",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "category": {
+                          "type": "string"
+                        },
+                        "config_keys": {
+                          "type": "string"
+                        },
+                        "depends_on": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "runtime_enabled": {
+                          "type": "boolean"
+                        },
+                        "runtime_toggleable": {
+                          "description": "v1: no runtime override layer — kept as false everywhere.\nv2 will flip this per-module once admin-settings bridge lands.",
+                          "type": "boolean"
+                        },
+                        "ui_route": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "category",
+                        "description",
+                        "enabled",
+                        "runtime_toggleable",
+                        "runtime_enabled",
+                        "config_keys",
+                        "ui_route",
+                        "depends_on",
+                        "version"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "MODULE_NOT_FOUND",
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "GET /api/v1/modules/{name}",
         "tags": [
           "Module"
         ]

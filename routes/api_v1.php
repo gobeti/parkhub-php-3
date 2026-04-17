@@ -77,6 +77,7 @@ Route::get('/translations/overrides', [TranslationController::class, 'overrides'
 
 // Modules endpoint (public — frontend uses this to discover available features)
 Route::get('/modules', [ModuleController::class, 'index']);
+Route::get('/modules/{name}', [ModuleController::class, 'show']);
 
 // Discovery / handshake endpoint (public)
 Route::get('/discover', [PublicController::class, 'discover']);

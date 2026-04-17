@@ -27,7 +27,10 @@ fi
 trap '[ "$RESTORE" = "1" ] && mv -f .env.dump-openapi.bak .env || rm -f .env.dump-openapi.bak' EXIT
 cp .env.example .env
 
-php artisan scramble:export --path="$OUT"
+# Scramble's reflection-based spec generation crosses the default 128M
+# limit on larger API surfaces. Raise it explicitly so fresh clones work
+# without the developer pre-patching php.ini.
+php -d memory_limit=1G artisan scramble:export --path="$OUT"
 
 # Pretty-print + normalise key ordering so diffs stay readable
 jq -S '.' "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
