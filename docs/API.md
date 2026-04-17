@@ -31,6 +31,7 @@ A legacy `/api/` prefix is also supported for backwards compatibility.
 - [Calendar / iCal](#calendar--ical)
 - [Webhooks](#webhooks)
 - [Push Notifications](#push-notifications)
+- [Modules](#modules)
 - [Admin Endpoints](#admin-endpoints)
 - [Public Endpoints](#public-endpoints)
 - [System & Health](#system--health)
@@ -879,6 +880,148 @@ Register a Web Push subscription.
 ### DELETE /api/v1/push/unsubscribe
 
 Remove all push subscriptions for the authenticated user.
+
+---
+
+## Modules
+
+*Added in v4.13.0 (T-1720 v1 + v2 + v3).*
+
+The Modular UX platform exposes the full installed module registry over REST. See [FEATURES.md § Modular UX Platform](FEATURES.md#modular-ux-platform) for the product overview, and the OpenAPI snapshot at [`docs/openapi/php.json`](openapi/php.json) for the canonical schema.
+
+Read endpoints are open to any authenticated user. Write endpoints under `/api/v1/admin/modules/*` require `role=admin` or `role=superadmin` — authz is layered: the `admin` middleware runs first, then Laravel Policies take over per-action (see `app/Policies/*`). Request bodies are validated via FormRequest classes; JSON Schema validation for config writes uses `opis/json-schema` 2.6.0.
+
+### GET /api/v1/modules
+
+List every installed module with enriched metadata. The response envelope keeps the legacy flat `modules` map in place so older clients still work.
+
+```bash
+curl -s https://parking.example.com/api/v1/modules \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Response:
+
+```json
+{
+  "modules": { "bookings": true, "stripe": false, "announcements": true },
+  "module_info": [
+    {
+      "name": "announcements",
+      "category": "Notification",
+      "description": "Admin-authored announcements shown to users on login.",
+      "enabled": true,
+      "runtime_toggleable": true,
+      "runtime_enabled": true,
+      "config_keys": ["announcement.max_active"],
+      "depends_on": [],
+      "ui_route": "/announcements",
+      "version": "4.13.0",
+      "config_schema": { "type": "object", "properties": { "...": {} } }
+    }
+  ],
+  "version": "4.13.0"
+}
+```
+
+`runtime_enabled` reflects the effective state after applying any admin override. For rows with `runtime_toggleable = false`, it always equals `enabled`.
+
+### GET /api/v1/modules/{name}
+
+Return a single `ModuleInfo`. Returns `404` if the slug is unknown.
+
+```bash
+curl -s https://parking.example.com/api/v1/modules/announcements \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### PATCH /api/v1/admin/modules/{name}
+
+Flip a module's `runtime_enabled` bit without redeploying. **Admin-only.** Body is bound to `UpdateModuleRequest` (FormRequest).
+
+```bash
+curl -s -X PATCH https://parking.example.com/api/v1/admin/modules/announcements \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"runtime_enabled": false}'
+```
+
+Response: the updated `ModuleInfo` (same shape as `GET /api/v1/modules/{name}`).
+
+Error codes:
+
+| Code | HTTP | When |
+|------|------|------|
+| — | 404 | Unknown module slug |
+| — | 409 | Module has `runtime_toggleable = false` (security-sensitive row) |
+| — | 403 | Caller is not an admin |
+| — | 422 | FormRequest validation rejected the body shape |
+
+Every successful toggle writes an `AuditLog` row with `action = 'module_config_updated'`.
+
+### GET /api/v1/admin/modules/{name}/config
+
+Return the module's JSON Schema plus the currently-persisted values for each schema property. **Admin-only.**
+
+```bash
+curl -s https://parking.example.com/api/v1/admin/modules/themes/config \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Response:
+
+```json
+{
+  "schema": {
+    "type": "object",
+    "properties": {
+      "default_theme": { "type": "string", "enum": ["light", "dark", "auto"] }
+    },
+    "required": ["default_theme"]
+  },
+  "values": { "default_theme": "dark" }
+}
+```
+
+Error codes: `404` for unknown slug, `400` for a module without a declared `config_schema`.
+
+### PATCH /api/v1/admin/modules/{name}/config
+
+Persist new values for the module's config. **Admin-only.** Body is bound to `UpdateModuleConfigRequest`, then validated against the module's JSON Schema via `opis/json-schema` 2.6.0. Failures return `422` with the structured error envelope below.
+
+```bash
+curl -s -X PATCH https://parking.example.com/api/v1/admin/modules/themes/config \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"values": {"default_theme": "light"}}'
+```
+
+Success response: the updated `{schema, values}` pair (same shape as the GET).
+
+Validation failure response (`422`):
+
+```json
+{
+  "error": "CONFIG_VALIDATION_FAILED",
+  "details": [
+    {
+      "path": "/default_theme",
+      "keyword": "enum",
+      "message": "The value must be one of: \"light\", \"dark\", \"auto\"."
+    }
+  ]
+}
+```
+
+Other error codes:
+
+| Code | HTTP | When |
+|------|------|------|
+| — | 404 | Unknown module slug |
+| — | 400 | Module has no declared `config_schema` |
+| — | 403 | Caller is not an admin |
+
+Every successful write emits an `AuditLog` row with `action = 'module_config_updated'`.
 
 ---
 
