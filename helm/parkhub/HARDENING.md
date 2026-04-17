@@ -65,6 +65,43 @@ kubectl get pod -l app.kubernetes.io/name=parkhub -o jsonpath='{.items[0].spec.c
 kubectl describe pod -l app.kubernetes.io/name=parkhub | grep -i -E 'warning|forbidden'
 ```
 
+## Observability
+
+The chart ships optional Prometheus Operator CRDs behind two flags:
+
+| Flag                                    | Default | Renders                                           |
+|-----------------------------------------|---------|---------------------------------------------------|
+| `monitoring.serviceMonitor.enabled`     | `false` | `ServiceMonitor` scraping `/api/metrics` at `30s` |
+| `monitoring.prometheusRule.enabled`     | `false` | `PrometheusRule` with three golden-signal alerts  |
+
+Both flags default to `false` so the chart still installs cleanly on
+clusters without `monitoring.coreos.com/v1` CRDs. Flip them on in
+your values override once `prometheus-operator` is present:
+
+```yaml
+monitoring:
+  serviceMonitor:
+    enabled: true
+    bearerTokenSecret:
+      name: parkhub-metrics
+      key: METRICS_TOKEN
+  prometheusRule:
+    enabled: true
+```
+
+`MetricsController` requires a bearer token matching `METRICS_TOKEN`,
+so wire a Secret via `serviceMonitor.bearerTokenSecret` in every
+environment where `METRICS_TOKEN` is set.
+
+Alerts emitted (`parkhub.rules` group):
+
+- `ParkhubHighErrorRate` — 5xx ratio > 5% for 10m (warning)
+- `ParkhubHighLatencyP99` — p99 HTTP latency > 500ms for 10m (warning)
+- `ParkhubServiceDown` — `up{job=~"parkhub.*"} == 0` for 5m (critical)
+
+The Rust sibling chart adds a `ParkhubJobFailureRate` rule on
+`job_runs_total` — PHP does not emit that counter yet.
+
 ## Relationship to the Rust chart
 
 The `parkhub-rust` sibling chart runs a static Rust binary (redb as its

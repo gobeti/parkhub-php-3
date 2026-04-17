@@ -216,6 +216,27 @@ redis:
   auth:
     password: "CHANGEME"  # override at deploy time
 
+# -- Observability: ServiceMonitor + PrometheusRule (prometheus-operator)
+# Both flags default to false so the chart installs cleanly on clusters
+# that do not have monitoring.coreos.com/v1 CRDs. Operators flip them
+# on once prometheus-operator is installed. ParkHub PHP exposes its
+# Prometheus text endpoint at /api/metrics (MetricsController), and
+# requires a bearer token matching METRICS_TOKEN — reference a Secret
+# via `serviceMonitor.bearerTokenSecret` when that token is set.
+monitoring:
+  serviceMonitor:
+    enabled: false
+    # interval: 30s
+    # scrapeTimeout: 10s
+    # additionalLabels: {}  # e.g. release: kube-prometheus-stack
+    # bearerTokenSecret:
+    #   name: parkhub-metrics
+    #   key: METRICS_TOKEN
+  prometheusRule:
+    enabled: false
+    # additionalLabels: {}
+    # alertLabels: {}  # e.g. team: platform
+
 # -- Extra environment variables
 extraEnv: []
 #  - name: CUSTOM_VAR
