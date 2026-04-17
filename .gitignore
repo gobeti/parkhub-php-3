@@ -60,3 +60,6 @@ blob-report/
 .forge-operator/
 .fop/
 skills-lock.json
+
+# Infection mutation testing reports
+/.infection/

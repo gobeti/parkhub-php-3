@@ -1,37 +1,31 @@
 {
-  // infection-php config — run with `vendor/bin/infection`.
+  // infection-php config — run with `vendor/bin/infection` or `composer infection`.
   //
   // https://infection.github.io/
   //
-  // Mirrors the parkhub-rust `.cargo/mutants.toml` approach: scope the
-  // sweep to hand-written validation + rules + middleware where a
-  // missed mutant is a real coverage gap, not the generated Eloquent
-  // or scaffold code.
+  // Scope: hand-written validation rules + HTTP middleware only. A
+  // surviving mutant in these files is a real coverage gap, not scaffold
+  // or framework-generated noise. The surface deliberately stays narrow
+  // while the baseline MSI beds in — widen in a follow-up pass once the
+  // first few nightly reports land.
   $schema: "vendor/infection/infection/resources/schema.json",
   source: {
     directories: [
-      "app/Http/Middleware",
-      "app/Http/Requests",
-      "app/Models/Scopes",
-      "app/Models/Concerns",
       "app/Rules",
-      "app/Support",
-    ],
-    excludes: [
-      "tests",
-      "resources",
-      "database/migrations",
+      "app/Http/Middleware",
     ],
   },
   logs: {
-    text: "infection.log",
-    summary: "infection-summary.log",
-    json: "infection.json",
+    text: ".infection/infection.log",
+    summary: ".infection/summary.log",
   },
-  // Fail the job only when the mutation score drops below this floor.
-  // Starts generous; tighten as the "normal" MSI settles after a few
-  // reports land.
-  minMsi: 50,
-  minCoveredMsi: 60,
-  timeout: 60,
+  mutators: {
+    "@default": true,
+  },
+  timeout: 30,
+  // Initial baseline. Generous on purpose; tighten once "normal" MSI is
+  // observable in CI after a handful of nightly sweeps.
+  minMsi: 60,
+  minCoveredMsi: 70,
+  testFramework: "phpunit",
 }
