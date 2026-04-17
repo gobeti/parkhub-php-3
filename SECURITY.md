@@ -80,42 +80,35 @@ Researchers are credited in release notes unless anonymity is requested.
 - All state-changing requests require valid authentication
 - No cookie-based CSRF vulnerability surface
 
-## Kubernetes Hardening (recommended)
+## Kubernetes Hardening
 
-The bundled Helm chart (`helm/parkhub/`) already sets:
+The bundled Helm chart (`helm/parkhub/`) ships with the full [Pod Security
+Standards **restricted**](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted)
+profile, now **default via `security.readOnlyRootFilesystem.enabled: true`**
+(T-1746):
+
 - `runAsNonRoot: true`, `runAsUser: 33` (www-data)
 - `allowPrivilegeEscalation: false`
 - `capabilities: drop: [ALL]`
+- `readOnlyRootFilesystem: true`
+- `seccompProfile: { type: RuntimeDefault }`
 
-For full PSS-restricted compliance, operators should additionally set
-`securityContext.readOnlyRootFilesystem: true` and mount `emptyDir` volumes
-at the paths Laravel writes to:
+The paths Laravel + Apache must write to are backed by `emptyDir` volumes
+with a `128Mi` size cap each: `/var/www/html/bootstrap/cache`,
+`/var/www/html/storage` (skipped when a PVC is enabled), `/var/run/apache2`,
+`/var/lock/apache2`, and `/tmp`.
+
+Operators who need a writable root (dev images running `composer install`
+or `php artisan tinker` at runtime) can flip the flag:
 
 ```yaml
-securityContext:
-  readOnlyRootFilesystem: true
-
-extraVolumes:
-  - name: storage
-    emptyDir: {}
-  - name: bootstrap-cache
-    emptyDir: {}
-  - name: apache-run
-    emptyDir: {}
-  - name: tmp
-    emptyDir: {}
-
-extraVolumeMounts:
-  - { name: storage,         mountPath: /var/www/html/storage }
-  - { name: bootstrap-cache, mountPath: /var/www/html/bootstrap/cache }
-  - { name: apache-run,      mountPath: /var/run/apache2 }
-  - { name: tmp,             mountPath: /tmp }
+security:
+  readOnlyRootFilesystem:
+    enabled: false
 ```
 
-The chart ships with these opt-in because a naive `readOnlyRootFilesystem: true`
-without the matching emptyDir mounts crashes Apache during `php artisan
-config:cache`. A follow-up will wire these through the chart's values so the
-full hardening can be enabled with a single flag.
+See [helm/parkhub/HARDENING.md](helm/parkhub/HARDENING.md) for the full
+matrix + verification commands.
 
 ## Supply Chain
 

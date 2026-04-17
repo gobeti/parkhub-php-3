@@ -23,12 +23,27 @@ podSecurityContext:
   runAsNonRoot: true
   runAsUser: 33  # www-data
   fsGroup: 33
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
       - ALL
+
+# -- Pod Security Standards "restricted" hardening (T-1746).
+# When enabled, the container runs with a read-only root filesystem and
+# the paths Laravel/Apache must write to are backed by tmpfs emptyDir
+# volumes. Flip `enabled` to false for dev images that need a writable
+# root (e.g. `php artisan tinker` poking around in vendor/).
+security:
+  readOnlyRootFilesystem:
+    enabled: true
+    # Size cap per emptyDir — prevents a runaway log/cache from filling
+    # the node's ephemeral storage. 128Mi is comfortable for Laravel
+    # cache + compiled views + Apache run/lock metadata.
+    sizeLimit: 128Mi
 
 service:
   type: ClusterIP
