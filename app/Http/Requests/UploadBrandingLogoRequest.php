@@ -16,7 +16,11 @@ class UploadBrandingLogoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'logo' => 'required|image|mimes:jpeg,png,gif,svg,webp|max:2048',
+            // SVG intentionally excluded: SVGs can carry inline <script> or
+            // javascript: refs and a served logo becomes a stored-XSS vector.
+            // Matches the parkhub-rust side which magic-byte-checks only
+            // JPEG / PNG / GIF / WebP. (T-1736)
+            'logo' => 'required|image|mimes:jpeg,png,gif,webp|max:2048',
         ];
     }
 }
