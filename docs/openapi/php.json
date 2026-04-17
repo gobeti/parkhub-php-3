@@ -4995,6 +4995,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           }
         },
         "tags": [
@@ -5074,6 +5077,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           }
         },
         "tags": [
@@ -11874,6 +11880,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           }
         },
         "tags": [
@@ -11953,6 +11962,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           }
         },
         "tags": [

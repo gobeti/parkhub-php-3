@@ -12,22 +12,16 @@ use Illuminate\Http\Request;
 
 class AdminAnnouncementController extends Controller
 {
-    private function requireAdmin($request): void
-    {
-        if (! $request->user() || ! $request->user()->isAdmin()) {
-            abort(403, 'Admin access required');
-        }
-    }
-
     public function announcements(Request $request)
     {
-        $this->requireAdmin($request);
+        $this->authorize('viewAny', Announcement::class);
 
         return response()->json(Announcement::orderBy('created_at', 'desc')->get());
     }
 
     public function createAnnouncement(CreateAnnouncementRequest $request)
     {
+        $this->authorize('create', Announcement::class);
         $ann = Announcement::create(array_merge(
             $request->only(['title', 'message', 'severity', 'expires_at']),
             ['created_by' => $request->user()->id, 'active' => true]
@@ -39,6 +33,7 @@ class AdminAnnouncementController extends Controller
     public function updateAnnouncement(UpdateAnnouncementRequest $request, string $id)
     {
         $ann = Announcement::findOrFail($id);
+        $this->authorize('update', $ann);
         $ann->update($request->only(['title', 'message', 'severity', 'active', 'expires_at']));
 
         return response()->json($ann);
@@ -46,8 +41,9 @@ class AdminAnnouncementController extends Controller
 
     public function deleteAnnouncement(Request $request, string $id)
     {
-        $this->requireAdmin($request);
-        Announcement::findOrFail($id)->delete();
+        $ann = Announcement::findOrFail($id);
+        $this->authorize('delete', $ann);
+        $ann->delete();
 
         return response()->json(['message' => 'Deleted']);
     }
