@@ -6,12 +6,26 @@
 # Intended for developer use before committing an API change: run this,
 # commit the updated docs/openapi/php.json alongside the code, and the
 # PR diff will show the contract change.
+#
+# The dump always runs against .env.example so developers can't produce
+# a snapshot that drifts from what the CI drift gate regenerates. Any
+# module-flag experimentation in your local .env is temporarily shelved.
 
 set -euo pipefail
 
 OUT="docs/openapi/php.json"
 
 mkdir -p "$(dirname "$OUT")"
+
+# Swap .env with .env.example for the duration of the dump so scramble
+# sees the shipped-default feature flags.
+RESTORE=0
+if [ -f .env ]; then
+    cp .env .env.dump-openapi.bak
+    RESTORE=1
+fi
+trap '[ "$RESTORE" = "1" ] && mv -f .env.dump-openapi.bak .env || rm -f .env.dump-openapi.bak' EXIT
+cp .env.example .env
 
 php artisan scramble:export --path="$OUT"
 
