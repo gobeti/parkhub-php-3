@@ -91,7 +91,7 @@ the authz Policy rollout.
 - `opis/json-schema` 2.6.0 added (JSON Schema 2020-12 validator).
 - `infection/infection` 0.32.6 added (dev-dep, mutation testing).
 - `schemathesis` 4.15.2 pinned in the nightly contract-fuzz workflow (Python-only, not in `composer.json`).
-- `laravel/pint` + `phpstan` kept at level 5 + existing baseline; level 6 raise work is tracked under T-1746.
+- `laravel/pint` kept at current stable; `phpstan` stays at level 5 intentionally (T-1746) — the baseline was shrunk from **1795 → 763 lines (−57 %)** by adding `@property` PHPDoc to 13 Eloquent models and `@mixin` to 13 matching `JsonResource` subclasses. A level-6 promotion attempt surfaced 328 additional real PHPDoc/generics findings; held at level 5 to preserve the shrink gain. Level-6 promotion is the next documented follow-up. Three Event classes (`BookingCancelled`, `BookingCreated`, `OccupancyChanged`) got proper `array<string, mixed>` / `array<int, Channel|PrivateChannel>` return types inline.
 
 ### Earlier in this release cycle
 
