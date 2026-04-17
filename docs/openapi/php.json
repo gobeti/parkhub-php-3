@@ -3108,6 +3108,19 @@
         "title": "UpdateMeRequest",
         "type": "object"
       },
+      "UpdateModuleRuntimeStateRequest": {
+        "description": "Validates the PATCH /api/v1/admin/modules/{name} payload.\n\nBody is a single `runtime_enabled: bool`. The controller layer owns\nmodule-existence + toggleable checks — this request's job is just\nto make sure the JSON shape is sane before we touch the DB.\n\nAuthorization is delegated to the `admin` middleware on the route\ngroup, so `authorize()` returns true (anyone who reaches the request\nhas already cleared auth + admin).",
+        "properties": {
+          "runtime_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "runtime_enabled"
+        ],
+        "title": "UpdateModuleRuntimeStateRequest",
+        "type": "object"
+      },
       "UpdateNotificationPreferencesRequest": {
         "properties": {
           "email_booking_confirm": {
@@ -16865,6 +16878,207 @@
         ]
       }
     },
+    "/v1/admin/modules/{name}": {
+      "patch": {
+        "description": "Admin-only endpoint to hot-toggle a module without a redeploy.\nThe module must be on the registry's runtime-toggleable allowlist\n(security / payment / tenancy modules stay env-driven).\n\nResponse codes:\n  - 200: toggle persisted, returns the fresh ModuleInfo shape.\n  - 404: module name unknown. `error.code = MODULE_NOT_FOUND`.\n  - 409: module exists but is not runtime-toggleable.\n    `error.code = MODULE_NOT_TOGGLEABLE`.\n\nWrites an `AuditLog` entry with the new state so an operator can\nalways reconstruct who flipped what, when — same pattern as the\nRust edition's `admin_modules::patch`.",
+        "operationId": "module.updateRuntimeState",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateModuleRuntimeStateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "category": {
+                          "type": "string"
+                        },
+                        "config_keys": {
+                          "type": "string"
+                        },
+                        "depends_on": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "runtime_enabled": {
+                          "type": "boolean"
+                        },
+                        "runtime_toggleable": {
+                          "type": "string"
+                        },
+                        "ui_route": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "category",
+                        "description",
+                        "enabled",
+                        "runtime_toggleable",
+                        "runtime_enabled",
+                        "config_keys",
+                        "ui_route",
+                        "depends_on",
+                        "version"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "MODULE_NOT_FOUND",
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "MODULE_NOT_TOGGLEABLE",
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "summary": "PATCH /api/v1/admin/modules/{name}",
+        "tags": [
+          "Module"
+        ]
+      }
+    },
     "/v1/admin/permissions": {
       "get": {
         "operationId": "rbac.listPermissions",
@@ -29958,8 +30172,7 @@
                           "type": "boolean"
                         },
                         "runtime_toggleable": {
-                          "description": "v1: no runtime override layer — kept as false everywhere.\nv2 will flip this per-module once admin-settings bridge lands.",
-                          "type": "boolean"
+                          "type": "string"
                         },
                         "ui_route": {
                           "type": "string"

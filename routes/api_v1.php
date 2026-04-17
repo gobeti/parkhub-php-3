@@ -213,6 +213,11 @@ Route::middleware([StartSession::class, 'auth:sanctum', 'throttle:api', 'session
         // Lot/slot admin
         Route::patch('/slots/{id}', [AdminController::class, 'updateSlot']);
         Route::delete('/lots/{id}', [AdminController::class, 'deleteLot']);
+
+        // Runtime module toggle (T-1720 v2). Controller enforces the
+        // runtime-toggleable allowlist; this route provides the admin
+        // surface the frontend's Modules Dashboard wires into.
+        Route::patch('/modules/{name}', [ModuleController::class, 'updateRuntimeState']);
     });
 
     // Waitlist (core)

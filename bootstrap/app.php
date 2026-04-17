@@ -3,9 +3,9 @@
 use App\Http\Middleware\ApiResponseWrapper;
 use App\Http\Middleware\ApiVersionHeader;
 use App\Http\Middleware\AuthenticateFromCookie;
-use App\Http\Middleware\CheckModule;
 use App\Http\Middleware\EnforceAbsoluteSessionLifetime;
 use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\ModuleGate;
 use App\Http\Middleware\RequestIdLogging;
 use App\Http\Middleware\RequireAdmin;
 use App\Http\Middleware\SecurityHeaders;
@@ -69,7 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => RequireAdmin::class,
-            'module' => CheckModule::class,
+            'module' => ModuleGate::class,
             'session.absolute' => EnforceAbsoluteSessionLifetime::class,
         ]);
     })

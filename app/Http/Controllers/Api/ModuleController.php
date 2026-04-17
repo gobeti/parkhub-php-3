@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateModuleRuntimeStateRequest;
+use App\Models\AuditLog;
 use App\Services\ModuleRegistry;
 use Illuminate\Http\JsonResponse;
 
@@ -75,6 +77,74 @@ class ModuleController extends Controller
         return response()->json([
             'success' => true,
             'data' => $info,
+            'error' => null,
+            'meta' => null,
+        ]);
+    }
+
+    /**
+     * PATCH /api/v1/admin/modules/{name}
+     *
+     * Admin-only endpoint to hot-toggle a module without a redeploy.
+     * The module must be on the registry's runtime-toggleable allowlist
+     * (security / payment / tenancy modules stay env-driven).
+     *
+     * Response codes:
+     *   - 200: toggle persisted, returns the fresh ModuleInfo shape.
+     *   - 404: module name unknown. `error.code = MODULE_NOT_FOUND`.
+     *   - 409: module exists but is not runtime-toggleable.
+     *     `error.code = MODULE_NOT_TOGGLEABLE`.
+     *
+     * Writes an `AuditLog` entry with the new state so an operator can
+     * always reconstruct who flipped what, when — same pattern as the
+     * Rust edition's `admin_modules::patch`.
+     */
+    public function updateRuntimeState(UpdateModuleRuntimeStateRequest $request, string $name): JsonResponse
+    {
+        if (ModuleRegistry::get($name) === null) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => [
+                    'code' => 'MODULE_NOT_FOUND',
+                    'message' => "Unknown module '{$name}'",
+                ],
+                'meta' => null,
+            ], 404);
+        }
+
+        if (! ModuleRegistry::isToggleable($name)) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => [
+                    'code' => 'MODULE_NOT_TOGGLEABLE',
+                    'message' => "Module '{$name}' is not runtime-toggleable; change its env flag to alter state.",
+                ],
+                'meta' => null,
+            ], 409);
+        }
+
+        $runtimeEnabled = $request->boolean('runtime_enabled');
+        ModuleRegistry::setRuntimeEnabled($name, $runtimeEnabled);
+
+        AuditLog::log([
+            'user_id' => $request->user()?->id,
+            'username' => $request->user()?->username,
+            'action' => 'module_runtime_toggled',
+            'event_type' => 'admin',
+            'details' => [
+                'name' => $name,
+                'new_state' => $runtimeEnabled,
+            ],
+            'ip_address' => $request->ip(),
+            'target_type' => 'module',
+            'target_id' => $name,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => ModuleRegistry::get($name),
             'error' => null,
             'meta' => null,
         ]);

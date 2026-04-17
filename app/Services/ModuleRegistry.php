@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Http\Controllers\Api\SystemController;
+use App\Models\Setting;
 use App\Providers\ModuleServiceProvider;
 
 /**
@@ -26,10 +27,17 @@ use App\Providers\ModuleServiceProvider;
  * with a screaming-snake env fallback for slugs that haven't yet been
  * promoted into config/modules.php.
  *
- * v1 of this registry is metadata-only. `runtime_toggleable` is `false`
- * everywhere; v2 will flip the bit for modules that support admin-driven
- * hot toggling. `config_keys` stays empty until v3 wires the per-module
- * admin-settings editor.
+ * v2 flips `runtime_toggleable = true` on the subset of modules that
+ * are safe to hot-toggle at runtime without data-loss or auth bypass
+ * risk. Toggleable modules read an override from the `settings` table
+ * (keyed `module.{name}.runtime_enabled`) on every materialization pass
+ * and fall back to the env-derived `enabled` bit when the setting is
+ * absent. Security / payment / tenancy modules stay `false` and are
+ * driven solely by env config — hot-toggling those would be a footgun.
+ *
+ * `config_keys` stays empty until v3 wires the per-module admin-settings
+ * editor. Every successful runtime toggle writes an AuditLog entry; the
+ * PATCH /api/v1/admin/modules/{name} endpoint is admin-gated.
  */
 final class ModuleRegistry
 {
@@ -49,6 +57,40 @@ final class ModuleRegistry
         'Notification',
         'Enterprise',
         'Experimental',
+    ];
+
+    /**
+     * Slugs that are safe to hot-toggle at runtime. Mirrors the
+     * `RUNTIME_TOGGLEABLE` set in `parkhub-server/src/api/modules_meta.rs`
+     * so a module that flips in Rust also flips in PHP — no backend
+     * drift for the shared admin dashboard.
+     *
+     * Explicitly excluded (env-only): bookings, vehicles, rbac, sso,
+     * oauth, multi_tenant, payments, stripe, invoices, webhooks,
+     * webhooks_v2, compliance, notifications, push_notifications,
+     * web_push, notification_center, audit_export. Toggling any of
+     * those at runtime would be a security, billing, or data-loss
+     * footgun — stay env-flagged.
+     *
+     * Defined as an associative array keyed by slug so membership
+     * checks are O(1) and the declaration reads as a set, not a list.
+     *
+     * @var array<string, true>
+     */
+    private const RUNTIME_TOGGLEABLE = [
+        'widgets' => true,
+        'themes' => true,
+        'favorites' => true,
+        'lobby_display' => true,
+        'accessible' => true,
+        'calendar_drag' => true,
+        'ev_charging' => true,
+        'maintenance' => true,
+        'geofence' => true,
+        'map' => true,
+        'graphql' => true,
+        'api_docs' => true,
+        'setup_wizard' => true,
     ];
 
     /**
@@ -740,21 +782,77 @@ final class ModuleRegistry
     private static function materialize(array $meta, string $version): array
     {
         $enabled = self::resolveEnabled($meta['name']);
+        $toggleable = isset(self::RUNTIME_TOGGLEABLE[$meta['name']]);
+        $runtimeEnabled = $toggleable
+            ? self::resolveRuntimeOverride($meta['name'], $enabled)
+            : $enabled;
 
         return [
             'name' => $meta['name'],
             'category' => $meta['category'],
             'description' => $meta['description'],
             'enabled' => $enabled,
-            // v1: no runtime override layer — kept as false everywhere.
-            // v2 will flip this per-module once admin-settings bridge lands.
-            'runtime_toggleable' => false,
-            'runtime_enabled' => $enabled,
+            'runtime_toggleable' => $toggleable,
+            'runtime_enabled' => $runtimeEnabled,
             'config_keys' => $meta['config_keys'],
             'ui_route' => $meta['ui_route'],
             'depends_on' => $meta['depends_on'],
             'version' => $version,
         ];
+    }
+
+    /**
+     * Resolve the admin-set runtime override for a toggleable module.
+     *
+     * Reads `module.{name}.runtime_enabled` from the settings table.
+     * `Setting::get` returns whatever was stored (string '1'/'0' when
+     * written by our PATCH endpoint, but tolerant of bool/int too).
+     * Falls back to the env-driven `enabled` bit when no override is
+     * set so a fresh install still reflects the shipped defaults.
+     */
+    private static function resolveRuntimeOverride(string $name, bool $fallback): bool
+    {
+        /** @var string|int|bool|null $stored */
+        $stored = Setting::get(self::runtimeSettingKey($name));
+        if ($stored === null) {
+            return $fallback;
+        }
+
+        return filter_var($stored, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $fallback;
+    }
+
+    /**
+     * Canonical settings key for a module's runtime override. Centralised
+     * so the controller, registry, and middleware all agree on the key
+     * shape without a magic string scattered across three files.
+     */
+    public static function runtimeSettingKey(string $name): string
+    {
+        return "module.{$name}.runtime_enabled";
+    }
+
+    /**
+     * Is this module allowed to be hot-toggled via the admin API? Used
+     * by the PATCH endpoint to reject non-toggleable modules with a
+     * 409 before hitting the settings table.
+     */
+    public static function isToggleable(string $name): bool
+    {
+        return isset(self::RUNTIME_TOGGLEABLE[$name]);
+    }
+
+    /**
+     * Persist a runtime override for a toggleable module. No-ops for
+     * modules that aren't on the allowlist so a bug in the controller
+     * layer can't silently bypass the policy.
+     */
+    public static function setRuntimeEnabled(string $name, bool $enabled): void
+    {
+        if (! self::isToggleable($name)) {
+            return;
+        }
+
+        Setting::set(self::runtimeSettingKey($name), $enabled ? '1' : '0');
     }
 
     /**
