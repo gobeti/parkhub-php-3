@@ -23,7 +23,12 @@ class ParkingHistoryController extends Controller
         $perPage = (int) $request->query('per_page', 10);
         $page = (int) $request->query('page', 1);
 
-        $query = Booking::where('user_id', $request->user()->id)
+        // Eager-load the lot and slot relations — the map() fallback reads
+        // $b->parkingLot?->name and $b->parkingSlot?->slot_number when the
+        // denormalised lot_name/slot_number columns are empty, which would
+        // otherwise fire 2*N queries for the page. (T-1747 N+1 fix.)
+        $query = Booking::with(['lot', 'slot'])
+            ->where('user_id', $request->user()->id)
             ->whereIn('status', ['completed', 'cancelled'])
             ->orderByDesc('start_time');
 
@@ -51,8 +56,13 @@ class ParkingHistoryController extends Controller
                 'user_id' => $b->user_id,
                 'lot_id' => $b->lot_id,
                 'slot_id' => $b->slot_id,
-                'lot_name' => $b->lot_name ?? $b->parkingLot?->name ?? 'Unknown',
-                'slot_number' => $b->slot_number ?? $b->parkingSlot?->slot_number ?? '?',
+                // Use the eager-loaded `lot`/`slot` relations (from ->with()) for the
+                // fallback — the previous `parkingLot`/`parkingSlot` camelCase names
+                // matched a non-relation alias (parkingLot) and a non-existent method
+                // (parkingSlot), which fired an extra query per row when the
+                // denormalised columns were empty. (T-1747 N+1 fix.)
+                'lot_name' => $b->lot_name ?? $b->lot?->name ?? 'Unknown',
+                'slot_number' => $b->slot_number ?? $b->slot?->slot_number ?? '?',
                 'start_time' => $b->start_time,
                 'end_time' => $b->end_time,
                 'status' => $b->status,

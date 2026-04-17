@@ -34195,9 +34195,7 @@
                       "updated_at": {
                         "type": "string"
                       },
-                      "user_vote": {
-                        "type": "string"
-                      },
+                      "user_vote": {},
                       "votes_against": {
                         "type": "integer"
                       },

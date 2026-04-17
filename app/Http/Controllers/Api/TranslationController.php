@@ -34,14 +34,21 @@ class TranslationController extends Controller
             }
         }
 
-        $proposals = $query->orderByDesc('created_at')->get()->map(function ($p) use ($request) {
-            $userVote = null;
-            if ($request->user()) {
-                $vote = TranslationVote::where('proposal_id', $p->id)
-                    ->where('user_id', $request->user()->id)
-                    ->first();
-                $userVote = $vote?->vote;
-            }
+        $proposals = $query->orderByDesc('created_at')->get();
+
+        // Pre-load the current user's votes across all proposals in a single
+        // query instead of per-proposal TranslationVote::where()->first() —
+        // that was an N-query loop over the page. (T-1747 N+1 fix.)
+        $userVotesByProposal = [];
+        if ($request->user()) {
+            $userVotesByProposal = TranslationVote::whereIn('proposal_id', $proposals->pluck('id'))
+                ->where('user_id', $request->user()->id)
+                ->pluck('vote', 'proposal_id')
+                ->all();
+        }
+
+        $proposals = $proposals->map(function ($p) use ($userVotesByProposal) {
+            $userVote = $userVotesByProposal[$p->id] ?? null;
 
             return [
                 'id' => $p->id,
