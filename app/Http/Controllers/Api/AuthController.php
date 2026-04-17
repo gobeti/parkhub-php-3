@@ -18,6 +18,8 @@ use App\Models\AuditLog;
 use App\Models\LoginHistory;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Authentication\AuthenticationService;
+use App\Services\Authentication\AuthOutcome;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,96 +77,69 @@ class AuthController extends Controller
         );
     }
 
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request, AuthenticationService $service): JsonResponse
     {
+        $result = $service->attempt(
+            [
+                'username' => (string) $request->input('username', ''),
+                'password' => (string) $request->input('password', ''),
+                'two_factor_code' => $request->input('two_factor_code'),
+            ],
+            [
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ],
+        );
 
-        $user = User::where('username', $request->username)
-            ->orWhere('email', $request->username)
-            ->first();
-
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            AuditLog::log([
-                'action' => 'login_failed',
-                'details' => ['username' => $request->username],
-                'ip_address' => $request->ip(),
-            ]);
-
-            return response()->json([
+        return match ($result->outcome) {
+            AuthOutcome::InvalidCredentials => response()->json([
                 'success' => false,
                 'data' => null,
                 'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'Invalid username or password'],
                 'meta' => null,
-            ], 401);
-        }
+            ], 401),
 
-        if (! $user->is_active) {
-            return response()->json([
+            AuthOutcome::AccountDisabled => response()->json([
                 'success' => false,
                 'data' => null,
                 'error' => ['code' => 'ACCOUNT_DISABLED', 'message' => 'Account is disabled'],
                 'meta' => null,
-            ], 403);
-        }
+            ], 403),
 
-        // 2FA check: if enabled, require code or return challenge.
-        // The challenge response is HTTP 200 with success=true + data.requires_2fa
-        // so the frontend request() helper can inspect data without treating
-        // the challenge as an error.
-        if ($user->two_factor_enabled) {
-            if (! $request->has('two_factor_code')) {
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'requires_2fa' => true,
-                        'message' => 'Two-factor authentication code required.',
-                    ],
-                    'error' => null,
-                    'meta' => null,
-                ]);
-            }
-
-            $valid = TwoFactorController::validateLoginCode($user, $request->two_factor_code);
-            if (! $valid) {
-                return response()->json([
-                    'success' => false,
-                    'data' => null,
-                    'error' => ['code' => 'INVALID_2FA_CODE', 'message' => 'Invalid two-factor authentication code.'],
-                    'meta' => null,
-                ], 401);
-            }
-        }
-
-        $user->update(['last_login' => now()]);
-        $token = $user->createToken('auth-token');
-
-        // Record login history
-        LoginHistory::create([
-            'user_id' => $user->id,
-            'ip_address' => $request->ip(),
-            'user_agent' => substr((string) $request->userAgent(), 0, 512),
-            'logged_in_at' => now(),
-        ]);
-
-        AuditLog::log([
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'action' => 'login',
-            'ip_address' => $request->ip(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $this->userResponse($user),
-                'tokens' => [
-                    'access_token' => $token->plainTextToken,
-                    'token_type' => 'Bearer',
-                    'expires_at' => now()->addDays(7)->toISOString(),
+            // Challenge returns HTTP 200 with success=true + data.requires_2fa
+            // so the frontend request() helper can inspect data without treating
+            // the challenge as an error.
+            AuthOutcome::RequiresTwoFactor => response()->json([
+                'success' => true,
+                'data' => [
+                    'requires_2fa' => true,
+                    'message' => 'Two-factor authentication code required.',
                 ],
-            ],
-            'error' => null,
-            'meta' => null,
-        ])->withCookie($this->authCookie($token->plainTextToken));
+                'error' => null,
+                'meta' => null,
+            ]),
+
+            AuthOutcome::InvalidTwoFactorCode => response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => ['code' => 'INVALID_2FA_CODE', 'message' => 'Invalid two-factor authentication code.'],
+                'meta' => null,
+            ], 401),
+
+            AuthOutcome::Success => response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => $this->userResponse($result->user),
+                    'tokens' => [
+                        'access_token' => $result->token->plainTextToken,
+                        'token_type' => 'Bearer',
+                        'expires_at' => now()->addDays(7)->toISOString(),
+                    ],
+                ],
+                'error' => null,
+                'meta' => null,
+            ])->withCookie($this->authCookie($result->token->plainTextToken)),
+        };
     }
 
     public function register(RegisterRequest $request): JsonResponse

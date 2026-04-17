@@ -127,12 +127,6 @@ parameters:
 			path: app/Http/Controllers/Api/AdminReportController.php
 
 		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 1
-			path: app/Http/Controllers/Api/AdminReportController.php
-
-		-
 			message: '#^Match expression does not handle remaining value\: mixed$#'
 			identifier: match.unhandled
 			count: 1
@@ -145,10 +139,16 @@ parameters:
 			path: app/Http/Controllers/Api/AdminReportController.php
 
 		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Services/Reports/ReportExportService.php
+
+		-
 			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 2
-			path: app/Http/Controllers/Api/AdminReportController.php
+			path: app/Services/Reports/ReportExportService.php
 
 		-
 			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'

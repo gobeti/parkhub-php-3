@@ -7343,6 +7343,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          },
           "201": {
             "content": {
               "application/json": {
@@ -7360,42 +7370,26 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "properties": {
-                        "error": {
-                          "const": "SLOT_UNAVAILABLE",
-                          "type": "string"
-                        },
-                        "message": {
-                          "const": "Slot is already booked",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "error",
-                        "message"
+                  "properties": {
+                    "error": {
+                      "enum": [
+                        "SLOT_UNAVAILABLE",
+                        "NO_SLOTS_AVAILABLE"
                       ],
-                      "type": "object"
+                      "type": "string"
                     },
-                    {
-                      "properties": {
-                        "error": {
-                          "const": "NO_SLOTS_AVAILABLE",
-                          "type": "string"
-                        },
-                        "message": {
-                          "const": "No available slots",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "error",
-                        "message"
-                      ],
-                      "type": "object"
+                    "message": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
-                  ]
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "type": "object"
                 }
               }
             },
@@ -8025,11 +8019,22 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LoginRequest"
+                  },
+                  {
+                    "properties": {
+                      "two_factor_code": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                ]
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -8037,6 +8042,42 @@
               "application/json": {
                 "schema": {
                   "anyOf": [
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
+                            "message": {
+                              "const": "Two-factor authentication code required.",
+                              "type": "string"
+                            },
+                            "requires_2fa": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "requires_2fa",
+                            "message"
+                          ],
+                          "type": "object"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "null"
+                        },
+                        "success": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "success",
+                        "data",
+                        "error",
+                        "meta"
+                      ],
+                      "type": "object"
+                    },
                     {
                       "properties": {
                         "data": {
@@ -8185,42 +8226,6 @@
                         "meta"
                       ],
                       "type": "object"
-                    },
-                    {
-                      "properties": {
-                        "data": {
-                          "properties": {
-                            "message": {
-                              "const": "Two-factor authentication code required.",
-                              "type": "string"
-                            },
-                            "requires_2fa": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "requires_2fa",
-                            "message"
-                          ],
-                          "type": "object"
-                        },
-                        "error": {
-                          "type": "null"
-                        },
-                        "meta": {
-                          "type": "null"
-                        },
-                        "success": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "success",
-                        "data",
-                        "error",
-                        "meta"
-                      ],
-                      "type": "object"
                     }
                   ]
                 }
@@ -8241,11 +8246,11 @@
                         "error": {
                           "properties": {
                             "code": {
-                              "const": "INVALID_2FA_CODE",
+                              "const": "INVALID_CREDENTIALS",
                               "type": "string"
                             },
                             "message": {
-                              "const": "Invalid two-factor authentication code.",
+                              "const": "Invalid username or password",
                               "type": "string"
                             }
                           },
@@ -8278,11 +8283,11 @@
                         "error": {
                           "properties": {
                             "code": {
-                              "const": "INVALID_CREDENTIALS",
+                              "const": "INVALID_2FA_CODE",
                               "type": "string"
                             },
                             "message": {
-                              "const": "Invalid username or password",
+                              "const": "Invalid two-factor authentication code.",
                               "type": "string"
                             }
                           },
@@ -21747,6 +21752,42 @@
                       "properties": {
                         "data": {
                           "properties": {
+                            "message": {
+                              "const": "Two-factor authentication code required.",
+                              "type": "string"
+                            },
+                            "requires_2fa": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "requires_2fa",
+                            "message"
+                          ],
+                          "type": "object"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "null"
+                        },
+                        "success": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "success",
+                        "data",
+                        "error",
+                        "meta"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "properties": {
                             "tokens": {
                               "properties": {
                                 "access_token": {
@@ -21891,42 +21932,6 @@
                         "meta"
                       ],
                       "type": "object"
-                    },
-                    {
-                      "properties": {
-                        "data": {
-                          "properties": {
-                            "message": {
-                              "const": "Two-factor authentication code required.",
-                              "type": "string"
-                            },
-                            "requires_2fa": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "requires_2fa",
-                            "message"
-                          ],
-                          "type": "object"
-                        },
-                        "error": {
-                          "type": "null"
-                        },
-                        "meta": {
-                          "type": "null"
-                        },
-                        "success": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "success",
-                        "data",
-                        "error",
-                        "meta"
-                      ],
-                      "type": "object"
                     }
                   ]
                 }
@@ -21947,11 +21952,11 @@
                         "error": {
                           "properties": {
                             "code": {
-                              "const": "INVALID_2FA_CODE",
+                              "const": "INVALID_CREDENTIALS",
                               "type": "string"
                             },
                             "message": {
-                              "const": "Invalid two-factor authentication code.",
+                              "const": "Invalid username or password",
                               "type": "string"
                             }
                           },
@@ -21984,11 +21989,11 @@
                         "error": {
                           "properties": {
                             "code": {
-                              "const": "INVALID_CREDENTIALS",
+                              "const": "INVALID_2FA_CODE",
                               "type": "string"
                             },
                             "message": {
-                              "const": "Invalid username or password",
+                              "const": "Invalid two-factor authentication code.",
                               "type": "string"
                             }
                           },
@@ -22920,6 +22925,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          },
           "201": {
             "content": {
               "application/json": {
@@ -22937,42 +22952,26 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "properties": {
-                        "error": {
-                          "const": "SLOT_UNAVAILABLE",
-                          "type": "string"
-                        },
-                        "message": {
-                          "const": "Slot is already booked",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "error",
-                        "message"
+                  "properties": {
+                    "error": {
+                      "enum": [
+                        "SLOT_UNAVAILABLE",
+                        "NO_SLOTS_AVAILABLE"
                       ],
-                      "type": "object"
+                      "type": "string"
                     },
-                    {
-                      "properties": {
-                        "error": {
-                          "const": "NO_SLOTS_AVAILABLE",
-                          "type": "string"
-                        },
-                        "message": {
-                          "const": "No available slots",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "error",
-                        "message"
-                      ],
-                      "type": "object"
+                    "message": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
-                  ]
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "type": "object"
                 }
               }
             },
