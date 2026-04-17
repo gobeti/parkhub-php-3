@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddFavoriteRequest;
+use App\Http\Requests\AnonymizeAccountRequest;
+use App\Http\Requests\UpdatePreferencesRequest;
 use App\Http\Resources\FavoriteResource;
 use App\Http\Resources\NotificationResource;
 use App\Models\Absence;
@@ -32,20 +35,8 @@ class UserController extends Controller
         return response()->json($request->user()->preferences ?? []);
     }
 
-    public function updatePreferences(Request $request): JsonResponse
+    public function updatePreferences(UpdatePreferencesRequest $request): JsonResponse
     {
-        $request->validate([
-            'language' => 'sometimes|string|max:10',
-            'theme' => 'sometimes|in:light,dark,system',
-            'notifications_enabled' => 'sometimes|boolean',
-            'email_notifications' => 'sometimes|boolean',
-            'push_notifications' => 'sometimes|boolean',
-            'show_plate_in_calendar' => 'sometimes|boolean',
-            'default_lot_id' => 'sometimes|nullable|uuid',
-            'locale' => 'sometimes|string|max:10',
-            'timezone' => 'sometimes|string|max:64',
-        ]);
-
         $allowed = [
             'language', 'theme', 'notifications_enabled', 'email_notifications',
             'push_notifications', 'show_plate_in_calendar', 'default_lot_id',
@@ -122,9 +113,8 @@ class UserController extends Controller
         );
     }
 
-    public function addFavorite(Request $request)
+    public function addFavorite(AddFavoriteRequest $request)
     {
-        $request->validate(['slot_id' => 'required|uuid']);
         $fav = Favorite::firstOrCreate([
             'user_id' => $request->user()->id,
             'slot_id' => $request->slot_id,
@@ -267,12 +257,8 @@ class UserController extends Controller
      * Unlike deleteAccount() which CASCADE-deletes everything, this keeps booking records
      * with PII replaced by placeholder values (required for German tax law — 7-year retention).
      */
-    public function anonymizeAccount(Request $request): JsonResponse
+    public function anonymizeAccount(AnonymizeAccountRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
-
         $user = $request->user();
 
         if (! Hash::check($request->password, $user->password)) {
