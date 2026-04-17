@@ -31926,6 +31926,32 @@
         ]
       }
     },
+    "/v1/security/csp-report": {
+      "post": {
+        "operationId": "securityReport.cspReport",
+        "responses": {
+          "204": {
+            "description": "No content"
+          }
+        },
+        "tags": [
+          "SecurityReport"
+        ]
+      }
+    },
+    "/v1/security/nel-report": {
+      "post": {
+        "operationId": "securityReport.nelReport",
+        "responses": {
+          "204": {
+            "description": "No content"
+          }
+        },
+        "tags": [
+          "SecurityReport"
+        ]
+      }
+    },
     "/v1/setup": {
       "post": {
         "operationId": "setup.init_0",
