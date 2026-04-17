@@ -74,6 +74,13 @@ class ModuleControllerTest extends TestCase
             $this->assertArrayHasKey('ui_route', $entry);
             $this->assertArrayHasKey('depends_on', $entry);
             $this->assertArrayHasKey('version', $entry);
+            // v3: every ModuleInfo must carry a `config_schema` slot
+            // (null for env-only modules, JSON Schema object otherwise).
+            $this->assertArrayHasKey('config_schema', $entry);
+            $this->assertTrue(
+                $entry['config_schema'] === null || is_array($entry['config_schema']),
+                "config_schema of '{$entry['name']}' must be array|null",
+            );
 
             $this->assertIsString($entry['name']);
             $this->assertIsString($entry['category']);

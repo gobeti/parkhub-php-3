@@ -35,9 +35,17 @@ use App\Providers\ModuleServiceProvider;
  * absent. Security / payment / tenancy modules stay `false` and are
  * driven solely by env config — hot-toggling those would be a footgun.
  *
- * `config_keys` stays empty until v3 wires the per-module admin-settings
- * editor. Every successful runtime toggle writes an AuditLog entry; the
- * PATCH /api/v1/admin/modules/{name} endpoint is admin-gated.
+ * `config_keys` is the flat list of scalar keys a module persists in
+ * the `settings` table (under `module.{name}.config.{key}`). v3 adds a
+ * `config_schema` sibling: an optional JSON Schema draft 2020-12
+ * document that typed-validates the config values an admin submits via
+ * the PATCH /api/v1/modules/{name}/config endpoint. Modules without a
+ * schema return a 400 from GET / 409-equivalent from PATCH — they're
+ * not editable through the generic settings UI.
+ *
+ * Every successful runtime toggle OR config mutation writes an AuditLog
+ * entry; both /api/v1/admin/modules/{name} and
+ * /api/v1/modules/{name}/config are admin-gated.
  */
 final class ModuleRegistry
 {
@@ -99,6 +107,13 @@ final class ModuleRegistry
      * materialization time from config / VERSION, so the const stays
      * pure metadata and can be reasoned about statically.
      *
+     * `config_schema` is an optional JSON Schema 2020-12 document that
+     * describes the module's editable settings. When present, the PATCH
+     * /api/v1/modules/{name}/config endpoint validates the admin's
+     * payload against it via opis/json-schema before persisting each
+     * property to the settings table. Modules without a schema stay
+     * env-only — they don't surface in the generic config editor UI.
+     *
      * @var list<array{
      *     name: string,
      *     category: string,
@@ -106,6 +121,7 @@ final class ModuleRegistry
      *     config_keys: list<string>,
      *     ui_route: ?string,
      *     depends_on: list<string>,
+     *     config_schema?: array<string, mixed>,
      * }>
      */
     private const MODULES = [
@@ -350,6 +366,57 @@ final class ModuleRegistry
             'ui_route' => null,
             'depends_on' => [],
         ],
+        [
+            'name' => 'announcements',
+            'category' => 'Admin',
+            'description' => 'Admin-authored in-app announcements — banners, modals, dashboards.',
+            'config_keys' => ['max_announcements', 'default_ttl_days', 'show_on_login'],
+            'ui_route' => '/admin/announcements',
+            'depends_on' => [],
+            'config_schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'max_announcements' => [
+                        'type' => 'integer',
+                        'minimum' => 1,
+                        'maximum' => 50,
+                    ],
+                    'default_ttl_days' => [
+                        'type' => 'integer',
+                        'minimum' => 1,
+                        'maximum' => 365,
+                    ],
+                    'show_on_login' => ['type' => 'boolean'],
+                ],
+                'additionalProperties' => false,
+            ],
+        ],
+        [
+            'name' => 'email_templates',
+            'category' => 'Admin',
+            'description' => 'Customisable transactional email templates — sender identity + per-event copy.',
+            'config_keys' => ['from_address', 'from_name', 'reply_to'],
+            'ui_route' => '/admin/email-templates',
+            'depends_on' => [],
+            'config_schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'from_address' => [
+                        'type' => 'string',
+                        'format' => 'email',
+                    ],
+                    'from_name' => [
+                        'type' => 'string',
+                        'maxLength' => 100,
+                    ],
+                    'reply_to' => [
+                        'type' => 'string',
+                        'format' => 'email',
+                    ],
+                ],
+                'additionalProperties' => false,
+            ],
+        ],
 
         // ── Analytics ────────────────────────────────────────────
         [
@@ -470,9 +537,20 @@ final class ModuleRegistry
             'name' => 'widgets',
             'category' => 'Integration',
             'description' => 'Embeddable widgets for external dashboards.',
-            'config_keys' => [],
+            'config_keys' => ['max_widgets_per_dashboard'],
             'ui_route' => null,
             'depends_on' => [],
+            'config_schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'max_widgets_per_dashboard' => [
+                        'type' => 'integer',
+                        'minimum' => 1,
+                        'maximum' => 20,
+                    ],
+                ],
+                'additionalProperties' => false,
+            ],
         ],
 
         // ── Notification ────────────────────────────────────────
@@ -480,9 +558,25 @@ final class ModuleRegistry
             'name' => 'notifications',
             'category' => 'Notification',
             'description' => 'In-app notification bell with per-event preferences.',
-            'config_keys' => [],
+            'config_keys' => ['push_enabled', 'email_enabled', 'quiet_hours_start', 'quiet_hours_end'],
             'ui_route' => '/notifications',
             'depends_on' => [],
+            'config_schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'push_enabled' => ['type' => 'boolean'],
+                    'email_enabled' => ['type' => 'boolean'],
+                    'quiet_hours_start' => [
+                        'type' => 'string',
+                        'format' => 'time',
+                    ],
+                    'quiet_hours_end' => [
+                        'type' => 'string',
+                        'format' => 'time',
+                    ],
+                ],
+                'additionalProperties' => false,
+            ],
         ],
         [
             'name' => 'notification_center',
@@ -556,9 +650,20 @@ final class ModuleRegistry
             'name' => 'themes',
             'category' => 'Enterprise',
             'description' => 'Per-tenant theme / branding customization.',
-            'config_keys' => [],
+            'config_keys' => ['default_theme', 'allow_user_override'],
             'ui_route' => null,
             'depends_on' => [],
+            'config_schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'default_theme' => [
+                        'type' => 'string',
+                        'enum' => ['light', 'dark', 'classic'],
+                    ],
+                    'allow_user_override' => ['type' => 'boolean'],
+                ],
+                'additionalProperties' => false,
+            ],
         ],
         [
             'name' => 'plugins',
@@ -692,6 +797,7 @@ final class ModuleRegistry
      *     ui_route: ?string,
      *     depends_on: list<string>,
      *     version: string,
+     *     config_schema: array<string, mixed>|null,
      * }>
      */
     public static function all(): array
@@ -719,6 +825,7 @@ final class ModuleRegistry
      *     ui_route: ?string,
      *     depends_on: list<string>,
      *     version: string,
+     *     config_schema: array<string, mixed>|null,
      * }|null
      */
     public static function get(string $name): ?array
@@ -730,6 +837,38 @@ final class ModuleRegistry
         }
 
         return null;
+    }
+
+    /**
+     * Return the raw JSON Schema document a module declares, or null if
+     * the module has no schema (or doesn't exist). Used by the config
+     * endpoints before they touch the settings table — keeping the
+     * schema lookup out of the controller body.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function configSchema(string $name): ?array
+    {
+        foreach (self::MODULES as $meta) {
+            if ($meta['name'] !== $name) {
+                continue;
+            }
+
+            return $meta['config_schema'] ?? null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Canonical settings key for a single config property of a module.
+     * Centralised so every layer agrees on the shape
+     * (`module.{name}.config.{key}`) without a magic string scattered
+     * across controller + registry + tests.
+     */
+    public static function configSettingKey(string $name, string $key): string
+    {
+        return "module.{$name}.config.{$key}";
     }
 
     /**
@@ -765,6 +904,7 @@ final class ModuleRegistry
      *     config_keys: list<string>,
      *     ui_route: ?string,
      *     depends_on: list<string>,
+     *     config_schema?: array<string, mixed>,
      * }  $meta
      * @return array{
      *     name: string,
@@ -777,6 +917,7 @@ final class ModuleRegistry
      *     ui_route: ?string,
      *     depends_on: list<string>,
      *     version: string,
+     *     config_schema: array<string, mixed>|null,
      * }
      */
     private static function materialize(array $meta, string $version): array
@@ -798,6 +939,7 @@ final class ModuleRegistry
             'ui_route' => $meta['ui_route'],
             'depends_on' => $meta['depends_on'],
             'version' => $version,
+            'config_schema' => $meta['config_schema'] ?? null,
         ];
     }
 

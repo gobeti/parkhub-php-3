@@ -3108,6 +3108,23 @@
         "title": "UpdateMeRequest",
         "type": "object"
       },
+      "UpdateModuleConfigRequest": {
+        "description": "Validates the PATCH /api/v1/modules/{name}/config payload.\n\nLaravel validation only covers the envelope shape — the payload must\nbe a `{values: object}` wrapper so the controller gets a predictable\nkey to pull from. The deeper, per-module type/enum/format checks run\nthrough `opis/json-schema` against the module's declared\n`config_schema` inside the controller; FormRequest rules can't\nexpress JSON Schema 2020-12 natively.\n\nAuthorization is delegated to the `admin` middleware on the route\ngroup, so `authorize()` returns true (anyone who reaches this\nrequest has already cleared auth + admin).\n\nOn validation failure we bypass the default Laravel 422 body and\nreturn the same `{success, data, error, meta}` envelope the rest of\nthe modules API uses, with `error.code = CONFIG_VALIDATION_FAILED`\nso the frontend can branch on it the same way it does for schema\nerrors raised by the controller — one error code, one handler.",
+        "properties": {
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "title": "UpdateModuleConfigRequest",
+        "type": "object"
+      },
       "UpdateModuleRuntimeStateRequest": {
         "description": "Validates the PATCH /api/v1/admin/modules/{name} payload.\n\nBody is a single `runtime_enabled: bool`. The controller layer owns\nmodule-existence + toggleable checks — this request's job is just\nto make sure the JSON shape is sane before we touch the DB.\n\nAuthorization is delegated to the `admin` middleware on the route\ngroup, so `authorize()` returns true (anyone who reaches the request\nhas already cleared auth + admin).",
         "properties": {
@@ -16916,6 +16933,12 @@
                         "config_keys": {
                           "type": "string"
                         },
+                        "config_schema": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "depends_on": {
                           "type": "string"
                         },
@@ -16951,7 +16974,8 @@
                         "config_keys",
                         "ui_route",
                         "depends_on",
-                        "version"
+                        "version",
+                        "config_schema"
                       ],
                       "type": [
                         "object",
@@ -30156,6 +30180,12 @@
                         "config_keys": {
                           "type": "string"
                         },
+                        "config_schema": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "depends_on": {
                           "type": "string"
                         },
@@ -30191,7 +30221,8 @@
                         "config_keys",
                         "ui_route",
                         "depends_on",
-                        "version"
+                        "version",
+                        "config_schema"
                       ],
                       "type": [
                         "object",
@@ -30265,6 +30296,331 @@
           }
         },
         "summary": "GET /api/v1/modules/{name}",
+        "tags": [
+          "Module"
+        ]
+      }
+    },
+    "/v1/modules/{name}/config": {
+      "get": {
+        "description": "Return the module's JSON Schema plus the currently-persisted\nvalues for each schema property. Shape:\n  { schema: { ...JSON Schema 2020-12 object... },\n    values: { default_theme: \"dark\", ... } }\n\nOnly modules that declare a `config_schema` are editable via this\nendpoint. Unknown module → 404; known but schema-less → 400. The\nRust edition returns the same codes so the shared frontend sees\none contract.",
+        "operationId": "module.getConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "schema": {
+                          "additionalProperties": {},
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "values": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "schema",
+                        "values"
+                      ],
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "MODULE_HAS_NO_CONFIG_SCHEMA",
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "MODULE_NOT_FOUND",
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "GET /api/v1/modules/{name}/config",
+        "tags": [
+          "Module"
+        ]
+      },
+      "patch": {
+        "description": "Validate the payload against the module's JSON Schema via\nopis/json-schema. On success, persist each property to the\n`settings` table under `module.{name}.config.{key}` and emit an\nAuditLog entry. On failure, return 422 with `{error.code:\nCONFIG_VALIDATION_FAILED, details: [...]}` — the Rust edition\nsurfaces the exact same error envelope.\n\nShape of the 200 response mirrors `getConfig`, so the frontend\ncan do a single-call round-trip without re-fetching.",
+        "operationId": "module.updateConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateModuleConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "schema": {
+                          "additionalProperties": {},
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "values": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "schema",
+                        "values"
+                      ],
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "MODULE_HAS_NO_CONFIG_SCHEMA",
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "MODULE_NOT_FOUND",
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "summary": "PATCH /api/v1/modules/{name}/config",
         "tags": [
           "Module"
         ]

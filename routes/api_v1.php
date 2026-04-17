@@ -220,6 +220,16 @@ Route::middleware([StartSession::class, 'auth:sanctum', 'throttle:api', 'session
         Route::patch('/modules/{name}', [ModuleController::class, 'updateRuntimeState']);
     });
 
+    // Per-module JSON Schema config editor (T-1720 v3). Admin-only —
+    // mirrors the Rust edition's /api/v1/modules/{name}/config pair so
+    // the shared parkhub-web config editor talks to either backend
+    // without branching. GET returns `{schema, values}`; PATCH runs
+    // the payload through opis/json-schema 2020-12 before persisting.
+    Route::middleware('admin')->group(function () {
+        Route::get('/modules/{name}/config', [ModuleController::class, 'getConfig']);
+        Route::patch('/modules/{name}/config', [ModuleController::class, 'updateConfig']);
+    });
+
     // Waitlist (core)
     Route::get('/waitlist', [WaitlistController::class, 'index']);
     Route::post('/waitlist', [WaitlistController::class, 'store']);
