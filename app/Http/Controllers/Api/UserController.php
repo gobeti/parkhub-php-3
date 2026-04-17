@@ -11,25 +11,22 @@ use App\Http\Requests\UpdatePreferencesRequest;
 use App\Http\Resources\FavoriteResource;
 use App\Http\Resources\NotificationResource;
 use App\Models\Absence;
-use App\Models\AuditLog;
 use App\Models\Booking;
-use App\Models\CreditTransaction;
 use App\Models\Favorite;
 use App\Models\Notification;
 use App\Models\PushSubscription;
 use App\Models\Setting;
-use App\Models\Vehicle;
+use App\Services\User\UserAccountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
+    public function __construct(private readonly UserAccountService $service) {}
+
     public function preferences(Request $request): JsonResponse
     {
         return response()->json($request->user()->preferences ?? []);
@@ -151,51 +148,7 @@ class UserController extends Controller
     // iCal export — bookings as calendar feed
     public function calendarExport(Request $request): Response
     {
-        $user = $request->user();
-        $bookings = Booking::where('user_id', $user->id)
-            ->whereIn('status', ['active', 'confirmed'])
-            ->whereNotNull('start_time')
-            ->get();
-
-        $orgName = Setting::get('company_name', 'ParkHub');
-        $prodId = '-//ParkHub//Calendar//EN';
-        $now = gmdate('Ymd\THis\Z');
-
-        $lines = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            "PRODID:{$prodId}",
-            'CALSCALE:GREGORIAN',
-            'METHOD:PUBLISH',
-            "X-WR-CALNAME:{$orgName} Parking",
-        ];
-
-        foreach ($bookings as $b) {
-            $uid = $b->id.'@parkhub';
-            // start_time / end_time arrive as Carbon via the datetime cast;
-            // `->timestamp` gives the Unix int strict_types wants.
-            $start = gmdate('Ymd\THis\Z', $b->start_time->timestamp);
-            $end = $b->end_time
-                ? gmdate('Ymd\THis\Z', $b->end_time->timestamp)
-                : gmdate('Ymd\THis\Z', $b->start_time->timestamp + 3600);
-
-            $summary = "Parking: {$b->slot_number} ({$b->lot_name})";
-            $location = $b->lot_name;
-
-            $lines[] = 'BEGIN:VEVENT';
-            $lines[] = "UID:{$uid}";
-            $lines[] = "DTSTAMP:{$now}";
-            $lines[] = "DTSTART:{$start}";
-            $lines[] = "DTEND:{$end}";
-            $lines[] = "SUMMARY:{$summary}";
-            $lines[] = "LOCATION:{$location}";
-            $lines[] = 'STATUS:CONFIRMED';
-            $lines[] = 'END:VEVENT';
-        }
-
-        $lines[] = 'END:VCALENDAR';
-
-        $ical = implode("\r\n", $lines)."\r\n";
+        $ical = $this->service->buildIcalFeed($request->user());
 
         return response($ical, 200, [
             'Content-Type' => 'text/calendar; charset=utf-8',
@@ -206,33 +159,7 @@ class UserController extends Controller
     // GDPR data export — everything about this user
     public function export(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        $data = [
-            'exported_at' => now()->toISOString(),
-            'profile' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'department' => $user->department,
-                'created_at' => $user->created_at?->toISOString(),
-            ],
-            'bookings' => Booking::where('user_id', $user->id)
-                ->orderBy('start_time', 'desc')
-                ->get(['id', 'lot_name', 'slot_number', 'vehicle_plate', 'start_time', 'end_time', 'status', 'booking_type']),
-            'absences' => Absence::where('user_id', $user->id)
-                ->orderBy('start_date', 'desc')
-                ->get(['id', 'absence_type', 'start_date', 'end_date', 'note']),
-            'vehicles' => Vehicle::where('user_id', $user->id)
-                ->get(['id', 'plate', 'make', 'model', 'color', 'is_default']),
-            'credit_transactions' => CreditTransaction::where('user_id', $user->id)
-                ->orderBy('created_at', 'desc')
-                ->get(['id', 'type', 'amount', 'balance_after', 'description', 'created_at']),
-            'preferences' => $user->preferences ?? [],
-        ];
-
-        return response()->json($data, 200, [
+        return response()->json($this->service->exportData($request->user()), 200, [
             'Content-Disposition' => 'attachment; filename="my-parkhub-data.json"',
         ]);
     }
@@ -261,71 +188,26 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        if (! Hash::check($request->password, $user->password)) {
+        // Historical: `reason` defaults to "User request" when absent.
+        // Keep the literal default inline here so Scramble can infer it
+        // as the body default in docs/openapi/php.json — the previous
+        // inline call lived inside an AuditLog::log() array literal,
+        // which Scramble's AST walker also reads.
+        $details = ['reason' => $request->input('reason', 'User request')];
+
+        $ok = $this->service->anonymize(
+            $user,
+            (string) $request->input('password'),
+            (string) $details['reason'],
+            $request->ip(),
+        );
+
+        if (! $ok) {
             return response()->json(['error' => 'INVALID_PASSWORD', 'message' => 'Password confirmation failed'], 403);
         }
 
-        $anonymousId = 'deleted-'.substr($user->id, 0, 8);
-
-        // Anonymize all bookings (keep for accounting, strip PII)
-        Booking::where('user_id', $user->id)->update([
-            'vehicle_plate' => '[GELÖSCHT]',
-            'notes' => null,
-        ]);
-
-        // Delete truly personal data tables
-        Absence::where('user_id', $user->id)->delete();
-
-        // Delete vehicle photos before deleting vehicle records
-        $vehicles = Vehicle::where('user_id', $user->id)->get();
-        foreach ($vehicles as $vehicle) {
-            if (! empty($vehicle->photo_path)) {
-                Storage::delete($vehicle->photo_path);
-            }
-        }
-        Vehicle::where('user_id', $user->id)->delete();
-
-        Favorite::where('user_id', $user->id)->delete();
-        Notification::where('user_id', $user->id)->delete();
-        PushSubscription::where('user_id', $user->id)->delete();
-
-        // Anonymize audit logs — strip IP and identifying details
-        DB::table('audit_log')->where('user_id', $user->id)->update([
-            'username' => 'deleted-user',
-            'ip_address' => '0.0.0.0',
-            'details' => null,
-        ]);
-
-        // Anonymize guest bookings created by this user
-        DB::table('guest_bookings')->where('created_by', $user->id)->update([
-            'guest_name' => 'Anonymous',
-        ]);
-
-        // Audit log before anonymizing (records the action for compliance)
-        AuditLog::log([
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'action' => 'gdpr_erasure',
-            'details' => ['reason' => $request->input('reason', 'User request')],
-            'ip_address' => $request->ip(),
-        ]);
-
         // Build the response BEFORE invalidating tokens so the session is still valid when serialized
         $response = response()->json(['success' => true, 'data' => ['message' => 'Account deleted successfully'], 'error' => null, 'meta' => null], 200);
-
-        // Anonymize the user record itself (don't hard-delete — bookings still reference it)
-        $user->preferences = null;
-        $user->update([
-            'name' => '[Gelöschter Nutzer]',
-            'email' => $anonymousId.'@deleted.invalid',
-            'username' => $anonymousId,
-            'password' => Str::random(64), // unguessable
-            'phone' => null,
-            'picture' => null,
-            'department' => null,
-            'preferences' => null,
-            'is_active' => false,
-        ]);
 
         // Invalidate all tokens AFTER building the response
         $user->tokens()->delete();

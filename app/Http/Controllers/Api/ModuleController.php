@@ -7,13 +7,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateModuleConfigRequest;
 use App\Http\Requests\UpdateModuleRuntimeStateRequest;
-use App\Models\AuditLog;
-use App\Models\Setting;
 use App\Services\ModuleRegistry;
+use App\Services\Modules\ModuleConfigurationService;
+use App\Services\Modules\ModuleConfigurationStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Opis\JsonSchema\Errors\ErrorFormatter;
-use Opis\JsonSchema\Validator as JsonSchemaValidator;
 
 /**
  * Modules API — backwards-compatible envelope plus enriched metadata.
@@ -30,9 +28,18 @@ use Opis\JsonSchema\Validator as JsonSchemaValidator;
  * `{modules, module_info, version}` envelope the Rust backend also
  * ships, so the shared parkhub-web client sees the same shape from
  * either backend.
+ *
+ * The JSON-Schema validation + runtime-toggle audit flow lives in
+ * ModuleConfigurationService (T-1742 pass 4). Each controller action
+ * below inlines its response envelope literally so Scramble can
+ * introspect the exact shape per-path — never route the happy path
+ * through a helper with a heterogeneous union return type, or the
+ * generated OpenAPI doc collapses to generic `array|null`.
  */
 class ModuleController extends Controller
 {
+    public function __construct(private readonly ModuleConfigurationService $service) {}
+
     /**
      * GET /api/v1/modules
      *
@@ -106,7 +113,13 @@ class ModuleController extends Controller
      */
     public function updateRuntimeState(UpdateModuleRuntimeStateRequest $request, string $name): JsonResponse
     {
-        if (ModuleRegistry::get($name) === null) {
+        $result = $this->service->toggleRuntimeState(
+            $name,
+            $request->boolean('runtime_enabled'),
+            $this->actor($request),
+        );
+
+        if ($result->status === ModuleConfigurationStatus::NotFound) {
             return response()->json([
                 'success' => false,
                 'data' => null,
@@ -118,7 +131,7 @@ class ModuleController extends Controller
             ], 404);
         }
 
-        if (! ModuleRegistry::isToggleable($name)) {
+        if ($result->status === ModuleConfigurationStatus::NotToggleable) {
             return response()->json([
                 'success' => false,
                 'data' => null,
@@ -129,23 +142,6 @@ class ModuleController extends Controller
                 'meta' => null,
             ], 409);
         }
-
-        $runtimeEnabled = $request->boolean('runtime_enabled');
-        ModuleRegistry::setRuntimeEnabled($name, $runtimeEnabled);
-
-        AuditLog::log([
-            'user_id' => $request->user()?->id,
-            'username' => $request->user()?->username,
-            'action' => 'module_runtime_toggled',
-            'event_type' => 'admin',
-            'details' => [
-                'name' => $name,
-                'new_state' => $runtimeEnabled,
-            ],
-            'ip_address' => $request->ip(),
-            'target_type' => 'module',
-            'target_id' => $name,
-        ]);
 
         return response()->json([
             'success' => true,
@@ -170,9 +166,7 @@ class ModuleController extends Controller
      */
     public function getConfig(Request $request, string $name): JsonResponse
     {
-        $info = ModuleRegistry::get($name);
-
-        if ($info === null) {
+        if (ModuleRegistry::get($name) === null) {
             return response()->json([
                 'success' => false,
                 'data' => null,
@@ -198,7 +192,7 @@ class ModuleController extends Controller
             ], 400);
         }
 
-        $values = $this->readPersistedValues($name, $schema);
+        $values = $this->service->readPersistedValues($name);
 
         return response()->json([
             'success' => true,
@@ -226,9 +220,7 @@ class ModuleController extends Controller
      */
     public function updateConfig(UpdateModuleConfigRequest $request, string $name): JsonResponse
     {
-        $info = ModuleRegistry::get($name);
-
-        if ($info === null) {
+        if (ModuleRegistry::get($name) === null) {
             return response()->json([
                 'success' => false,
                 'data' => null,
@@ -257,71 +249,26 @@ class ModuleController extends Controller
         /** @var array<string, mixed> $values */
         $values = $request->input('values', []);
 
-        // opis/json-schema wants the data and the schema as stdClass /
-        // scalar trees (it treats assoc-arrays as JSON arrays, not
-        // objects). json_decode(json_encode(...)) is the canonical way
-        // to normalise without hand-rolling a recursive walker — the
-        // registry schema is tiny so the extra encode cost is trivial.
-        $dataObj = json_decode((string) json_encode((object) $values));
-        $schemaObj = json_decode((string) json_encode($schema));
+        $result = $this->service->updateConfig($name, $schema, $values, $this->actor($request));
 
-        // Positional args — the opis constructor uses snake_case names
-        // internally (`$max_errors`, `$stop_at_first_error`) so named
-        // params trip a TypeError on PHP 8.4. Loader=null, 20 errors,
-        // don't short-circuit on first hit so the 422 body lists every
-        // problem the admin needs to fix.
-        $validator = new JsonSchemaValidator(null, 20, false);
-        $result = $validator->validate($dataObj, $schemaObj);
-
-        if ($result->hasError()) {
-            $formatter = new ErrorFormatter;
-            /** @var array<string, list<string>> $details */
-            $details = $formatter->formatKeyed($result->error());
-
+        if ($result->status === ModuleConfigurationStatus::ValidationFailed) {
             return response()->json([
                 'success' => false,
                 'data' => null,
                 'error' => [
                     'code' => 'CONFIG_VALIDATION_FAILED',
                     'message' => 'Config payload failed schema validation.',
-                    'details' => $details,
+                    'details' => $result->details,
                 ],
                 'meta' => null,
             ], 422);
         }
 
-        // Persist each top-level property independently so the settings
-        // table stores one row per key — matches the key-value contract
-        // the rest of the admin surface already uses (e.g. runtime
-        // toggles under `module.{name}.runtime_enabled`).
-        $keysChanged = [];
-        foreach ($values as $key => $value) {
-            Setting::set(
-                ModuleRegistry::configSettingKey($name, (string) $key),
-                json_encode($value),
-            );
-            $keysChanged[] = (string) $key;
-        }
-
-        AuditLog::log([
-            'user_id' => $request->user()?->id,
-            'username' => $request->user()?->username,
-            'action' => 'module_config_updated',
-            'event_type' => 'admin',
-            'details' => [
-                'name' => $name,
-                'keys_changed' => $keysChanged,
-            ],
-            'ip_address' => $request->ip(),
-            'target_type' => 'module',
-            'target_id' => $name,
-        ]);
-
         return response()->json([
             'success' => true,
             'data' => [
                 'schema' => $schema,
-                'values' => (object) $this->readPersistedValues($name, $schema),
+                'values' => (object) $this->service->readPersistedValues($name),
             ],
             'error' => null,
             'meta' => null,
@@ -329,31 +276,14 @@ class ModuleController extends Controller
     }
 
     /**
-     * Read the currently-persisted value for each property declared in
-     * the schema. Missing settings are simply absent from the returned
-     * map — the frontend treats absence as "use schema default / leave
-     * field empty". Stored values come back through `json_decode` so
-     * booleans, integers, and strings survive the round-trip.
-     *
-     * @param  array<string, mixed>  $schema
-     * @return array<string, mixed>
+     * @return array{user_id: ?string, username: ?string, ip_address: ?string}
      */
-    private function readPersistedValues(string $name, array $schema): array
+    private function actor(Request $request): array
     {
-        /** @var array<string, mixed> $properties */
-        $properties = $schema['properties'] ?? [];
-
-        $values = [];
-        foreach (array_keys($properties) as $key) {
-            $raw = Setting::get(ModuleRegistry::configSettingKey($name, (string) $key));
-            if ($raw === null) {
-                continue;
-            }
-
-            $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
-            $values[$key] = $decoded;
-        }
-
-        return $values;
+        return [
+            'user_id' => $request->user()?->id,
+            'username' => $request->user()?->username,
+            'ip_address' => $request->ip(),
+        ];
     }
 }
