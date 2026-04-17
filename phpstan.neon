@@ -6,10 +6,9 @@ parameters:
     paths:
         - app/
 
-    # Level 2 with baseline. Raised from 1 after the strict_types migration
-    # closed; level 2 adds "unknown methods on all types (including $this)"
-    # which is where Larastan's dynamic-property checks kick in.
-    level: 2
+    # Level 3 with baseline. Each step raises the bar for new code;
+    # pre-existing findings land in phpstan-baseline.neon.
+    level: 3
 
     # Exclude generated/cache files
     excludePaths:

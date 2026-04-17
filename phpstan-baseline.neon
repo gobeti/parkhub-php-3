@@ -319,6 +319,12 @@ parameters:
 			path: app/Http/Controllers/Api/LotController.php
 
 		-
+			message: '#^Property App\\Models\\ParkingLot\:\:\$layout \(string\|null\) does not accept array\<string, list\<array\<string, list\<mixed\>\|string\>\>\|string\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Api/LotController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
