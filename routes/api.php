@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\AdminReportController;
 use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\BookingSwapController;
+use App\Http\Controllers\Api\GuestBookingController;
 use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\MiscController;
@@ -90,8 +92,8 @@ Route::middleware([StartSession::class, 'auth:sanctum', 'session.absolute'])->gr
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
     Route::post('/bookings/quick', [BookingController::class, 'quickBook']);
-    Route::post('/bookings/guest', [BookingController::class, 'guestBooking']);
-    Route::post('/bookings/swap', [BookingController::class, 'swap']);
+    Route::post('/bookings/guest', [GuestBookingController::class, 'guestBooking']);
+    Route::post('/bookings/swap', [BookingSwapController::class, 'swap']);
     Route::put('/bookings/{id}/notes', [BookingController::class, 'updateNotes']);
 
     // Recurring bookings

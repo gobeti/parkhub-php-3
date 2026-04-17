@@ -6,12 +6,12 @@
  * Depends on: bookings module.
  */
 
-use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\BookingSwapController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['module:swap_requests', 'auth:sanctum', 'throttle:api'])->group(function () {
-    Route::post('/bookings/swap', [BookingController::class, 'swap']);
-    Route::get('/swap-requests', [BookingController::class, 'swapRequests']);
-    Route::post('/bookings/{id}/swap-request', [BookingController::class, 'createSwapRequest']);
-    Route::put('/swap-requests/{id}', [BookingController::class, 'respondSwapRequest']);
+    Route::post('/bookings/swap', [BookingSwapController::class, 'swap']);
+    Route::get('/swap-requests', [BookingSwapController::class, 'swapRequests']);
+    Route::post('/bookings/{id}/swap-request', [BookingSwapController::class, 'createSwapRequest']);
+    Route::put('/swap-requests/{id}', [BookingSwapController::class, 'respondSwapRequest']);
 });

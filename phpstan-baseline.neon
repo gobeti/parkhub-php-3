@@ -271,32 +271,14 @@ parameters:
 			path: app/Http/Controllers/Api/BillingController.php
 
 		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Api/BookingCalendarController.php
+
+		-
 			message: '#^Left side of && is always true\.$#'
 			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Relation ''requester'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Relation ''requesterBooking'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Relation ''target'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Relation ''targetBooking'' is not found in App\\Models\\SwapRequest model\.$#'
-			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/Api/BookingController.php
 
@@ -307,16 +289,34 @@ parameters:
 			path: app/Http/Controllers/Api/BookingController.php
 
 		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
 			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\ParkingLot\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/BookingController.php
+
+		-
+			message: '#^Relation ''requester'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
+
+		-
+			message: '#^Relation ''requesterBooking'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
+
+		-
+			message: '#^Relation ''target'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
+
+		-
+			message: '#^Relation ''targetBooking'' is not found in App\\Models\\SwapRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BookingSwapController.php
 
 		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'

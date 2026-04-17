@@ -7412,7 +7412,7 @@
     },
     "/bookings/guest": {
       "post": {
-        "operationId": "booking.guestBooking_0",
+        "operationId": "guestBooking.guestBooking_0",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7485,7 +7485,7 @@
           }
         },
         "tags": [
-          "Booking"
+          "GuestBooking"
         ]
       }
     },
@@ -7590,7 +7590,7 @@
     },
     "/bookings/swap": {
       "post": {
-        "operationId": "booking.swap_0",
+        "operationId": "bookingSwap.swap_0",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7623,7 +7623,7 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingSwap"
         ]
       }
     },
@@ -23073,7 +23073,7 @@
     "/v1/bookings/guest": {
       "get": {
         "description": "The GuestPass page calls this on mount to render its booking table.\nWithout the endpoint the request 404'd and the list sat empty — the\npage still \"worked\" (create flow was unaffected) but users couldn't\nsee or cancel their own guest passes.",
-        "operationId": "booking.listGuestBookings",
+        "operationId": "guestBooking.listGuestBookings",
         "responses": {
           "200": {
             "content": {
@@ -23094,11 +23094,11 @@
         },
         "summary": "List guest passes created by the current user",
         "tags": [
-          "Booking"
+          "GuestBooking"
         ]
       },
       "post": {
-        "operationId": "booking.guestBooking_1",
+        "operationId": "guestBooking.guestBooking_1",
         "requestBody": {
           "content": {
             "application/json": {
@@ -23171,13 +23171,13 @@
           }
         },
         "tags": [
-          "Booking"
+          "GuestBooking"
         ]
       }
     },
     "/v1/bookings/guest/{id}": {
       "delete": {
-        "operationId": "booking.deleteGuestBooking",
+        "operationId": "guestBooking.deleteGuestBooking",
         "parameters": [
           {
             "in": "path",
@@ -23225,7 +23225,7 @@
         },
         "summary": "Cancel a guest pass owned by the current user",
         "tags": [
-          "Booking"
+          "GuestBooking"
         ]
       }
     },
@@ -23355,7 +23355,7 @@
     },
     "/v1/bookings/ical": {
       "get": {
-        "operationId": "booking.ical",
+        "operationId": "bookingCalendar.ical",
         "responses": {
           "200": {
             "content": {
@@ -23381,7 +23381,7 @@
         },
         "summary": "iCal feed — returns all active bookings as .ics for calendar subscription",
         "tags": [
-          "Booking"
+          "BookingCalendar"
         ]
       }
     },
@@ -23624,7 +23624,7 @@
     },
     "/v1/bookings/swap": {
       "post": {
-        "operationId": "booking.swap_0",
+        "operationId": "bookingSwap.swap_0",
         "requestBody": {
           "content": {
             "application/json": {
@@ -23657,7 +23657,7 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingSwap"
         ]
       }
     },
@@ -23997,7 +23997,7 @@
     },
     "/v1/bookings/{id}/checkin": {
       "post": {
-        "operationId": "booking.checkin",
+        "operationId": "bookingCheckIn.checkin",
         "parameters": [
           {
             "in": "path",
@@ -24027,13 +24027,13 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingCheckIn"
         ]
       }
     },
     "/v1/bookings/{id}/extend": {
       "post": {
-        "operationId": "booking.extend",
+        "operationId": "bookingCheckIn.extend",
         "parameters": [
           {
             "in": "path",
@@ -24095,7 +24095,7 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingCheckIn"
         ]
       }
     },
@@ -24869,7 +24869,7 @@
     },
     "/v1/bookings/{id}/swap-request": {
       "post": {
-        "operationId": "booking.createSwapRequest",
+        "operationId": "bookingSwap.createSwapRequest",
         "parameters": [
           {
             "in": "path",
@@ -24936,7 +24936,7 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingSwap"
         ]
       }
     },
@@ -25169,7 +25169,7 @@
     },
     "/v1/calendar/events": {
       "get": {
-        "operationId": "booking.calendarEvents",
+        "operationId": "bookingCalendar.calendarEvents",
         "responses": {
           "200": {
             "content": {
@@ -25186,7 +25186,7 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingCalendar"
         ]
       }
     },
@@ -33805,7 +33805,7 @@
     },
     "/v1/swap-requests": {
       "get": {
-        "operationId": "booking.swapRequests",
+        "operationId": "bookingSwap.swapRequests",
         "responses": {
           "200": {
             "content": {
@@ -33825,13 +33825,13 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingSwap"
         ]
       }
     },
     "/v1/swap-requests/{id}": {
       "put": {
-        "operationId": "booking.respondSwapRequest",
+        "operationId": "bookingSwap.respondSwapRequest",
         "parameters": [
           {
             "in": "path",
@@ -33874,7 +33874,7 @@
           }
         },
         "tags": [
-          "Booking"
+          "BookingSwap"
         ]
       }
     },
