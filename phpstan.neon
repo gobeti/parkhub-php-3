@@ -6,9 +6,9 @@ parameters:
     paths:
         - app/
 
-    # Level 3 with baseline. Each step raises the bar for new code;
+    # Level 4 with baseline. Each step raises the bar for new code;
     # pre-existing findings land in phpstan-baseline.neon.
-    level: 3
+    level: 4
 
     # Exclude generated/cache files
     excludePaths:

@@ -85,6 +85,24 @@ parameters:
 			path: app/Http/Controllers/Api/AdminController.php
 
 		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Http/Controllers/Api/AdminController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/AdminController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/AdminController.php
+
+		-
 			message: '#^Relation ''user'' is not found in App\\Models\\CreditTransaction model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -113,6 +131,30 @@ parameters:
 			identifier: method.nonObject
 			count: 2
 			path: app/Http/Controllers/Api/AdminReportController.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Http/Controllers/Api/AdminReportController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/AdminReportController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/AdminReportController.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Api/ApiVersionController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$action\.$#'
@@ -163,6 +205,18 @@ parameters:
 			path: app/Http/Controllers/Api/AuditLogController.php
 
 		-
+			message: '#^Call to function is_array\(\) with string\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 3
+			path: app/Http/Controllers/Api/AuditLogController.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Laravel\\Sanctum\\PersonalAccessToken and ''delete'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
 			message: '#^Cannot call method toISOString\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -171,6 +225,30 @@ parameters:
 		-
 			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
 			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/AuthController.php
 
@@ -253,6 +331,18 @@ parameters:
 			path: app/Http/Controllers/Api/BookingInvoiceController.php
 
 		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/BookingInvoiceController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/BookingInvoiceController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
@@ -261,6 +351,18 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$username\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/DataImportExportController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/DataImportExportController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>username" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/DataImportExportController.php
 
@@ -343,6 +445,48 @@ parameters:
 			path: app/Http/Controllers/Api/MiscController.php
 
 		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/MiscController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/MobileBookingController.php
+
+		-
+			message: '#^Offset ''booking_id'' on string\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Api/NotificationCenterController.php
+
+		-
+			message: '#^Ternary operator condition is always false\.$#'
+			identifier: ternary.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Api/NotificationCenterController.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Controllers/Api/OAuthController.php
+
+		-
+			message: '#^Offset ''friday''\|''monday''\|''saturday''\|''sunday''\|''thursday''\|''tuesday''\|''wednesday'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Http/Controllers/Api/OperatingHoursController.php
+
+		-
+			message: '#^Offset ''is_24h'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Http/Controllers/Api/OperatingHoursController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$date\.$#'
 			identifier: property.notFound
 			count: 1
@@ -373,8 +517,32 @@ parameters:
 			path: app/Http/Controllers/Api/PWAController.php
 
 		-
+			message: '#^Using nullsafe property access "\?\-\>label" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/PWAController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/PWAController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/ParkingHistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/ParkingHistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slot_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/ParkingHistoryController.php
 
@@ -415,6 +583,18 @@ parameters:
 			path: app/Http/Controllers/Api/ParkingPassController.php
 
 		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/ParkingPassController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slot_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/Api/ParkingPassController.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\Zone\:\:\$max_capacity\.$#'
 			identifier: property.notFound
 			count: 1
@@ -439,6 +619,12 @@ parameters:
 			path: app/Http/Controllers/Api/RecommendationController.php
 
 		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Http/Controllers/Api/ScheduledReportController.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\Booking\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Booking\>\:\:\$date\.$#'
 			identifier: property.notFound
 			count: 1
@@ -457,6 +643,18 @@ parameters:
 			path: app/Http/Controllers/Api/SharingController.php
 
 		-
+			message: '#^Using nullsafe property access "\?\-\>label" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/SharingController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/SharingController.php
+
+		-
 			message: '#^PHPDoc tag @var with type class\-string is not subtype of native type ''\\\\Stripe\\\\Checkout…''\.$#'
 			identifier: varTag.nativeType
 			count: 1
@@ -467,6 +665,24 @@ parameters:
 			identifier: property.notFound
 			count: 2
 			path: app/Http/Controllers/Api/TeamController.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Api/TeamController.php
+
+		-
+			message: '#^Call to function in_array\(\) with arguments ''classic'', array\{''classic'', ''glass'', ''bento'', ''brutalist'', ''neon'', ''warm''\} and true will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Controllers/Api/ThemeController.php
+
+		-
+			message: '#^Offset ''design_theme'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Api/ThemeController.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\TranslationProposal\:\:\$reviewer\.$#'
@@ -487,9 +703,21 @@ parameters:
 			path: app/Http/Controllers/Api/TranslationController.php
 
 		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 5
+			path: app/Http/Controllers/Api/TranslationController.php
+
+		-
 			message: '#^Cannot access property \$timestamp on string\.$#'
 			identifier: property.nonObject
 			count: 3
+			path: app/Http/Controllers/Api/UserController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
 			path: app/Http/Controllers/Api/UserController.php
 
 		-
@@ -497,6 +725,12 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/Api/UserController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Api/VehicleController.php
 
 		-
 			message: '#^Cannot call method isPast\(\) on string\.$#'
@@ -1369,6 +1603,18 @@ parameters:
 			path: app/Http/Resources/ZoneResource.php
 
 		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Jobs/AggregateSystemMetricsJob.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Jobs/AggregateSystemMetricsJob.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\WaitlistEntry\:\:\$user\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1377,6 +1623,12 @@ parameters:
 		-
 			message: '#^Relation ''user'' is not found in App\\Models\\RecurringBooking model\.$#'
 			identifier: larastan.relationExistence
+			count: 1
+			path: app/Jobs/ExpandRecurringBookingsJob.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slot_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Jobs/ExpandRecurringBookingsJob.php
 
@@ -1393,7 +1645,37 @@ parameters:
 			path: app/Mail/BookingConfirmation.php
 
 		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Mail/BookingConfirmation.php
+
+		-
 			message: '#^Cannot call method format\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: app/Mail/BookingReminderMail.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Mail/BookingReminderMail.php
+
+		-
+			message: '#^Offset non\-falsy\-string on non\-falsy\-string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/ParkingLot.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between null and null will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Models/ParkingLot.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Models/ParkingLot.php
