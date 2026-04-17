@@ -48,6 +48,7 @@ class SecurityReportController extends Controller
         // We deliberately don't validate payload shape — Reporting API
         // payloads differ by browser + evolve every spec revision.
         // The only thing we require is that *something* was sent.
+        // T-1749-intentional: browser-defined payload; FormRequest would over-constrain.
         $request->validate(['body' => 'present']);
 
         /** @var array<string, mixed> $payload */

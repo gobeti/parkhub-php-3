@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSlotRequest;
 use App\Http\Resources\ParkingSlotResource;
 use App\Models\ParkingSlot;
 use Illuminate\Http\JsonResponse;
@@ -19,10 +20,9 @@ class SlotController extends Controller
         }
     }
 
-    public function store(Request $request, string $lotId)
+    public function store(StoreSlotRequest $request, string $lotId)
     {
         $this->requireAdmin($request);
-        $request->validate(['slot_number' => 'required|string']);
         $slot = ParkingSlot::create(array_merge(
             $request->only(['slot_number', 'status', 'slot_type', 'features', 'reserved_for_department', 'zone_id']),
             ['lot_id' => $lotId]

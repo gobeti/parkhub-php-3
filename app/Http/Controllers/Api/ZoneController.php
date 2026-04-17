@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreZoneRequest;
 use App\Http\Resources\ZoneResource;
 use App\Models\Zone;
 use Illuminate\Http\JsonResponse;
@@ -18,9 +19,8 @@ class ZoneController extends Controller
         return ZoneResource::collection(Zone::where('lot_id', $lotId)->get());
     }
 
-    public function store(Request $request, string $lotId)
+    public function store(StoreZoneRequest $request, string $lotId)
     {
-        $request->validate(['name' => 'required|string']);
         $zone = Zone::create(array_merge($request->only(['name', 'color', 'description']), ['lot_id' => $lotId]));
 
         return ZoneResource::make($zone)->response()->setStatusCode(201);

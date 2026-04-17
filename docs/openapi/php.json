@@ -1300,6 +1300,20 @@
         "title": "GuestBookingResource",
         "type": "object"
       },
+      "ImportIcalRequest": {
+        "description": "Accepts iCal payloads either as a multipart file upload or a raw string\nbody. Rules are conditional on the transport so callers can use whichever\nshape fits their client without us routing to two separate endpoints.",
+        "properties": {
+          "ical": {
+            "maxLength": 1048576,
+            "type": "string"
+          }
+        },
+        "required": [
+          "ical"
+        ],
+        "title": "ImportIcalRequest",
+        "type": "object"
+      },
       "ImportLotsDataRequest": {
         "properties": {
           "data": {
@@ -2419,6 +2433,23 @@
         "title": "StoreGuestBookingRequest",
         "type": "object"
       },
+      "StoreLotRequest": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "total_slots": {
+            "maximum": 1000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "StoreLotRequest",
+        "type": "object"
+      },
       "StoreMaintenanceWindowRequest": {
         "properties": {
           "affected_slots": {
@@ -2588,6 +2619,18 @@
         "title": "StoreRecurringBookingRequest",
         "type": "object"
       },
+      "StoreSlotRequest": {
+        "properties": {
+          "slot_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot_number"
+        ],
+        "title": "StoreSlotRequest",
+        "type": "object"
+      },
       "StoreTranslationProposalRequest": {
         "properties": {
           "context": {
@@ -2658,6 +2701,19 @@
         "title": "StoreVehicleRequest",
         "type": "object"
       },
+      "StoreWaitlistRequest": {
+        "properties": {
+          "lot_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lot_id"
+        ],
+        "title": "StoreWaitlistRequest",
+        "type": "object"
+      },
       "StoreWebhookRequest": {
         "properties": {
           "active": {
@@ -2693,6 +2749,18 @@
           "url"
         ],
         "title": "StoreWebhookRequest",
+        "type": "object"
+      },
+      "StoreZoneRequest": {
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "StoreZoneRequest",
         "type": "object"
       },
       "SubscribePushRequest": {
@@ -3709,6 +3777,7 @@
         "properties": {
           "logo": {
             "contentMediaType": "application/octet-stream",
+            "description": "SVG intentionally excluded: SVGs can carry inline <script> or\njavascript: refs and a served logo becomes a stored-XSS vector.\nMatches the parkhub-rust side which magic-byte-checks only\nJPEG / PNG / GIF / WebP. (T-1736)",
             "format": "binary",
             "maxLength": 2048,
             "type": "string"
@@ -4753,30 +4822,24 @@
         "operationId": "absence.importIcal_0",
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "properties": {
-                  "file": {
-                    "contentMediaType": "application/octet-stream",
-                    "format": "binary",
-                    "maxLength": 2048,
-                    "type": "string"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ImportIcalRequest"
                   },
-                  "ical": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "type": "string"
+                  {
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
                   }
-                },
-                "required": [
-                  "file"
-                ],
-                "type": "object"
+                ]
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -4803,6 +4866,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -8325,20 +8391,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "total_slots": {
-                    "maximum": 1000,
-                    "minimum": 1,
-                    "type": "integer"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreLotRequest"
               }
             }
           },
@@ -8602,15 +8655,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "slot_number": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "slot_number"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreSlotRequest"
               }
             }
           },
@@ -8779,15 +8824,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreZoneRequest"
               }
             }
           },
@@ -10754,20 +10791,9 @@
         "operationId": "absence.importIcal_0",
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "properties": {
-                  "file": {
-                    "contentMediaType": "application/octet-stream",
-                    "format": "binary",
-                    "maxLength": 2048,
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "file"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ImportIcalRequest"
               }
             }
           },
@@ -10798,6 +10824,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -27321,20 +27350,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "total_slots": {
-                    "maximum": 1000,
-                    "minimum": 1,
-                    "type": "integer"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreLotRequest"
               }
             }
           },
@@ -28146,15 +28162,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "slot_number": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "slot_number"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreSlotRequest"
               }
             }
           },
@@ -28978,15 +28986,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreZoneRequest"
               }
             }
           },
@@ -36091,20 +36091,9 @@
         "operationId": "absence.importIcal_0",
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "properties": {
-                  "file": {
-                    "contentMediaType": "application/octet-stream",
-                    "format": "binary",
-                    "maxLength": 2048,
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "file"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ImportIcalRequest"
               }
             }
           },
@@ -36135,6 +36124,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -49664,16 +49656,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "lot_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "lot_id"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreWaitlistRequest"
               }
             }
           },
@@ -50421,16 +50404,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "lot_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "lot_id"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreWaitlistRequest"
               }
             }
           },

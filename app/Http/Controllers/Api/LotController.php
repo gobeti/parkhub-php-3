@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreLotRequest;
 use App\Http\Resources\ParkingLotResource;
 use App\Models\Booking;
 use App\Models\ParkingLot;
@@ -48,10 +49,9 @@ class LotController extends Controller
         return ParkingLotResource::collection($lots);
     }
 
-    public function store(Request $request)
+    public function store(StoreLotRequest $request)
     {
         $this->authorize('create', ParkingLot::class);
-        $request->validate(['name' => 'required|string', 'total_slots' => 'sometimes|integer|min:1|max:1000']);
 
         $data = $request->only(['name', 'address', 'total_slots', 'layout', 'status', 'hourly_rate', 'daily_max', 'monthly_pass', 'currency']);
         // Default to 10 slots if not specified — ensures bookings work immediately

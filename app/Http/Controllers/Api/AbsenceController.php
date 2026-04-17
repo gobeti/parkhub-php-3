@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ImportIcalRequest;
 use App\Http\Requests\StoreAbsenceRequest;
 use App\Models\Absence;
 use App\Models\Setting;
@@ -105,14 +106,13 @@ class AbsenceController extends Controller
         ]);
     }
 
-    public function importIcal(Request $request): JsonResponse
+    public function importIcal(ImportIcalRequest $request): JsonResponse
     {
-        // Accept either a file upload (multipart) or a raw 'ical' string body
+        // Accept either a file upload (multipart) or a raw 'ical' string body.
+        // ImportIcalRequest applies the right rules based on which shape arrived.
         if ($request->hasFile('file')) {
-            $request->validate(['file' => 'required|file|mimes:ics,txt,calendar|max:2048']);
             $ical = $request->file('file')->get();
         } else {
-            $request->validate(['ical' => 'required|string|max:1048576']);
             $ical = $request->input('ical');
         }
         $user = $request->user();

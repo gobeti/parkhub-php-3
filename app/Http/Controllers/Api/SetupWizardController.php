@@ -57,6 +57,7 @@ class SetupWizardController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // T-1749-intentional: private step helpers — would need per-step routing refactor to benefit from FormRequest.
         $request->validate([
             'step' => 'required|integer|min:1|max:4',
         ]);
@@ -79,6 +80,7 @@ class SetupWizardController extends Controller
 
     private function processCompanyStep(Request $request): JsonResponse
     {
+        // T-1749-intentional: private step helpers — would need per-step routing refactor to benefit from FormRequest.
         $request->validate([
             'company_name' => 'required|string|max:255',
             'timezone' => 'nullable|string|max:100',
@@ -104,6 +106,7 @@ class SetupWizardController extends Controller
 
     private function processLotStep(Request $request): JsonResponse
     {
+        // T-1749-intentional: private step helpers — would need per-step routing refactor to benefit from FormRequest.
         $request->validate([
             'lot_name' => 'required|string|max:255',
             'floor_count' => 'nullable|integer|min:1|max:20',
@@ -149,6 +152,7 @@ class SetupWizardController extends Controller
 
     private function processUsersStep(Request $request): JsonResponse
     {
+        // T-1749-intentional: private step helpers — would need per-step routing refactor to benefit from FormRequest.
         $request->validate([
             'invite_emails' => 'nullable|array',
             'invite_emails.*' => 'email',
@@ -184,6 +188,7 @@ class SetupWizardController extends Controller
 
     private function processThemeStep(Request $request): JsonResponse
     {
+        // T-1749-intentional: private step helpers — would need per-step routing refactor to benefit from FormRequest.
         $request->validate([
             'theme' => 'required|string|max:50',
         ]);

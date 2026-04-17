@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreWaitlistRequest;
 use App\Http\Requests\WaitlistSubscribeRequest;
 use App\Http\Resources\WaitlistEntryResource;
 use App\Models\Booking;
@@ -33,7 +34,7 @@ class WaitlistController extends Controller
     /**
      * POST /api/v1/waitlist — legacy: join waitlist for a lot.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreWaitlistRequest $request): JsonResponse
     {
         if (Setting::get('waitlist_enabled', 'true') !== 'true') {
             return response()->json([
@@ -42,13 +43,9 @@ class WaitlistController extends Controller
             ], 403);
         }
 
-        $request->validate([
-            'lot_id' => 'required|uuid|exists:parking_lots,id',
-        ]);
-
         $entry = WaitlistEntry::firstOrCreate([
             'user_id' => $request->user()->id,
-            'lot_id' => $request->lot_id,
+            'lot_id' => $request->input('lot_id'),
         ]);
 
         return response()->json(['success' => true, 'data' => WaitlistEntryResource::make($entry)], 201);
