@@ -178,6 +178,7 @@ php artisan test                      # Run 1,565 PHPUnit tests
 
 - Live occupancy dashboard with booking heatmaps
 - Revenue analytics with 30-day trends, peak hours, top lots
+- **CO₂ tracking** -- per-booking CO₂ estimates via `FuelType` enum + `/api/v1/bookings/co2-summary` (carpool detection, dashboard KPI tile, 10-locale copy)
 - Rate limit monitoring dashboard
 - CSV export, PDF invoices, admin reports
 - Custom branding, announcements, outbound webhooks
@@ -409,6 +410,10 @@ All legal documents are provided as **operator-customizable templates** -- not b
 | **VVT Template** | Records of processing activities | [legal/vvt-template.md](legal/vvt-template.md) |
 | **Cookie Policy** | TTDSG SS25 localStorage documentation | [legal/cookie-policy-template.md](legal/cookie-policy-template.md) |
 | **Widerrufsbelehrung** | Consumer withdrawal notice (DE) | [legal/widerrufsbelehrung-template.md](legal/widerrufsbelehrung-template.md) |
+| **BFSG Accessibility** | German Accessibility Improvement Act statement (required for most commercial deployments from 2025-06-28) | [legal/bfsg-barrierefreiheit-template.md](legal/bfsg-barrierefreiheit-template.md) |
+| **EU AI Act Transparency** | Art. 50 transparency notice -- required if the operator enables AI/ML features | [legal/ai-act-transparency-template.md](legal/ai-act-transparency-template.md) |
+
+See [`legal/`](legal/) for the full template set before deployment.
 
 ---
 
@@ -422,8 +427,19 @@ A feature-equivalent **Rust edition** (Axum + redb embedded DB) exists for envir
 
 ## Contributing
 
-Contributions welcome -- see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup,
-branch naming conventions, testing requirements, code style (Pint + Larastan), and PR process.
+Contributions welcome -- see [DEVELOPMENT.md](DEVELOPMENT.md) for the local dev loop and [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, branch naming conventions, testing requirements, code style (Pint + Larastan/PHPStan level 4), and PR process.
+
+Contributor quickstart:
+
+```bash
+pre-commit install          # install local git hooks (config in .pre-commit-config.yaml)
+composer ci                 # mandatory pre-push gate — mirrors .github/workflows/*.yml
+# or:
+make ci                     # same gate via make
+make act                    # optional: run the actual workflows locally via nektos/act (.actrc preconfigured)
+```
+
+Mutation testing (Infection) runs weekly via `.github/workflows/mutants.yml` (`infection.json5` gates survivors). OpenAPI parity with the [Rust edition](https://github.com/nash87/parkhub-rust) is enforced via [docs/openapi-parity.md](docs/openapi-parity.md) + `scripts/dump-openapi.sh` / `scripts/diff-openapi.sh`.
 
 Bug reports and feature requests: [GitHub Issues](https://github.com/nash87/parkhub-php/issues)
 
