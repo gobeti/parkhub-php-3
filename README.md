@@ -6,14 +6,14 @@
 
 <p align="center">
   <a href="https://github.com/nash87/parkhub-php/actions/workflows/ci.yml"><img src="https://github.com/nash87/parkhub-php/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v4.11.0-brightgreen.svg?style=flat-square" alt="v4.11.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/Release-v4.13.0-brightgreen.svg?style=flat-square" alt="v4.13.0"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT License"></a>
   <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg?style=flat-square&logo=php&logoColor=white" alt="PHP 8.4"></a>
   <a href="https://laravel.com/"><img src="https://img.shields.io/badge/Laravel-12-FF2D20.svg?style=flat-square&logo=laravel&logoColor=white" alt="Laravel 12"></a>
   <a href="https://astro.build/"><img src="https://img.shields.io/badge/Astro-6-BC52EE.svg?style=flat-square&logo=astro&logoColor=white" alt="Astro 6"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB.svg?style=flat-square&logo=react&logoColor=black" alt="React 19"></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4.svg?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4"></a>
-  <img src="https://img.shields.io/badge/Tests-1700%2B-success.svg?style=flat-square" alt="1700+ tests">
+  <img src="https://img.shields.io/badge/Tests-1754%2B-success.svg?style=flat-square" alt="1754+ tests">
   <a href="docs/GDPR.md"><img src="https://img.shields.io/badge/DSGVO-konform-green.svg?style=flat-square" alt="GDPR Compliant"></a>
   <a href="docs/COMPLIANCE.md"><img src="https://img.shields.io/badge/Compliance-Audited-brightgreen.svg?style=flat-square" alt="Compliance Audited"></a>
   <a href="docker-compose.yml"><img src="https://img.shields.io/badge/Docker-ready-2496ED.svg?style=flat-square&logo=docker&logoColor=white" alt="Docker Ready"></a>
@@ -39,15 +39,17 @@
 
 ---
 
-## What's New in v4.10.0
+## What's New in v4.13.0
 
 | Feature | Description |
 |---------|-------------|
-| **Kinetic Observatory dashboard** | New `KpiCard`, `TrendCard`, `SensorFeedCard`, `RecentActivityCard` kit drives the home dashboard: 4-KPI row, SVG trend chart with period selector, pulsing sensor feed, responsive activity table |
-| **Seeder ~30x faster on low-CPU hosts** | `Hash::make()` hoisted out of the 198-user loop and `parking_slots.slot_number` pre-fetched before the ~3500-booking loop — demo seeding runs in ~10 s instead of hanging past Render's port-scan deploy timeout |
-| **Apache runs as root again** | Reverted the `gosu www-data` drop because Apache's error log symlinks to `/proc/self/fd/2`, which only root can open — the CodeQL container-running-as-root alert is dismissed as a false positive for a single-tenant Render container |
-| **Single-arch container** | Dropped `linux/arm64` from Release Container — QEMU emulation was the deploy bottleneck and Render only runs amd64 |
-| **Pint style pass** | `MetricsController`, `SSOController`, `UpdateController`, `WebhookV2Controller` clean under `pint --test` |
+| **Modular UX Platform (T-1720)** | 70-module registry with admin dashboard at `/admin/modules`, runtime enable/disable via `PATCH /api/v1/admin/modules/{name}`, per-module JSON Schema config editor, and Command Palette (`Cmd+K` / `Ctrl+K` / `/`). See [docs/FEATURES.md § Modular UX Platform](docs/FEATURES.md#modular-ux-platform) |
+| **Service layer extraction (T-1742)** | 12 focused services extracted over 6 passes, replacing the fat-controller pattern: `BookingCreationService`, `AuthenticationService`, `StripeWebhookService`, `VehicleService`, `AdminSettingsService`, `ComplianceService`, `ModuleConfigurationService`, `UserAccountService`, `AdminUserManagementService`, `WebhookDispatchService`, `AuditLogQueryService`, plus supporting result DTOs |
+| **Controller split (T-1743)** | `BookingController` (1035 LOC) decomposed into 5 focused controllers: `BookingController`, `BookingCalendarController`, `BookingCheckInController`, `BookingInvoiceController`, `BookingSwapController` |
+| **Laravel Policies (T-1745)** | 11 policies covering the primary domain models (`Booking`, `Vehicle`, `Absence`, `Announcement`, `AuditLog`, `Favorite`, `Notification`, `ParkingLot`, `Tenant`, `Webhook`, `Widget`) — up from 3 |
+| **Security hardening (T-1736, T-1737)** | SVG dropped from branding logo uploads; cross-tenant admin write guards on user updates |
+| **Testing depth (T-1734)** | 1,320 feature tests + 434 unit tests + `infection-php` (nightly) + `schemathesis` (OpenAPI contract fuzzing, nightly) |
+| **Perf (T-1747)** | Admin list endpoints eager-load relations to eliminate N+1 queries |
 
 ---
 
@@ -103,7 +105,7 @@ composer install
 ```bash
 composer setup                        # Install + configure + migrate + build
 composer dev                          # Dev server + Vite + queue + logs
-php artisan test                      # Run 1,565 PHPUnit tests
+php artisan test                      # Run PHPUnit (1,320 feature + 434 unit)
 ```
 
 **[Live Demo](https://parkhub-php-demo.onrender.com)** | Login: `admin@parkhub.test` / `demo` | (auto-resets every 6 hours)
@@ -168,8 +170,11 @@ php artisan test                      # Run 1,565 PHPUnit tests
 - **httpOnly cookie auth** with SameSite=Lax (XSS-proof, Bearer fallback for APIs)
 - bcrypt password hashing (12 rounds), configurable password policies
 - 2FA/TOTP with QR enrollment, backup codes
-- Per-endpoint rate limiting (login, register, payments)
+- **Laravel Policies** (11 total, covering `Booking`, `Vehicle`, `Absence`, `Announcement`, `AuditLog`, `Favorite`, `Notification`, `ParkingLot`, `Tenant`, `Webhook`, `Widget` -- up from 3 in previous releases, T-1745)
+- **Multi-tenancy hardening** -- tenant scope enforced on admin analytics + CSV exports + rate-limit cache keys (T-1731), plus cross-tenant admin write guards on user updates (T-1737)
+- Per-endpoint rate limiting (login, register, payments) with tenant-namespaced cache keys
 - Nonce-based CSP, security headers middleware
+- SVG blocked from branding logo uploads (T-1736)
 - Full audit log with IP tracking
 - API key authentication for integrations
 - OWASP Top 10 compliance -- see [Security Model](docs/SECURITY.md)
@@ -208,90 +213,19 @@ php artisan test                      # Run 1,565 PHPUnit tests
 
 ## Module System
 
-ParkHub organizes functionality into **67 runtime-toggleable modules** across five categories. Toggle any module via `MODULE_*=true|false` environment variables.
+ParkHub organizes functionality into **70 modules** across **11 categories** — Core, Booking, Vehicle, Admin, Payment, Integration, Analytics, Compliance, Notification, Enterprise, Experimental — in a single declarative registry at [`app/Services/ModuleRegistry.php`](app/Services/ModuleRegistry.php).
 
-### Core Modules (20 -- enabled by default, opt-out)
+Every module is exposed in the admin dashboard at `/admin/modules` with status pills, category grouping, search, dependency chain, and config-keys count. Shipped in **v4.13.0** (T-1720 v1 + v2 + v3):
 
-| Module | Description |
-|--------|-------------|
-| Bookings | Full booking lifecycle with conflict detection |
-| Vehicles | Vehicle CRUD with photo upload and plate lookup |
-| Absences | Leave tracking with iCal import |
-| Zones | Per-lot zone management |
-| Slots | Slot CRUD with status tracking |
-| Lots | Lot management with layout editor |
-| Recurring | Recurring booking patterns |
-| Favourites | Favourite slot pinning |
-| Swap | Booking swap requests |
-| Waitlist | Waitlist for full lots |
-| Credits | Credit system for bookings |
-| Themes | 12 switchable design themes |
-| Notifications | In-app notifications |
-| QR Codes | QR code generation for bookings |
-| Invoices | PDF invoice generation |
-| Operating Hours | Lot operating hour configuration |
-| iCal | Calendar subscription feeds |
-| Map | Interactive Leaflet map view |
-| Lobby Display | Public occupancy display board |
-| GDPR | Data export and erasure endpoints |
+- **Runtime enable/disable** — 13 safe modules flip via `PATCH /api/v1/admin/modules/{name}` without a redeploy (widgets, themes, favorites, lobby-display, accessible, calendar-drag, ev-charging, maintenance, geofence, map, graphql, api-docs, setup-wizard). Security-sensitive modules (`auth`, `payments`, `rbac`, `webhooks`, `audit-export`, `multi-tenant`, `notifications`) stay env-flagged.
+- **JSON Schema config editor** — 5 modules ship a `config_schema` (JSON Schema 2020-12) and surface a per-module config modal: `themes`, `announcements`, `notifications`, `email-templates`, `widgets`. Writes validate server-side via `opis/json-schema`; failures return `422 CONFIG_VALIDATION_FAILED` with a structured `details` array.
+- **Command Palette** — `Cmd+K` / `Ctrl+K` / `/` auto-seeds "Go to…" entries from every active module with a `ui_route`.
+- **Module Gate middleware** — `App\Http\Middleware\ModuleGate` returns `404 MODULE_DISABLED` for runtime-disabled routes (indistinguishable from an uninstalled feature).
+- **Audit log** — every toggle and every config write emits an `AuditLog` row with actor, module slug, before/after value, timestamp, and originating IP.
 
-### Admin Modules (8 -- enabled by default, opt-out)
+Compile-in availability is still gated via `MODULE_*=true|false` environment variables (see `config/modules.php`); the runtime toggle layers on top of that.
 
-| Module | Description |
-|--------|-------------|
-| Admin Reports | Stats, heatmaps, CSV export |
-| Analytics | 30-day trends, revenue, peak hours, user growth |
-| Data Export | Bulk data export for admins |
-| Import | Data import from CSV/JSON |
-| Metrics | Prometheus metrics at `/api/metrics` |
-| Rate Dashboard | Real-time rate limit monitoring |
-| Compliance | GDPR compliance reports with 10 automated checks |
-| Scheduled Reports | Automated email digest delivery |
-
-### Feature Modules (18 -- enabled by default, opt-out)
-
-| Module | Description |
-|--------|-------------|
-| Visitors | Visitor pre-registration with QR passes |
-| EV Charging | EV charging station management |
-| Accessible | Accessible parking with priority booking |
-| Maintenance | Maintenance scheduling with auto-block |
-| Cost Center | Cost center billing and analytics |
-| Fleet | Fleet/vehicle management overview |
-| History | Personal parking history and stats |
-| Geofence | Geofencing with GPS auto check-in |
-| Waitlist Ext | Enhanced waitlist with priority and notifications |
-| Parking Pass | Digital QR badge with public verification |
-| Absence Approval | Absence approval workflows |
-| Calendar Drag | Drag-to-reschedule on calendar |
-| Widgets | Customizable admin dashboard widgets |
-| Sharing | Booking sharing and guest invites |
-| API Versioning | API version headers and deprecation |
-| Plugins | Plugin/extension system with event hooks |
-| GraphQL | GraphQL API with interactive playground |
-| API Docs | Interactive API documentation |
-
-### Integration Modules (8 -- disabled by default, opt-in)
-
-| Module | Description | Requires |
-|--------|-------------|----------|
-| Stripe | Checkout sessions, webhooks, payment history | Stripe API keys |
-| OAuth | Social login (Google, GitHub, etc.) | OAuth credentials |
-| Web Push | VAPID-based browser push notifications | VAPID keys |
-| Webhooks | Outbound webhooks with HMAC signing | Webhook URLs |
-| Push Notifications | Legacy push notification support | Push service |
-| Broadcasting | Real-time event broadcasting | Broadcasting driver |
-| Realtime | Server-Sent Events (SSE) | -- |
-| Email Templates | Professional HTML email templates | SMTP |
-
-### Enterprise Modules (4 -- disabled by default, opt-in)
-
-| Module | Description |
-|--------|-------------|
-| Multi-Tenant | Tenant isolation with scoping middleware |
-| Dynamic Pricing | Time-based and demand-based pricing rules |
-| Setup Wizard | Interactive onboarding wizard |
-| Branding | Custom logo, colors, company name |
+See [docs/FEATURES.md § Modular UX Platform](docs/FEATURES.md#modular-ux-platform) for the full surface description and [API.md § Modules](docs/API.md) for the HTTP contract.
 
 ---
 
@@ -348,20 +282,23 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md) for step-by-step guides for eac
 
 ## Testing
 
-**1,700+ backend tests** -- plus Vitest frontend and 29 Playwright E2E specs. CI runs on every push via GitHub Actions. Lighthouse CI enforces accessibility >= 95, performance >= 90.
+**1,320 feature tests + 434 unit tests** across the Laravel backend, plus Vitest frontend and 29 Playwright E2E specs. CI runs on every push via GitHub Actions. Lighthouse CI enforces accessibility >= 95, performance >= 90.
 
 ```bash
-composer test                       # PHPUnit backend
+composer test                       # PHPUnit backend (feature + unit)
 cd parkhub-web && npx vitest run    # Frontend
 npx playwright test                 # E2E
 ```
 
-### CI & Security Scanning
+Supplementary safety nets (all CI-enforced):
 
-- **GitHub Actions** CI on every push (PHPUnit, Vitest, Pint lint, Larastan static analysis)
-- **CodeQL** -- automated code scanning, 0 open alerts
+- **`infection-php`** -- mutation testing (nightly, `.github/workflows/mutants.yml`)
+- **`schemathesis`** -- OpenAPI contract fuzzing against `docs/openapi/php.json` (nightly)
+- **Lighthouse CI** -- a11y ≥ 95, perf ≥ 90, SEO ≥ 95 gates
+- **CodeQL** -- automated PHP + JS code scanning on every PR
 - **Trivy** -- container image vulnerability scanning
 - **Dependabot** -- automated dependency updates with auto-merge for patch/minor
+- **SBOM + cosign** -- every release image attested with Syft SBOM and cosign signature
 
 ---
 
@@ -385,7 +322,7 @@ Key environment variables (full list in [docs/CONFIGURATION.md](docs/CONFIGURATI
 
 Full REST API documentation at `/api/v1/*` is available in [docs/API.md](docs/API.md). The API mirrors the [Rust edition](https://github.com/nash87/parkhub-rust) endpoint structure, making both backends interchangeable.
 
-Interactive API documentation is available via Scramble at `/docs/api` when enabled.
+The complete OpenAPI 3.0 spec is snapshotted at [`docs/openapi/php.json`](docs/openapi/php.json) and regenerated via `composer openapi:dump` on every schema change — a CI drift gate (`make drift`) blocks any handler change that forgets to update it. Interactive API documentation is available via Scramble at `/docs/api` when enabled.
 
 ---
 

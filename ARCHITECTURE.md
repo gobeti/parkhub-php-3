@@ -24,42 +24,63 @@ parkhub-php/
 │   │   ├── GenerateVapidKeys.php      # VAPID key generation for Web Push
 │   │   └── RefillMonthlyCredits.php   # Monthly credit quota refill
 │   ├── Http/
-│   │   ├── Controllers/Api/    # 25 API controllers
-│   │   │   ├── AuthController.php           # Login, register, forgot/reset password
-│   │   │   ├── BookingController.php        # CRUD + quick-book, guest, swap (32K)
-│   │   │   ├── AdminController.php          # User/booking management, audit log
-│   │   │   ├── AdminSettingsController.php  # Settings, branding, privacy, email (20K)
-│   │   │   ├── AdminReportController.php    # Stats, heatmap, CSV export
-│   │   │   ├── AdminCreditController.php    # Credit grants, refills, transactions
-│   │   │   ├── AdminAnnouncementController.php  # Announcement CRUD
-│   │   │   ├── LotController.php            # Parking lot CRUD + occupancy
-│   │   │   ├── SlotController.php           # Slot CRUD within lots
-│   │   │   ├── ZoneController.php           # Zone management
-│   │   │   ├── UserController.php           # Profile, prefs, notifications, export
-│   │   │   ├── VehicleController.php        # Vehicle CRUD + photo upload (42K)
-│   │   │   ├── BookingInvoiceController.php # PDF invoice generation
-│   │   │   ├── AbsenceController.php        # Absence CRUD + iCal import
-│   │   │   ├── RecurringBookingController.php # Recurring booking management
-│   │   │   ├── WaitlistController.php       # Waitlist CRUD
-│   │   │   ├── TeamController.php           # Team directory + today view
-│   │   │   ├── MiscController.php           # Push, email, QR, webhooks
-│   │   │   ├── DemoController.php           # Demo mode: status, vote-reset
-│   │   │   ├── SetupController.php          # First-run setup wizard
-│   │   │   ├── HealthController.php         # Health + readiness checks
-│   │   │   ├── MetricsController.php        # Prometheus metrics
-│   │   │   ├── PublicController.php         # Public occupancy display
-│   │   │   └── SystemController.php         # System info
+│   │   ├── Controllers/Api/    # API controllers — `BookingController` split into 5 focused controllers in T-1743
+│   │   │   ├── AuthController.php                 # Login, register, forgot/reset password (delegates to AuthenticationService)
+│   │   │   ├── BookingController.php              # CRUD + quick-book (1035 → 640 LOC after T-1743)
+│   │   │   ├── BookingCalendarController.php      # Calendar view + iCal (T-1743 split)
+│   │   │   ├── BookingCheckInController.php       # Check-in / check-out (T-1743 split)
+│   │   │   ├── BookingInvoiceController.php       # PDF invoice generation (T-1743 split)
+│   │   │   ├── BookingSwapController.php          # Swap request lifecycle (T-1743 split)
+│   │   │   ├── GuestBookingController.php         # Guest bookings without user accounts
+│   │   │   ├── MobileBookingController.php        # Mobile-optimized booking endpoints
+│   │   │   ├── AdminController.php                # User/booking management, audit log
+│   │   │   ├── AdminSettingsController.php        # Settings, branding, privacy, email
+│   │   │   ├── AdminReportController.php          # Stats, heatmap, CSV export
+│   │   │   ├── AdminCreditController.php          # Credit grants, refills, transactions
+│   │   │   ├── AdminAnnouncementController.php    # Announcement CRUD
+│   │   │   ├── AdminModulesController.php         # Runtime toggle + JSON Schema config editor (T-1720)
+│   │   │   ├── LotController.php                  # Parking lot CRUD + occupancy
+│   │   │   ├── SlotController.php                 # Slot CRUD within lots
+│   │   │   ├── ZoneController.php                 # Zone management
+│   │   │   ├── UserController.php                 # Profile, prefs, notifications, export
+│   │   │   ├── VehicleController.php              # Vehicle CRUD + photo upload
+│   │   │   ├── AbsenceController.php              # Absence CRUD + iCal import
+│   │   │   ├── RecurringBookingController.php     # Recurring booking management
+│   │   │   ├── WaitlistController.php             # Waitlist CRUD
+│   │   │   ├── TeamController.php                 # Team directory + today view
+│   │   │   ├── MiscController.php                 # Push, email, QR, webhooks
+│   │   │   ├── DemoController.php                 # Demo mode: status, vote-reset
+│   │   │   ├── SetupController.php                # First-run setup wizard
+│   │   │   ├── HealthController.php               # Health + readiness checks
+│   │   │   ├── MetricsController.php              # Prometheus metrics
+│   │   │   ├── PublicController.php               # Public occupancy display
+│   │   │   └── SystemController.php               # System info
 │   │   ├── Middleware/
 │   │   │   ├── ApiResponseWrapper.php       # Wraps responses in { success, data } envelope
 │   │   │   ├── ForceJsonResponse.php        # Forces Accept: application/json
 │   │   │   ├── RequireAdmin.php             # Admin role gate
+│   │   │   ├── ModuleGate.php               # Returns 404 MODULE_DISABLED for runtime-disabled modules (T-1720)
 │   │   │   └── SecurityHeaders.php          # CSP, HSTS, X-Frame, etc.
-│   │   └── Resources/           # API Resource transformers (10 resources)
+│   │   └── Resources/           # API Resource transformers
 │   ├── Jobs/                    # Queue jobs (push notifications, etc.)
 │   ├── Mail/                    # Mailable classes
-│   ├── Models/                  # 22 Eloquent models
-│   ├── Providers/               # Service providers
-│   └── Services/                # Business logic services
+│   ├── Models/                  # Eloquent models
+│   ├── Policies/                # Laravel Policies — 11 total (T-1745, up from 3): Absence, Announcement, AuditLog, Booking, Favorite, Notification, ParkingLot, Tenant, Vehicle, Webhook, Widget
+│   ├── Providers/               # Service providers (ModuleServiceProvider binds runtime-toggle bus)
+│   └── Services/                # Business-logic services — 12 focused services extracted across T-1742 passes 1–6:
+│                                #   Authentication/AuthenticationService.php
+│                                #   Booking/BookingCreationService.php
+│                                #   Stripe/StripeWebhookService.php
+│                                #   Vehicle/VehicleService.php
+│                                #   Admin/AdminSettingsService.php
+│                                #   Admin/AdminUserManagementService.php
+│                                #   Audit/AuditLogQueryService.php
+│                                #   Compliance/ComplianceService.php
+│                                #   Modules/ModuleConfigurationService.php
+│                                #   User/UserAccountService.php
+│                                #   Webhook/WebhookDispatchService.php
+│                                #   Reports/ReportExportService.php
+│                                #   plus ModuleRegistry, PushNotificationService, CircuitBreaker
 │
 ├── routes/
 │   ├── api.php                 # Laravel-style API routes (108 endpoints)
@@ -93,9 +114,9 @@ parkhub-php/
 ├── legal/                      # German legal document templates (GDPR)
 ├── docs/                       # Documentation + screenshots
 ├── tests/
-│   ├── Feature/                # 46 PHPUnit feature test files (461 test methods)
-│   └── Unit/                   # Unit tests
-└── .github/workflows/          # CI, Docker publish
+│   ├── Feature/                # 130 PHPUnit feature test files, 1,320 test methods
+│   └── Unit/                   # 84 unit test files, 434 test methods — coverage of the extracted services, policies, and registries
+└── .github/workflows/          # CI, Docker publish, mutants, schemathesis, lighthouse
 ```
 
 ## Backend Architecture
@@ -348,13 +369,18 @@ Eloquent models are transformed via Laravel API Resources before serialization:
 
 ### Backend (PHP)
 
-| Type          | Count | Framework | Location                        |
-|--------------|-------|-----------|---------------------------------|
-| Feature tests | 500+  | PHPUnit   | `tests/Feature/*.php` (46 files) |
-| Unit tests    | 1     | PHPUnit   | `tests/Unit/ExampleTest.php`     |
+| Type          | Count | Framework            | Location                                       |
+|--------------|-------|----------------------|------------------------------------------------|
+| Feature tests | 1,320 | PHPUnit              | `tests/Feature/*.php` (130 files)              |
+| Unit tests    | 434   | PHPUnit              | `tests/Unit/*.php` (84 files)                  |
+| Mutation      | —     | `infection-php`      | Nightly (`.github/workflows/mutants.yml`)      |
+| Contract fuzz | —     | `schemathesis`       | Nightly — runs against `docs/openapi/php.json` |
 
 Feature tests cover the full HTTP surface: auth flows, booking CRUD, admin
-operations, credit system, edge cases, GDPR compliance, webhooks, etc.
+operations, credit system, edge cases, GDPR compliance, webhooks, module
+runtime toggle + JSON Schema config editor, tenant scope, etc. Unit tests
+cover the 12 services extracted in T-1742, the 11 policies shipped in
+T-1745, and the module registry/gate.
 
 Run with: `php artisan test` or `composer test`
 
@@ -414,11 +440,15 @@ Performance testing scripts with [k6](https://grafana.com/docs/k6/) live in `tes
           |  10 Integ. |  Cross-module API tests
           |  suites    |
          ++-----------++
-         |  ~500 Unit   |  PHPUnit + Vitest
-         |  tests       |
-        ++--------------+
-        |  k6 Load Tests |  smoke / load / stress / spike
-        +----------------+
+         |  1,320 Feature |  PHPUnit HTTP surface
+         +----------------+
+         |   434 Unit     |  PHPUnit services + policies
+         +----------------+
+         |  k6 Load Tests |  smoke / load / stress / spike
+         +----------------+
+         |  Mutation +    |  infection-php + schemathesis (nightly)
+         |  contract fuzz |
+         +----------------+
 ```
 
 ## Deployment

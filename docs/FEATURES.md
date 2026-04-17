@@ -28,7 +28,7 @@ Every compiled-in feature is a first-class **module**. The registry, admin dashb
 
 ### Module Registry
 
-Sixty-eight modules across eleven categories (Core, Booking, Vehicle, Admin, Payment, Integration, Analytics, Compliance, Notification, Enterprise, Experimental). Each registry row declares its slug, category, description, compile-time availability, runtime-toggleable bit, config keys, UI route, dependency chain, and optional JSON Schema.
+Seventy modules across eleven categories (Core, Booking, Vehicle, Admin, Payment, Integration, Analytics, Compliance, Notification, Enterprise, Experimental). Each registry row declares its slug, category, description, compile-time availability, runtime-toggleable bit, config keys, UI route, dependency chain, and optional JSON Schema.
 
 Introspection endpoints live under `/api/v1/modules*` — see [API.md § Modules](API.md#modules) for the full contract. The legacy flat `{modules: {name: bool}}` map is preserved in the response envelope so existing callers keep working.
 
@@ -86,7 +86,7 @@ The rows below are the places where the PHP edition diverges from the Rust editi
 
 | Area | PHP edition | Rust edition |
 |------|-------------|--------------|
-| Module count | **68 modules** (registered in the Laravel registry) | 72 modules |
+| Module count | **70 modules** (registered in the Laravel registry) | 72 modules |
 | Toggleable modules | 13 safe rows | 15 safe rows |
 | Runtime | Laravel 12 on PHP 8.4 | Single Axum 0.8 binary |
 | JSON Schema validator | `opis/json-schema` 2.6.0 | `jsonschema` 0.35 (Rust crate) |
@@ -99,7 +99,7 @@ The rows below are the places where the PHP edition diverges from the Rust editi
 | Mutation testing | `infection/infection` 0.32.6 (nightly) | `cargo-mutants` 25.3.1 (nightly) |
 | Contract fuzzing | `schemathesis` 4.15.2 against `docs/openapi/php.json` | manual property tests + OpenAPI drift gate |
 
-The four modules that are Rust-only in v4.13.0 are all `social` + runtime-quirk rows that don't translate 1:1 to Laravel (e.g. specific Rust-only feature flags in the Cargo workspace). They ship no user-visible feature on the Rust side either — their state is `runtime_toggleable = false, runtime_enabled = false` by default — so the gap is an implementation artefact, not a product gap.
+The two modules that are Rust-only in v4.13.0 are all runtime-quirk rows that don't translate 1:1 to Laravel (e.g. specific Rust-only feature flags in the Cargo workspace). They ship no user-visible feature on the Rust side either — their state is `runtime_toggleable = false, runtime_enabled = false` by default — so the gap is an implementation artefact, not a product gap.
 
 ---
 
