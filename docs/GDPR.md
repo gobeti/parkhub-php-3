@@ -297,18 +297,23 @@ curl -s -X PUT https://parking.example.com/api/v1/admin/privacy \
 
 ### Audit Log Pruning
 
-There is no automatic audit log pruning. Add a scheduled command:
+Enforced automatically by `App\Jobs\PurgeAuditLogsJob`, scheduled daily at
+03:15 UTC via `bootstrap/app.php` (`->onOneServer()->withoutOverlapping()`).
+The `AUDIT_RETENTION_DAYS` env var overrides the 90-day default.
+
+The job deletes in chunks of 1000 via Eloquent (not raw DB), so any future
+global scope on `AuditLog` (tenant scope, soft-delete, etc.) continues to
+apply. Each chunk emits a structured `Log::info` line with `deleted_count`
+and `oldest_remaining` for observability.
+
+Equivalent one-liner for manual runs or ad-hoc cleanup:
 
 ```php
-// In App\Console\Kernel or a dedicated console command:
 \App\Models\AuditLog::where('created_at', '<', now()->subDays(90))->delete();
 ```
 
-Schedule via cron:
-
-```cron
-0 2 * * 0 php /var/www/parkhub/artisan app:prune-audit-log
-```
+No external cron entry is required — Laravel's scheduler (`php artisan
+schedule:run` every minute) is the single entry point.
 
 ### Session Token Expiry
 

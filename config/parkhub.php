@@ -24,4 +24,16 @@ return [
     'min_duration_hours' => (float) env('BOOKING_MIN_DURATION_HOURS', 0.5),
     'max_duration_hours' => (float) env('BOOKING_MAX_DURATION_HOURS', 720),
     'max_active_bookings' => (int) env('BOOKING_MAX_ACTIVE', 10),
+
+    /*
+    |--------------------------------------------------------------------------
+    | GDPR / Audit Retention
+    |--------------------------------------------------------------------------
+    |
+    | Days to keep rows in the audit_log table. Enforced by
+    | App\Jobs\PurgeAuditLogsJob, scheduled daily at 03:15 UTC.
+    | See docs/GDPR.md.
+    */
+
+    'audit_retention_days' => (int) env('AUDIT_RETENTION_DAYS', 90),
 ];

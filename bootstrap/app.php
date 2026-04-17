@@ -8,7 +8,9 @@ use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\RequestIdLogging;
 use App\Http\Middleware\RequireAdmin;
 use App\Http\Middleware\SecurityHeaders;
+use App\Jobs\PurgeAuditLogsJob;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -68,6 +70,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => RequireAdmin::class,
             'module' => CheckModule::class,
         ]);
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        // GDPR audit-log retention — see docs/GDPR.md.
+        // Daily 03:15 UTC: low-traffic window, well after the 03:00
+        // sanctum-prune slot so the two jobs never contend on the same
+        // shared-hosting cron tick.
+        $schedule->job(new PurgeAuditLogsJob((int) config('parkhub.audit_retention_days', 90)))
+            ->dailyAt('03:15')
+            ->timezone('UTC')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->name('purge-audit-logs');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Consistent JSON error responses for API routes
