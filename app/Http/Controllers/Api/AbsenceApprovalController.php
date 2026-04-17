@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RejectAbsenceRequest;
+use App\Http\Requests\StoreAbsenceApprovalRequest;
 use App\Models\Absence;
 use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
@@ -15,15 +17,8 @@ class AbsenceApprovalController extends Controller
     /**
      * POST /api/v1/absences/requests — submit absence request (status=pending).
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreAbsenceApprovalRequest $request): JsonResponse
     {
-        $request->validate([
-            'absence_type' => 'required|in:homeoffice,vacation,sick,training,business_trip,personal,other',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'reason' => 'required|string|max:1000',
-        ]);
-
         $absence = Absence::create([
             'user_id' => $request->user()->id,
             'absence_type' => $request->input('absence_type'),
@@ -108,12 +103,8 @@ class AbsenceApprovalController extends Controller
     /**
      * PUT /api/v1/admin/absences/{id}/reject — reject with reason (admin).
      */
-    public function reject(Request $request, string $id): JsonResponse
+    public function reject(RejectAbsenceRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'reason' => 'required|string|max:1000',
-        ]);
-
         $absence = Absence::where('status', Absence::STATUS_PENDING)->findOrFail($id);
 
         $absence->update([

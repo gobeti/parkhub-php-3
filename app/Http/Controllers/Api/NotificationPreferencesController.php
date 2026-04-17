@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateNotificationPreferencesRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -30,20 +31,8 @@ class NotificationPreferencesController extends Controller
         return response()->json(array_merge($this->defaults, $prefs));
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateNotificationPreferencesRequest $request): JsonResponse
     {
-        $request->validate([
-            'email_booking_confirm' => 'sometimes|boolean',
-            'email_reminder' => 'sometimes|boolean',
-            'email_swap' => 'sometimes|boolean',
-            'push_enabled' => 'sometimes|boolean',
-            'sms_enabled' => 'sometimes|boolean',
-            'whatsapp_enabled' => 'sometimes|boolean',
-            'phone_number' => 'sometimes|nullable|string|max:20',
-            'quiet_hours_start' => 'sometimes|nullable|date_format:H:i',
-            'quiet_hours_end' => 'sometimes|nullable|date_format:H:i',
-        ]);
-
         $current = $request->user()->notification_preferences ?? $this->defaults;
         $updated = array_merge($current, $request->only([
             'email_booking_confirm', 'email_reminder', 'email_swap',

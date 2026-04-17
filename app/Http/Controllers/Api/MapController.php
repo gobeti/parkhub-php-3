@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SetLotLocationRequest;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class MapController extends Controller
 {
@@ -79,13 +79,8 @@ class MapController extends Controller
      *
      * Admin-only: set/update latitude & longitude for a parking lot.
      */
-    public function setLocation(Request $request, string $id): JsonResponse
+    public function setLocation(SetLotLocationRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ]);
-
         $lot = ParkingLot::find($id);
 
         if (! $lot) {

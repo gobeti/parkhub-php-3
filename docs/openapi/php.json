@@ -733,6 +733,24 @@
         "title": "ChargingSession",
         "type": "object"
       },
+      "ConfirmPaymentRequest": {
+        "properties": {
+          "payment_intent_id": {
+            "type": "string"
+          },
+          "payment_method": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "payment_intent_id"
+        ],
+        "title": "ConfirmPaymentRequest",
+        "type": "object"
+      },
       "CreateAnnouncementRequest": {
         "properties": {
           "expires_at": {
@@ -768,6 +786,44 @@
           "message"
         ],
         "title": "CreateAnnouncementRequest",
+        "type": "object"
+      },
+      "CreatePaymentIntentRequest": {
+        "properties": {
+          "amount": {
+            "minimum": 50,
+            "type": "integer"
+          },
+          "booking_id": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "description": "in cents",
+            "maxLength": 3,
+            "minLength": 3,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metadata": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "title": "CreatePaymentIntentRequest",
         "type": "object"
       },
       "CreateStripeCheckoutRequest": {
@@ -991,6 +1047,25 @@
         "title": "FavoriteResource",
         "type": "object"
       },
+      "FlagVehicleRequest": {
+        "properties": {
+          "flagged": {
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "flagged"
+        ],
+        "title": "FlagVehicleRequest",
+        "type": "object"
+      },
       "GeofenceCheckInRequest": {
         "properties": {
           "latitude": {
@@ -1110,6 +1185,46 @@
         "title": "GuestBookingResource",
         "type": "object"
       },
+      "ImportLotsDataRequest": {
+        "properties": {
+          "data": {
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "data"
+        ],
+        "title": "ImportLotsDataRequest",
+        "type": "object"
+      },
+      "ImportUsersDataRequest": {
+        "properties": {
+          "data": {
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "data"
+        ],
+        "title": "ImportUsersDataRequest",
+        "type": "object"
+      },
       "ImportUsersRequest": {
         "properties": {
           "users": {
@@ -1173,6 +1288,49 @@
           "users"
         ],
         "title": "ImportUsersRequest",
+        "type": "object"
+      },
+      "InitSetupRequest": {
+        "properties": {
+          "admin_email": {
+            "format": "email",
+            "type": "string"
+          },
+          "admin_name": {
+            "type": "string"
+          },
+          "admin_password": {
+            "minLength": 8,
+            "type": "string"
+          },
+          "admin_username": {
+            "minLength": 3,
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string"
+          },
+          "create_sample_data": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "use_case": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "company_name",
+          "admin_username",
+          "admin_password",
+          "admin_email",
+          "admin_name"
+        ],
+        "title": "InitSetupRequest",
         "type": "object"
       },
       "LoginRequest": {
@@ -1724,6 +1882,19 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "RejectAbsenceRequest": {
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RejectAbsenceRequest",
+        "type": "object"
+      },
       "ResetDatabaseRequest": {
         "properties": {
           "confirm": {
@@ -1774,6 +1945,62 @@
           "accept"
         ],
         "title": "RespondSwapRequestRequest",
+        "type": "object"
+      },
+      "SetLotLocationRequest": {
+        "properties": {
+          "latitude": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "title": "SetLotLocationRequest",
+        "type": "object"
+      },
+      "StoreAbsenceApprovalRequest": {
+        "properties": {
+          "absence_type": {
+            "enum": [
+              "homeoffice",
+              "vacation",
+              "sick",
+              "training",
+              "business_trip",
+              "personal",
+              "other"
+            ],
+            "type": "string"
+          },
+          "end_date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "absence_type",
+          "start_date",
+          "end_date",
+          "reason"
+        ],
+        "title": "StoreAbsenceApprovalRequest",
         "type": "object"
       },
       "StoreAbsenceRequest": {
@@ -1956,6 +2183,50 @@
           "reason"
         ],
         "title": "StoreMaintenanceWindowRequest",
+        "type": "object"
+      },
+      "StoreRecurringBookingRequest": {
+        "properties": {
+          "days_of_week": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "end_date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "lot_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "slot_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lot_id",
+          "slot_id",
+          "days_of_week",
+          "start_date",
+          "end_date",
+          "start_time",
+          "end_time"
+        ],
+        "title": "StoreRecurringBookingRequest",
         "type": "object"
       },
       "StoreVehicleRequest": {
@@ -2268,6 +2539,49 @@
           }
         },
         "title": "UpdateMaintenanceWindowRequest",
+        "type": "object"
+      },
+      "UpdateNotificationPreferencesRequest": {
+        "properties": {
+          "email_booking_confirm": {
+            "type": "boolean"
+          },
+          "email_reminder": {
+            "type": "boolean"
+          },
+          "email_swap": {
+            "type": "boolean"
+          },
+          "phone_number": {
+            "maxLength": 20,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "push_enabled": {
+            "type": "boolean"
+          },
+          "quiet_hours_end": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quiet_hours_start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sms_enabled": {
+            "type": "boolean"
+          },
+          "whatsapp_enabled": {
+            "type": "boolean"
+          }
+        },
+        "title": "UpdateNotificationPreferencesRequest",
         "type": "object"
       },
       "UpdatePreferencesRequest": {
@@ -4702,6 +5016,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -8314,47 +8631,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "days_of_week": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  "end_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "end_time": {
-                    "type": "string"
-                  },
-                  "lot_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "slot_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "start_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "start_time": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "lot_id",
-                  "slot_id",
-                  "days_of_week",
-                  "start_date",
-                  "end_date",
-                  "start_time",
-                  "end_time"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreRecurringBookingRequest"
               }
             }
           },
@@ -8373,6 +8650,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -8742,46 +9022,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "admin_email": {
-                    "format": "email",
-                    "type": "string"
-                  },
-                  "admin_name": {
-                    "type": "string"
-                  },
-                  "admin_password": {
-                    "minLength": 8,
-                    "type": "string"
-                  },
-                  "admin_username": {
-                    "minLength": 3,
-                    "type": "string"
-                  },
-                  "company_name": {
-                    "type": "string"
-                  },
-                  "create_sample_data": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "use_case": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "company_name",
-                  "admin_username",
-                  "admin_password",
-                  "admin_email",
-                  "admin_name"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/InitSetupRequest"
               }
             }
           },
@@ -10008,39 +10249,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "absence_type": {
-                    "enum": [
-                      "homeoffice",
-                      "vacation",
-                      "sick",
-                      "training",
-                      "business_trip",
-                      "personal",
-                      "other"
-                    ],
-                    "type": "string"
-                  },
-                  "end_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "reason": {
-                    "maxLength": 1000,
-                    "type": "string"
-                  },
-                  "start_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "absence_type",
-                  "start_date",
-                  "end_date",
-                  "reason"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreAbsenceApprovalRequest"
               }
             }
           },
@@ -10147,6 +10356,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -10442,16 +10654,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "reason": {
-                    "maxLength": 1000,
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "reason"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/RejectAbsenceRequest"
               }
             }
           },
@@ -10471,6 +10674,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -14457,22 +14663,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "flagged": {
-                    "type": "boolean"
-                  },
-                  "reason": {
-                    "maxLength": 500,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "flagged"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/FlagVehicleRequest"
               }
             }
           },
@@ -14519,6 +14710,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -14775,6 +14969,9 @@
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
           },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
+          },
           "422": {
             "$ref": "#/components/responses/ValidationException"
           }
@@ -14791,23 +14988,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "data": {
-                    "type": "string"
-                  },
-                  "format": {
-                    "enum": [
-                      "csv",
-                      "json"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "format",
-                  "data"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ImportLotsDataRequest"
               }
             }
           },
@@ -14899,6 +15080,9 @@
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
           },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
+          },
           "422": {
             "$ref": "#/components/responses/ValidationException"
           }
@@ -14916,23 +15100,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "data": {
-                    "type": "string"
-                  },
-                  "format": {
-                    "enum": [
-                      "csv",
-                      "json"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "format",
-                  "data"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ImportUsersDataRequest"
               }
             }
           },
@@ -15044,6 +15212,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -15506,23 +15677,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "latitude": {
-                    "maximum": 90,
-                    "minimum": -90,
-                    "type": "number"
-                  },
-                  "longitude": {
-                    "maximum": 180,
-                    "minimum": -180,
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "latitude",
-                  "longitude"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/SetLotLocationRequest"
               }
             }
           },
@@ -15577,6 +15732,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "404": {
             "content": {
@@ -17127,6 +17285,9 @@
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
           },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
+          },
           "422": {
             "$ref": "#/components/responses/ValidationException"
           }
@@ -17222,6 +17383,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -29972,21 +30136,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "payment_intent_id": {
-                    "type": "string"
-                  },
-                  "payment_method": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "payment_intent_id"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/ConfirmPaymentRequest"
               }
             }
           },
@@ -30048,6 +30198,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -30195,41 +30348,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "amount": {
-                    "minimum": 50,
-                    "type": "integer"
-                  },
-                  "booking_id": {
-                    "format": "uuid",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "currency": {
-                    "description": "in cents",
-                    "maxLength": 3,
-                    "minLength": 3,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "metadata": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "amount"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/CreatePaymentIntentRequest"
               }
             }
           },
@@ -30314,6 +30433,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -30543,46 +30665,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "email_booking_confirm": {
-                    "type": "boolean"
-                  },
-                  "email_reminder": {
-                    "type": "boolean"
-                  },
-                  "email_swap": {
-                    "type": "boolean"
-                  },
-                  "phone_number": {
-                    "maxLength": 20,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "push_enabled": {
-                    "type": "boolean"
-                  },
-                  "quiet_hours_end": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "quiet_hours_start": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "sms_enabled": {
-                    "type": "boolean"
-                  },
-                  "whatsapp_enabled": {
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
               }
             }
           }
@@ -30601,6 +30684,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -30834,247 +30920,6 @@
         },
         "tags": [
           "Public"
-        ]
-      }
-    },
-    "/v1/push/subscribe": {
-      "post": {
-        "description": "Store a Web Push subscription for the authenticated user.",
-        "operationId": "push.subscribe",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "endpoint": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "type": "string"
-                  },
-                  "keys": {
-                    "properties": {
-                      "auth": {
-                        "type": "string"
-                      },
-                      "p256dh": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "p256dh",
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "endpoint",
-                  "keys"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "message": {
-                          "const": "Subscription stored",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "message"
-                      ],
-                      "type": "object"
-                    },
-                    "error": {
-                      "type": "null"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationException"
-          }
-        },
-        "summary": "POST /api/v1/push/subscribe",
-        "tags": [
-          "Push"
-        ]
-      }
-    },
-    "/v1/push/unsubscribe": {
-      "delete": {
-        "description": "Remove all push subscriptions for the authenticated user.",
-        "operationId": "push.unsubscribe",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "message": {
-                          "const": "Unsubscribed",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "message"
-                      ],
-                      "type": "object"
-                    },
-                    "error": {
-                      "type": "null"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          }
-        },
-        "summary": "DELETE /api/v1/push/unsubscribe",
-        "tags": [
-          "Push"
-        ]
-      }
-    },
-    "/v1/push/vapid-key": {
-      "get": {
-        "description": "Return the VAPID public key so the frontend can subscribe.",
-        "operationId": "push.vapidKey",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "public_key": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "public_key"
-                      ],
-                      "type": "object"
-                    },
-                    "error": {
-                      "type": "null"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "type": "null"
-                    },
-                    "error": {
-                      "properties": {
-                        "code": {
-                          "const": "NOT_CONFIGURED",
-                          "type": "string"
-                        },
-                        "message": {
-                          "const": "Web Push not configured",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "type": "object"
-                    },
-                    "meta": {
-                      "type": "null"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "data",
-                    "error",
-                    "meta"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "summary": "GET /api/v1/push/vapid-key",
-        "tags": [
-          "Push"
         ]
       }
     },
@@ -31654,47 +31499,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "days_of_week": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "minItems": 1,
-                    "type": "array"
-                  },
-                  "end_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "end_time": {
-                    "type": "string"
-                  },
-                  "lot_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "slot_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  },
-                  "start_date": {
-                    "format": "date-time",
-                    "type": "string"
-                  },
-                  "start_time": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "lot_id",
-                  "slot_id",
-                  "days_of_week",
-                  "start_date",
-                  "end_date",
-                  "start_time",
-                  "end_time"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/StoreRecurringBookingRequest"
               }
             }
           },
@@ -31713,6 +31518,9 @@
           },
           "401": {
             "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "$ref": "#/components/responses/AuthorizationException"
           },
           "422": {
             "$ref": "#/components/responses/ValidationException"
@@ -31857,46 +31665,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "admin_email": {
-                    "format": "email",
-                    "type": "string"
-                  },
-                  "admin_name": {
-                    "type": "string"
-                  },
-                  "admin_password": {
-                    "minLength": 8,
-                    "type": "string"
-                  },
-                  "admin_username": {
-                    "minLength": 3,
-                    "type": "string"
-                  },
-                  "company_name": {
-                    "type": "string"
-                  },
-                  "create_sample_data": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "use_case": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "company_name",
-                  "admin_username",
-                  "admin_password",
-                  "admin_email",
-                  "admin_name"
-                ],
-                "type": "object"
+                "$ref": "#/components/schemas/InitSetupRequest"
               }
             }
           },
@@ -48973,381 +48742,6 @@
         ]
       }
     },
-    "/v1/webhooks": {
-      "get": {
-        "operationId": "misc.webhooks_0",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/Webhook"
-                  },
-                  "type": "array"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      },
-      "post": {
-        "operationId": "misc.createWebhook_1",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "active": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "events": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "secret": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "url": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "pattern": "^https?:\\/\\/",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "url"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Webhook"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationException"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      }
-    },
-    "/v1/webhooks/{id}": {
-      "delete": {
-        "operationId": "misc.deleteWebhook_1",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "const": "Deleted",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      },
-      "put": {
-        "operationId": "misc.updateWebhook_0",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "active": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "events": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "secret": {
-                    "maxLength": 255,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "url": {
-                    "format": "uri",
-                    "maxLength": 2048,
-                    "pattern": "^https?:\\/\\/",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          },
-          "422": {
-            "$ref": "#/components/responses/ValidationException"
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      }
-    },
-    "/v1/webhooks/{id}/test": {
-      "post": {
-        "operationId": "misc.testWebhook",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status_code": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "status_code"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          },
-          "401": {
-            "$ref": "#/components/responses/AuthenticationException"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "description": "Error overview.",
-                      "example": "Admin access required",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "message"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "An error"
-          },
-          "502": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "success",
-                    "error"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "Misc"
-        ]
-      }
-    },
     "/vehicles": {
       "get": {
         "operationId": "vehicle.index_0",
@@ -49795,7 +49189,7 @@
     },
     "/webhooks": {
       "get": {
-        "operationId": "misc.webhooks_0",
+        "operationId": "misc.webhooks",
         "responses": {
           "200": {
             "content": {
@@ -49839,7 +49233,7 @@
         ]
       },
       "post": {
-        "operationId": "misc.createWebhook_1",
+        "operationId": "misc.createWebhook",
         "requestBody": {
           "content": {
             "application/json": {
@@ -49928,7 +49322,7 @@
     },
     "/webhooks/{id}": {
       "delete": {
-        "operationId": "misc.deleteWebhook_1",
+        "operationId": "misc.deleteWebhook",
         "parameters": [
           {
             "in": "path",
@@ -49988,7 +49382,7 @@
         ]
       },
       "put": {
-        "operationId": "misc.updateWebhook_0",
+        "operationId": "misc.updateWebhook",
         "parameters": [
           {
             "in": "path",

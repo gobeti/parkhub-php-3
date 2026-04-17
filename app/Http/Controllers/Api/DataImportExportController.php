@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ImportLotsDataRequest;
+use App\Http\Requests\ImportUsersDataRequest;
 use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\User;
@@ -19,12 +21,9 @@ class DataImportExportController extends Controller
     /**
      * POST /api/v1/admin/import/users — import users from CSV/JSON.
      */
-    public function importUsers(Request $request): JsonResponse
+    public function importUsers(ImportUsersDataRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'format' => 'required|in:csv,json',
-            'data' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $imported = 0;
         $skipped = 0;
@@ -84,12 +83,9 @@ class DataImportExportController extends Controller
     /**
      * POST /api/v1/admin/import/lots — import parking lots from CSV/JSON.
      */
-    public function importLots(Request $request): JsonResponse
+    public function importLots(ImportLotsDataRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'format' => 'required|in:csv,json',
-            'data' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $imported = 0;
         $skipped = 0;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpsertSSOProviderRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -111,17 +112,8 @@ class SSOController extends Controller
     /**
      * Create or update an SSO provider (admin only).
      */
-    public function upsert(Request $request, string $provider): JsonResponse
+    public function upsert(UpsertSSOProviderRequest $request, string $provider): JsonResponse
     {
-        $request->validate([
-            'display_name' => 'required|string|max:255',
-            'entity_id' => 'required|string|max:1024',
-            'sso_url' => 'required|url|max:2048',
-            'certificate' => 'required|string',
-            'metadata_url' => 'nullable|string|max:2048',
-            'enabled' => 'boolean',
-        ]);
-
         $providers = $this->loadProviders();
 
         $slug = Str::slug($provider);

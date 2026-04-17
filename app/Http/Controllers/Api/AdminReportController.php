@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\HeatmapReportRequest;
+use App\Http\Requests\OccupancyReportRequest;
+use App\Http\Requests\RevenueReportRequest;
 use App\Models\Absence;
 use App\Models\Booking;
 use App\Models\ParkingLot;
@@ -55,10 +58,8 @@ class AdminReportController extends Controller
         ]);
     }
 
-    public function heatmap(Request $request): JsonResponse
+    public function heatmap(HeatmapReportRequest $request): JsonResponse
     {
-
-        $request->validate(['days' => 'integer|min:1|max:365']);
         $days = (int) $request->get('days', 30);
 
         // Use DB-agnostic expressions: DAYOFWEEK (MySQL) vs strftime (SQLite)
@@ -217,14 +218,8 @@ class AdminReportController extends Controller
     /**
      * Revenue report grouped by day/week/month.
      */
-    public function revenue(Request $request): JsonResponse
+    public function revenue(RevenueReportRequest $request): JsonResponse
     {
-        $request->validate([
-            'start' => 'required|date',
-            'end' => 'required|date|after_or_equal:start',
-            'group_by' => 'sometimes|string|in:day,week,month',
-        ]);
-
         $groupBy = $request->get('group_by', 'day');
         $driver = DB::getDriverName();
 
@@ -261,13 +256,8 @@ class AdminReportController extends Controller
     /**
      * Occupancy percentage over time.
      */
-    public function occupancy(Request $request): JsonResponse
+    public function occupancy(OccupancyReportRequest $request): JsonResponse
     {
-        $request->validate([
-            'start' => 'required|date',
-            'end' => 'required|date|after_or_equal:start',
-        ]);
-
         $totalSlots = ParkingSlot::count();
         if ($totalSlots === 0) {
             return response()->json(['data' => [], 'total_slots' => 0]);

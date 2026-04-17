@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InitSetupRequest;
 use App\Models\ParkingLot;
 use App\Models\ParkingSlot;
 use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class SetupController extends Controller
@@ -33,21 +33,11 @@ class SetupController extends Controller
         ]);
     }
 
-    public function init(Request $request)
+    public function init(InitSetupRequest $request)
     {
         if (filter_var(Setting::get('setup_completed', false), FILTER_VALIDATE_BOOLEAN)) {
             return response()->json(['error' => 'Setup already completed'], 400);
         }
-
-        $request->validate([
-            'company_name' => 'required|string',
-            'admin_username' => 'required|string|min:3',
-            'admin_password' => 'required|string|min:8',
-            'admin_email' => 'required|email',
-            'admin_name' => 'required|string',
-            'use_case' => 'nullable|string',
-            'create_sample_data' => 'nullable|boolean',
-        ]);
 
         // Create admin user
         $admin = User::create([

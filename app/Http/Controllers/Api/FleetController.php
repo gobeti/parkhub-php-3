@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FlagVehicleRequest;
 use App\Models\Vehicle;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -85,14 +86,11 @@ class FleetController extends Controller
     /**
      * PUT /api/v1/admin/fleet/{id}/flag — flag or unflag a vehicle.
      */
-    public function flag(Request $request, string $id): JsonResponse
+    public function flag(FlagVehicleRequest $request, string $id): JsonResponse
     {
         $vehicle = Vehicle::findOrFail($id);
 
-        $validated = $request->validate([
-            'flagged' => 'required|boolean',
-            'reason' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         $vehicle->update([
             'flagged' => $validated['flagged'],

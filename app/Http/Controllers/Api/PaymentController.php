@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ConfirmPaymentRequest;
+use App\Http\Requests\CreatePaymentIntentRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -16,15 +18,8 @@ class PaymentController extends Controller
      * POST /api/v1/payments/create-intent
      * Creates a payment intent stub (Stripe parity).
      */
-    public function createIntent(Request $request): JsonResponse
+    public function createIntent(CreatePaymentIntentRequest $request): JsonResponse
     {
-        $request->validate([
-            'amount' => 'required|integer|min:50', // in cents
-            'currency' => 'nullable|string|size:3',
-            'booking_id' => 'nullable|uuid',
-            'metadata' => 'nullable|array',
-        ]);
-
         $intentId = 'pi_'.Str::random(24);
 
         return response()->json([
@@ -48,13 +43,8 @@ class PaymentController extends Controller
      * Confirms a payment intent stub.
      * Returns proper status based on whether payment_method was provided.
      */
-    public function confirm(Request $request): JsonResponse
+    public function confirm(ConfirmPaymentRequest $request): JsonResponse
     {
-        $request->validate([
-            'payment_intent_id' => 'required|string',
-            'payment_method' => 'nullable|string',
-        ]);
-
         // Without a payment method, the intent cannot succeed
         $status = $request->filled('payment_method') ? 'succeeded' : 'requires_payment_method';
 

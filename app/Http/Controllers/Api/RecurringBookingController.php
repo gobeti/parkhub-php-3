@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRecurringBookingRequest;
 use App\Http\Resources\RecurringBookingResource;
 use App\Models\RecurringBooking;
 use Illuminate\Http\Request;
@@ -18,18 +19,8 @@ class RecurringBookingController extends Controller
         );
     }
 
-    public function store(Request $request)
+    public function store(StoreRecurringBookingRequest $request)
     {
-        $request->validate([
-            'lot_id' => 'required|uuid',
-            'slot_id' => 'required|uuid',
-            'days_of_week' => 'required|array',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after:start_date',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-        ]);
-
         $recurring = RecurringBooking::create(array_merge(
             $request->only(['lot_id', 'slot_id', 'days_of_week', 'start_date', 'end_date', 'start_time', 'end_time', 'vehicle_plate']),
             ['user_id' => $request->user()->id, 'active' => true]
