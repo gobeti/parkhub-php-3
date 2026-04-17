@@ -13,7 +13,7 @@ OUT="docs/openapi/php.json"
 
 mkdir -p "$(dirname "$OUT")"
 
-php artisan scramble:export --path="$OUT" >/dev/null
+php artisan scramble:export --path="$OUT"
 
 # Pretty-print + normalise key ordering so diffs stay readable
 jq -S '.' "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
