@@ -6,9 +6,16 @@ parameters:
     paths:
         - app/
 
-    # Level 5 with baseline. Each step raises the bar for new code;
+    # Level 5 with shrunk baseline. Each step raises the bar for new code;
     # pre-existing findings land in phpstan-baseline.neon.
     # Level 5 adds: check types of arguments passed to methods and functions.
+    #
+    # Level 6 bump was attempted on 2026-04-17 (T-1746). It surfaced 328 real
+    # PHPDoc/generics gaps (missingType.iterableValue, missingType.return,
+    # missingType.generics) — all baselinable but tripling the baseline size.
+    # Per audit STOP clause ( >50 new findings → hold ), we remain at level 5
+    # pending a dedicated follow-up sweep to add @return / array<…> PHPDoc
+    # across controllers and helpers before promoting to level 6.
     level: 5
 
     # Exclude generated/cache files

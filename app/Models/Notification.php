@@ -7,7 +7,19 @@ namespace App\Models;
 use App\Services\PushNotificationService;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $user_id
+ * @property string $type
+ * @property ?string $title
+ * @property ?string $message
+ * @property ?array<string, mixed> $data
+ * @property bool $read
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class Notification extends Model
 {
     use HasUuids;

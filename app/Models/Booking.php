@@ -5,12 +5,42 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $user_id
+ * @property string $lot_id
+ * @property string $slot_id
+ * @property string $booking_type
+ * @property ?string $lot_name
+ * @property ?string $slot_number
+ * @property ?string $vehicle_plate
+ * @property Carbon $start_time
+ * @property Carbon $end_time
+ * @property string $status
+ * @property ?string $notes
+ * @property ?array<string, mixed> $recurrence
+ * @property ?Carbon $checked_in_at
+ * @property ?string $base_price
+ * @property ?string $tax_amount
+ * @property ?string $total_price
+ * @property string $currency
+ * @property ?string $tenant_id
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read User $user
+ * @property-read ParkingLot $lot
+ * @property-read ParkingLot $parkingLot
+ * @property-read ParkingSlot $slot
+ * @property-read Collection<int, BookingNote> $bookingNotes
+ */
 class Booking extends Model
 {
     use BelongsToTenant, HasFactory, HasUuids;

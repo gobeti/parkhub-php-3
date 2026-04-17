@@ -19,6 +19,8 @@ class BookingCancelled implements ShouldBroadcast
 
     /**
      * Get the channels the event should broadcast on.
+     *
+     * @return array<int, PrivateChannel>
      */
     public function broadcastOn(): array
     {
@@ -32,6 +34,9 @@ class BookingCancelled implements ShouldBroadcast
         return 'booking.cancelled';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [

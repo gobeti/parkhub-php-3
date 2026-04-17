@@ -7,7 +7,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $created_by
+ * @property string $lot_id
+ * @property string $slot_id
+ * @property string $guest_name
+ * @property string $guest_code
+ * @property Carbon $start_time
+ * @property Carbon $end_time
+ * @property ?string $vehicle_plate
+ * @property string $status
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read ParkingLot $lot
+ * @property-read ParkingSlot $slot
+ * @property-read User $creator
+ */
 class GuestBooking extends Model
 {
     use HasUuids;

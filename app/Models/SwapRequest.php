@@ -6,7 +6,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $requester_booking_id
+ * @property string $target_booking_id
+ * @property string $requester_id
+ * @property string $target_id
+ * @property string $status
+ * @property ?string $message
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read Booking $requesterBooking
+ * @property-read Booking $targetBooking
+ * @property-read User $requester
+ * @property-read User $target
+ */
 class SwapRequest extends Model
 {
     use HasUuids;

@@ -5,12 +5,41 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $name
+ * @property ?string $address
+ * @property ?string $latitude
+ * @property ?string $longitude
+ * @property ?string $center_lat
+ * @property ?string $center_lng
+ * @property ?int $geofence_radius_m
+ * @property int $total_slots
+ * @property int $available_slots
+ * @property ?array<string, mixed> $layout
+ * @property string $status
+ * @property ?string $hourly_rate
+ * @property ?string $daily_max
+ * @property ?string $monthly_pass
+ * @property string $currency
+ * @property ?array<string, mixed> $operating_hours
+ * @property ?array<string, mixed> $dynamic_pricing_rules
+ * @property ?string $tenant_id
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read Collection<int, ParkingSlot> $slots
+ * @property-read Collection<int, Zone> $zones
+ * @property-read Collection<int, Booking> $bookings
+ * @property-read ?Tenant $tenant
+ */
 class ParkingLot extends Model
 {
     use BelongsToTenant, HasFactory, HasUuids;

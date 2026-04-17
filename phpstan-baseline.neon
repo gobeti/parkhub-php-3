@@ -97,38 +97,14 @@ parameters:
 			path: app/Http/Controllers/Api/AdminAnalyticsController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Api/AdminController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
-			identifier: property.notFound
-			count: 1
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 3
 			path: app/Http/Controllers/Api/AdminController.php
 
 		-
 			message: '#^Match expression does not handle remaining value\: mixed$#'
 			identifier: match.unhandled
-			count: 1
-			path: app/Http/Controllers/Api/AdminController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,App\\Models\\GuestBooking\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Http/Controllers/Api/AdminController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 2
-			path: app/Http/Controllers/Api/AdminController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/AdminController.php
 
@@ -151,15 +127,9 @@ parameters:
 			path: app/Http/Controllers/Api/AdminReportController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
 			count: 1
-			path: app/Http/Controllers/Api/AdminReportController.php
-
-		-
-			message: '#^Cannot call method format\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 2
 			path: app/Http/Controllers/Api/AdminReportController.php
 
 		-
@@ -175,15 +145,9 @@ parameters:
 			path: app/Http/Controllers/Api/AdminReportController.php
 
 		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 2
-			path: app/Http/Controllers/Api/AdminReportController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
 			path: app/Http/Controllers/Api/AdminReportController.php
 
 		-
@@ -253,12 +217,6 @@ parameters:
 			path: app/Http/Controllers/Api/AuthController.php
 
 		-
-			message: '#^Cannot call method toISOString\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Controllers/Api/AuthController.php
-
-		-
 			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -278,6 +236,12 @@ parameters:
 
 		-
 			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 2
 			path: app/Http/Controllers/Api/AuthController.php
@@ -307,21 +271,9 @@ parameters:
 			path: app/Http/Controllers/Api/BillingController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\WaitlistEntry\:\:\$user\.$#'
-			identifier: property.notFound
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
 			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/BookingController.php
-
-		-
-			message: '#^Cannot access property \$timestamp on string\.$#'
-			identifier: property.nonObject
-			count: 3
 			path: app/Http/Controllers/Api/BookingController.php
 
 		-
@@ -355,43 +307,49 @@ parameters:
 			path: app/Http/Controllers/Api/BookingController.php
 
 		-
-			message: '#^Cannot access property \$timestamp on string\.$#'
-			identifier: property.nonObject
-			count: 2
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Api/BookingController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\ParkingLot\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/BookingController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 4
 			path: app/Http/Controllers/Api/BookingInvoiceController.php
 
 		-
-			message: '#^Cannot call method format\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 2
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
 			path: app/Http/Controllers/Api/BookingInvoiceController.php
 
 		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Api/BookingInvoiceController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 2
 			path: app/Http/Controllers/Api/BookingInvoiceController.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 2
-			path: app/Http/Controllers/Api/BookingInvoiceController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
 			count: 1
 			path: app/Http/Controllers/Api/DataImportExportController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$username\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/DataImportExportController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/DataImportExportController.php
@@ -409,14 +367,20 @@ parameters:
 			path: app/Http/Controllers/Api/FleetController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$username\.$#'
-			identifier: property.notFound
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Vehicle\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/Api/FleetController.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Vehicle\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/FleetController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\User\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/FleetController.php
 
@@ -445,21 +409,9 @@ parameters:
 			path: app/Http/Controllers/Api/LotController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/LotController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slot_number\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Http/Controllers/Api/LotController.php
-
-		-
-			message: '#^Cannot call method toISOString\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 2
 			path: app/Http/Controllers/Api/LotController.php
 
 		-
@@ -469,12 +421,6 @@ parameters:
 			path: app/Http/Controllers/Api/LotController.php
 
 		-
-			message: '#^Property App\\Models\\ParkingLot\:\:\$layout \(string\|null\) does not accept array\<string, list\<array\<string, list\<mixed\>\|string\>\>\|string\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: app/Http/Controllers/Api/LotController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
@@ -487,13 +433,7 @@ parameters:
 			path: app/Http/Controllers/Api/MaintenanceController.php
 
 		-
-			message: '#^Cannot call method toISOString\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Controllers/Api/MiscController.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/MiscController.php
@@ -505,34 +445,10 @@ parameters:
 			path: app/Http/Controllers/Api/MobileBookingController.php
 
 		-
-			message: '#^Offset ''booking_id'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/Api/NotificationCenterController.php
-
-		-
-			message: '#^Ternary operator condition is always false\.$#'
-			identifier: ternary.alwaysFalse
-			count: 1
-			path: app/Http/Controllers/Api/NotificationCenterController.php
-
-		-
 			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: app/Http/Controllers/Api/OAuthController.php
-
-		-
-			message: '#^Offset ''friday''\|''monday''\|''saturday''\|''sunday''\|''thursday''\|''tuesday''\|''wednesday'' on array\{\}\|string on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 3
-			path: app/Http/Controllers/Api/OperatingHoursController.php
-
-		-
-			message: '#^Offset ''is_24h'' on array\{\}\|string on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 2
-			path: app/Http/Controllers/Api/OperatingHoursController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$date\.$#'
@@ -577,33 +493,9 @@ parameters:
 			path: app/Http/Controllers/Api/PWAController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/ParkingHistoryController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slot_number\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/ParkingHistoryController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Http/Controllers/Api/ParkingHistoryController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Controllers/Api/ParkingHistoryController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>slot_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
 			path: app/Http/Controllers/Api/ParkingHistoryController.php
 
 		-
@@ -619,27 +511,21 @@ parameters:
 			path: app/Http/Controllers/Api/ParkingPassController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Api/ParkingPassController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slot\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/Api/ParkingPassController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slot_number\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Api/ParkingPassController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$start_time\.$#'
 			identifier: property.notFound
 			count: 1
+			path: app/Http/Controllers/Api/ParkingPassController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
 			path: app/Http/Controllers/Api/ParkingPassController.php
 
 		-
@@ -651,20 +537,14 @@ parameters:
 		-
 			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
-			count: 2
+			count: 1
 			path: app/Http/Controllers/Api/ParkingPassController.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>slot_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
-			count: 3
+			count: 2
 			path: app/Http/Controllers/Api/ParkingPassController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Zone\:\:\$max_capacity\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/ParkingZoneController.php
 
 		-
 			message: '#^Call to an undefined method Illuminate\\Database\\ConnectionInterface\:\:getSchemaBuilder\(\)\.$#'
@@ -673,16 +553,10 @@ parameters:
 			path: app/Http/Controllers/Api/ParkingZoneController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 2
-			path: app/Http/Controllers/Api/RecommendationController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slot_number\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Api/RecommendationController.php
+			path: app/Http/Controllers/Api/ParkingZoneController.php
 
 		-
 			message: '#^Match expression does not handle remaining value\: mixed$#'
@@ -697,25 +571,19 @@ parameters:
 			path: app/Http/Controllers/Api/SharingController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$label\.$#'
+			message: '#^Access to an undefined property App\\Models\\ParkingSlot\:\:\$label\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/Api/SharingController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
 			count: 1
 			path: app/Http/Controllers/Api/SharingController.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>label" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Controllers/Api/SharingController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/SharingController.php
@@ -741,7 +609,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: app/Http/Controllers/Api/TeamController.php
 
 		-
@@ -757,22 +625,10 @@ parameters:
 			path: app/Http/Controllers/Api/TeamController.php
 
 		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\User\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/TeamController.php
-
-		-
-			message: '#^Call to function in_array\(\) with arguments ''classic'', array\{''classic'', ''glass'', ''bento'', ''brutalist'', ''neon'', ''warm''\} and true will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: app/Http/Controllers/Api/ThemeController.php
-
-		-
-			message: '#^Offset ''design_theme'' on array\{\}\|string on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/Api/ThemeController.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\TranslationProposal\:\:\$reviewer\.$#'
@@ -799,12 +655,6 @@ parameters:
 			path: app/Http/Controllers/Api/TranslationController.php
 
 		-
-			message: '#^Cannot access property \$timestamp on string\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/Api/UserController.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 2
@@ -817,22 +667,22 @@ parameters:
 			path: app/Http/Controllers/Api/UserController.php
 
 		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Api/UserController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/UserController.php
+
+		-
 			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
 			path: app/Http/Controllers/Api/VehicleController.php
-
-		-
-			message: '#^Cannot call method isPast\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Controllers/Api/WaitlistController.php
-
-		-
-			message: '#^Cannot call method toISOString\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Http/Controllers/Api/WaitlistController.php
 
 		-
 			message: '#^Relation ''lot'' is not found in App\\Models\\WaitlistEntry model\.$#'
@@ -841,862 +691,16 @@ parameters:
 			path: app/Http/Controllers/Api/WaitlistController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/WaitlistController.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\User\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Controllers/Api/WidgetController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Booking\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Http/Controllers/Api/WidgetController.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingNoteResource\:\:\$booking_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingNoteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingNoteResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingNoteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingNoteResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingNoteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingNoteResource\:\:\$note\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingNoteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingNoteResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingNoteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingNoteResource\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingNoteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$base_price\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$booking_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$checked_in_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$currency\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$end_time\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$lot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$lot_name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$notes\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$recurrence\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$slot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$slot_number\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$start_time\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$tax_amount\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$total_price\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\BookingResource\:\:\$vehicle_plate\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/BookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\FavoriteResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/FavoriteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\FavoriteResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/FavoriteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\FavoriteResource\:\:\$slot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/FavoriteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\FavoriteResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/FavoriteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\FavoriteResource\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/FavoriteResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$created_by\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$end_time\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$guest_code\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$guest_name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$lot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$slot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$start_time\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\GuestBookingResource\:\:\$vehicle_plate\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/GuestBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$data\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$message\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$read\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$title\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\NotificationResource\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/NotificationResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$address\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$available_slots\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$currency\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$daily_max\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$hourly_rate\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$layout\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$monthly_pass\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$total_slots\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingLotResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingLotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$features\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$lot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$number\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$reserved_for_department\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$slot_number\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$slot_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ParkingSlotResource\:\:\$zone_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ParkingSlotResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$active\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$days_of_week\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$end_date\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$end_time\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$lot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$slot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$start_date\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$start_time\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\RecurringBookingResource\:\:\$vehicle_plate\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/RecurringBookingResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$message\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$requester_booking_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$requester_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$target_booking_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$target_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\SwapRequestResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/SwapRequestResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$credits_balance\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$credits_last_refilled\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$credits_monthly_quota\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$department\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email_verified_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$is_active\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$last_login\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$phone\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$picture\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$preferences\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$role\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$username\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$color\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$is_default\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$make\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$model\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$photo_url\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$plate\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\VehicleResource\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/VehicleResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$accepted_booking_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$lot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$notified_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$offer_expires_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$slot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\WaitlistEntryResource\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/WaitlistEntryResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ZoneResource\:\:\$color\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ZoneResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ZoneResource\:\:\$created_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ZoneResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ZoneResource\:\:\$description\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ZoneResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ZoneResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ZoneResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ZoneResource\:\:\$lot_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ZoneResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ZoneResource\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ZoneResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\ZoneResource\:\:\$updated_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/ZoneResource.php
 
 		-
 			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
@@ -1711,22 +715,10 @@ parameters:
 			path: app/Jobs/AggregateSystemMetricsJob.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\WaitlistEntry\:\:\$user\.$#'
-			identifier: property.notFound
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
 			count: 1
 			path: app/Jobs/AutoReleaseBookingsJob.php
-
-		-
-			message: '#^Parameter \#2 \$lot of class App\\Mail\\WaitlistSlotAvailableMail constructor expects App\\Models\\ParkingLot, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Jobs/AutoReleaseBookingsJob.php
-
-		-
-			message: '#^Parameter \#2 \$haystack of function in_array expects array, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Jobs/ExpandRecurringBookingsJob.php
 
 		-
 			message: '#^Relation ''user'' is not found in App\\Models\\RecurringBooking model\.$#'
@@ -1741,55 +733,31 @@ parameters:
 			path: app/Jobs/ExpandRecurringBookingsJob.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
 			count: 1
 			path: app/Jobs/SendBookingReminderJob.php
 
 		-
-			message: '#^Parameter \#2 \$recipient of class App\\Mail\\BookingReminderMail constructor expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Jobs/SendBookingReminderJob.php
-
-		-
-			message: '#^Cannot call method format\(\) on string\.$#'
-			identifier: method.nonObject
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
 			count: 2
 			path: app/Mail/BookingConfirmation.php
 
 		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 2
 			path: app/Mail/BookingConfirmation.php
 
 		-
-			message: '#^Cannot call method format\(\) on string\.$#'
-			identifier: method.nonObject
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
 			count: 1
 			path: app/Mail/BookingReminderMail.php
 
 		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Mail/BookingReminderMail.php
-
-		-
-			message: '#^Offset non\-falsy\-string on non\-falsy\-string on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Models/ParkingLot.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between null and null will always evaluate to true\.$#'
-			identifier: identical.alwaysTrue
-			count: 1
-			path: app/Models/ParkingLot.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: app/Models/ParkingLot.php

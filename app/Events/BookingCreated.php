@@ -23,6 +23,8 @@ class BookingCreated implements ShouldBroadcast
      *
      * Broadcasts on the authenticated user's private channel so that only
      * the booking owner receives the real-time update.
+     *
+     * @return array<int, PrivateChannel>
      */
     public function broadcastOn(): array
     {
@@ -36,6 +38,9 @@ class BookingCreated implements ShouldBroadcast
         return 'booking.created';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [

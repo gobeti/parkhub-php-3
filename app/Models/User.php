@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,8 +13,46 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property string $id
+ * @property ?string $username
+ * @property string $email
+ * @property string $name
+ * @property ?string $picture
+ * @property ?string $phone
+ * @property string $password
+ * @property string $role
+ * @property ?array<string, mixed> $preferences
+ * @property bool $is_active
+ * @property ?string $department
+ * @property ?Carbon $last_login
+ * @property int $credits_balance
+ * @property int $credits_monthly_quota
+ * @property ?Carbon $credits_last_refilled
+ * @property ?Carbon $email_verified_at
+ * @property ?string $two_factor_secret
+ * @property bool $two_factor_enabled
+ * @property ?array<string, mixed> $notification_preferences
+ * @property ?string $ical_token
+ * @property ?string $tenant_id
+ * @property string $accessibility_needs
+ * @property ?string $cost_center
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property ?Carbon $deleted_at
+ * @property-read Collection<int, LoginHistory> $loginHistory
+ * @property-read Collection<int, Booking> $bookings
+ * @property-read Collection<int, Vehicle> $vehicles
+ * @property-read Collection<int, Absence> $absences
+ * @property-read Collection<int, Notification> $notifications_list
+ * @property-read Collection<int, Favorite> $favorites
+ * @property-read Collection<int, RecurringBooking> $recurringBookings
+ * @property-read Collection<int, CreditTransaction> $creditTransactions
+ * @property-read ?Tenant $tenant
+ */
 class User extends Authenticatable
 {
     use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, Notifiable, SoftDeletes;

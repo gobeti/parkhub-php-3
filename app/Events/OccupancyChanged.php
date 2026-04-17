@@ -26,6 +26,9 @@ class OccupancyChanged implements ShouldBroadcast
         public readonly int $total,
     ) {}
 
+    /**
+     * @return array<int, Channel>
+     */
     public function broadcastOn(): array
     {
         return [
@@ -38,6 +41,9 @@ class OccupancyChanged implements ShouldBroadcast
         return 'occupancy.changed';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [
