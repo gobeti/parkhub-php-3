@@ -51,9 +51,21 @@ class AdminController extends Controller
         }
         $user->update($data);
         // Handle role separately — it's excluded from $fillable to prevent mass-assignment escalation
-        if ($request->filled('role')) {
+        $roleChanged = false;
+        if ($request->filled('role') && $user->role !== $request->role) {
             $user->role = $request->role;
             $user->save();
+            $roleChanged = true;
+        }
+
+        // Privilege change on the target user: invalidate their existing
+        // tokens so the new role can't be bypassed by a stale session, and
+        // rotate the acting admin's session ID for defense-in-depth.
+        if ($roleChanged || $request->filled('password')) {
+            $user->tokens()->delete();
+            if ($request->hasSession()) {
+                $request->session()->regenerate();
+            }
         }
 
         // Return via toArray() to respect $hidden
@@ -302,6 +314,9 @@ class AdminController extends Controller
                 'change_role' => (function () use ($user, $request) {
                     $user->role = $request->role;
                     $user->save();
+                    // Privilege change — kill existing sessions so the new
+                    // role applies immediately on next login.
+                    $user->tokens()->delete();
                 })(),
                 'delete' => $user->delete(),
             };

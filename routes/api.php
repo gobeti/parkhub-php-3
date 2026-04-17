@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WaitlistController;
 use App\Http\Controllers\Api\ZoneController;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 // Health check (no auth)
@@ -53,7 +54,7 @@ Route::get('/legal/privacy', [PublicController::class, 'legalPrivacy']);
 Route::get('/legal/impressum', [PublicController::class, 'legalImpressum']);
 
 // Protected routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware([StartSession::class, 'auth:sanctum', 'session.absolute'])->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);

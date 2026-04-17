@@ -38,6 +38,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Absolute Session Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | Hard cap on session age (in minutes) measured from the moment the user
+    | first authenticated, independent of activity. Unlike `lifetime` above
+    | (which is an idle timeout that refreshes on every request), this value
+    | ensures a stolen cookie/token becomes worthless after the cap elapses.
+    | Matches BSI TR-03107 and OWASP ASVS 3.3.2. Default: 1440 = 24 hours.
+    |
+    */
+
+    'absolute_lifetime' => (int) env('SESSION_ABSOLUTE_LIFETIME', 1440),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Encryption
     |--------------------------------------------------------------------------
     |

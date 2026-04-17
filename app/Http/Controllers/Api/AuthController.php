@@ -460,6 +460,14 @@ class AuthController extends Controller
         $user->update(['password' => Hash::make($request->new_password)]);
         $user->tokens()->delete();
         $token = $user->createToken('auth-token');
+
+        // Regenerate the session ID on a privilege change — defends against
+        // session fixation and ensures the `auth_at` anchor resets for the
+        // absolute-lifetime cap. See BSI TR-03107 / OWASP ASVS 3.3.2.
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         AuditLog::log([
             'user_id' => $user->id,
             'username' => $user->username,

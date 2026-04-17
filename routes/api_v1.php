@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WaitlistController;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 // ── Core routes (always available) ──────────────────────────────────────────
@@ -94,7 +95,7 @@ module_routes('map', 'map.php');
 
 // ── Core protected routes ───────────────────────────────────────────────────
 
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::middleware([StartSession::class, 'auth:sanctum', 'throttle:api', 'session.absolute'])->group(function () {
     // Auth (protected)
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
