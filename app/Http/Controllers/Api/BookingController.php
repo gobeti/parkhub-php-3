@@ -7,7 +7,14 @@ namespace App\Http\Controllers\Api;
 use App\Events\BookingCancelled;
 use App\Events\BookingCreated;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateSwapRequestRequest;
+use App\Http\Requests\ExtendBookingRequest;
+use App\Http\Requests\IndexBookingsRequest;
+use App\Http\Requests\RespondSwapRequestRequest;
 use App\Http\Requests\StoreBookingRequest;
+use App\Http\Requests\StoreGuestBookingRequest;
+use App\Http\Requests\SwapBookingRequest;
+use App\Http\Requests\UpdateBookingNotesRequest;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\GuestBookingResource;
 use App\Http\Resources\SwapRequestResource;
@@ -34,14 +41,8 @@ use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
-    public function index(Request $request)
+    public function index(IndexBookingsRequest $request)
     {
-        $request->validate([
-            'from_date' => 'sometimes|date',
-            'to_date' => 'sometimes|date',
-            'status' => 'sometimes|string|in:active,confirmed,cancelled,completed,expired',
-        ]);
-
         $query = Booking::with(['lot', 'slot'])
             ->where('user_id', $request->user()->id);
         if ($request->has('status')) {
@@ -531,7 +532,7 @@ class BookingController extends Controller
         return response()->json(['success' => true, 'data' => null, 'error' => null, 'meta' => null]);
     }
 
-    public function guestBooking(Request $request)
+    public function guestBooking(StoreGuestBookingRequest $request)
     {
         // Enforce allow_guest_bookings setting
         if (Setting::get('allow_guest_bookings', 'false') !== 'true') {
@@ -541,13 +542,6 @@ class BookingController extends Controller
                 'meta' => null,
             ], 403);
         }
-
-        $request->validate([
-            'lot_id' => 'required|uuid',
-            'slot_id' => 'nullable|uuid',
-            'guest_name' => 'required|string',
-            'end_time' => 'required|date',
-        ]);
 
         $slotId = $request->slot_id;
         if (! $slotId) {
@@ -620,13 +614,8 @@ class BookingController extends Controller
         return GuestBookingResource::make($guest)->response()->setStatusCode(201);
     }
 
-    public function swap(Request $request)
+    public function swap(SwapBookingRequest $request)
     {
-        $request->validate([
-            'booking_id' => 'required|uuid',
-            'target_slot_id' => 'required|uuid',
-        ]);
-
         $booking = Booking::where('user_id', $request->user()->id)->findOrFail($request->booking_id);
 
         $newSlot = ParkingSlot::findOrFail($request->target_slot_id);
@@ -656,16 +645,11 @@ class BookingController extends Controller
         });
     }
 
-    public function updateNotes(Request $request, string $id)
+    public function updateNotes(UpdateBookingNotesRequest $request, string $id)
     {
         $booking = Booking::findOrFail($id);
         $this->authorize('updateNotes', $booking);
         $user = $request->user();
-
-        $request->validate([
-            'notes' => 'nullable|string|max:2000',
-            'note' => 'nullable|string|max:2000',
-        ]);
 
         $booking->update(['notes' => $request->notes]);
 
@@ -899,13 +883,8 @@ class BookingController extends Controller
         ]);
     }
 
-    public function createSwapRequest(Request $request, string $id)
+    public function createSwapRequest(CreateSwapRequestRequest $request, string $id)
     {
-        $request->validate([
-            'target_booking_id' => 'required|uuid',
-            'message' => 'nullable|string|max:500',
-        ]);
-
         $booking = Booking::where('user_id', $request->user()->id)
             ->where('status', 'active')
             ->findOrFail($id);
@@ -947,12 +926,8 @@ class BookingController extends Controller
         return SwapRequestResource::make($swap->load(['requesterBooking', 'targetBooking', 'requester']))->response()->setStatusCode(201);
     }
 
-    public function respondSwapRequest(Request $request, string $id)
+    public function respondSwapRequest(RespondSwapRequestRequest $request, string $id)
     {
-        $request->validate([
-            'accept' => 'required|boolean',
-        ]);
-
         $swap = SwapRequest::where('target_id', $request->user()->id)
             ->where('status', 'pending')
             ->findOrFail($id);
@@ -1000,11 +975,9 @@ class BookingController extends Controller
         return SwapRequestResource::make($swap->fresh()->load(['requesterBooking', 'targetBooking']));
     }
 
-    public function extend(Request $request, string $id): JsonResponse
+    public function extend(ExtendBookingRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'new_end_time' => 'required|date|after:now',
-        ]);
+        $validated = $request->validated();
 
         $booking = Booking::where('user_id', $request->user()->id)
             ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_ACTIVE])
