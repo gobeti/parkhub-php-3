@@ -263,6 +263,8 @@ For a deep dive into the directory layout, controllers, middleware, database sch
 | Dashboard with occupancy stats | Interactive booking flow |
 | ![Admin Panel](docs/screenshots/08-admin.png) | ![Dark Mode](docs/screenshots/09-dark-mode.png) |
 | Admin panel with lot management | Full dark mode support |
+| ![Modules Dashboard](docs/screenshots/10-modules-dashboard.png) | ![Command Palette](docs/screenshots/11-command-palette.png) |
+| Admin Modules Dashboard — toggle plugins + edit JSON-schema config without redeploying (v4.13.0) | Command Palette (Cmd+K) — navigate + run actions from one search bar |
 
 ---
 
