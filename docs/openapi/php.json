@@ -30923,6 +30923,247 @@
         ]
       }
     },
+    "/v1/push/subscribe": {
+      "post": {
+        "description": "Store a Web Push subscription for the authenticated user.",
+        "operationId": "push.subscribe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "endpoint": {
+                    "format": "uri",
+                    "maxLength": 2048,
+                    "type": "string"
+                  },
+                  "keys": {
+                    "properties": {
+                      "auth": {
+                        "type": "string"
+                      },
+                      "p256dh": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "p256dh",
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "endpoint",
+                  "keys"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "message": {
+                          "const": "Subscription stored",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "summary": "POST /api/v1/push/subscribe",
+        "tags": [
+          "Push"
+        ]
+      }
+    },
+    "/v1/push/unsubscribe": {
+      "delete": {
+        "description": "Remove all push subscriptions for the authenticated user.",
+        "operationId": "push.unsubscribe",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "message": {
+                          "const": "Unsubscribed",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        },
+        "summary": "DELETE /api/v1/push/unsubscribe",
+        "tags": [
+          "Push"
+        ]
+      }
+    },
+    "/v1/push/vapid-key": {
+      "get": {
+        "description": "Return the VAPID public key so the frontend can subscribe.",
+        "operationId": "push.vapidKey",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {
+                        "public_key": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "public_key"
+                      ],
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "null"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "null"
+                    },
+                    "error": {
+                      "properties": {
+                        "code": {
+                          "const": "NOT_CONFIGURED",
+                          "type": "string"
+                        },
+                        "message": {
+                          "const": "Web Push not configured",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    },
+                    "meta": {
+                      "type": "null"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "error",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "GET /api/v1/push/vapid-key",
+        "tags": [
+          "Push"
+        ]
+      }
+    },
     "/v1/pwa/manifest": {
       "get": {
         "operationId": "pwa.manifest",
@@ -48742,6 +48983,381 @@
         ]
       }
     },
+    "/v1/webhooks": {
+      "get": {
+        "operationId": "misc.webhooks_0",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Webhook"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Error overview.",
+                      "example": "Admin access required",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "An error"
+          }
+        },
+        "tags": [
+          "Misc"
+        ]
+      },
+      "post": {
+        "operationId": "misc.createWebhook_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "active": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "events": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "secret": {
+                    "maxLength": 255,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "url": {
+                    "format": "uri",
+                    "maxLength": 2048,
+                    "pattern": "^https?:\\/\\/",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Error overview.",
+                      "example": "Admin access required",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "An error"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "tags": [
+          "Misc"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}": {
+      "delete": {
+        "operationId": "misc.deleteWebhook_1",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "const": "Deleted",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Error overview.",
+                      "example": "Admin access required",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "An error"
+          }
+        },
+        "tags": [
+          "Misc"
+        ]
+      },
+      "put": {
+        "operationId": "misc.updateWebhook_0",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "active": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "events": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "secret": {
+                    "maxLength": 255,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "url": {
+                    "format": "uri",
+                    "maxLength": 2048,
+                    "pattern": "^https?:\\/\\/",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Error overview.",
+                      "example": "Admin access required",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "An error"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "tags": [
+          "Misc"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}/test": {
+      "post": {
+        "operationId": "misc.testWebhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "status_code"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "description": "Error overview.",
+                      "example": "Admin access required",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "An error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Misc"
+        ]
+      }
+    },
     "/vehicles": {
       "get": {
         "operationId": "vehicle.index_0",
@@ -49189,7 +49805,7 @@
     },
     "/webhooks": {
       "get": {
-        "operationId": "misc.webhooks",
+        "operationId": "misc.webhooks_0",
         "responses": {
           "200": {
             "content": {
@@ -49233,7 +49849,7 @@
         ]
       },
       "post": {
-        "operationId": "misc.createWebhook",
+        "operationId": "misc.createWebhook_1",
         "requestBody": {
           "content": {
             "application/json": {
@@ -49322,7 +49938,7 @@
     },
     "/webhooks/{id}": {
       "delete": {
-        "operationId": "misc.deleteWebhook",
+        "operationId": "misc.deleteWebhook_1",
         "parameters": [
           {
             "in": "path",
@@ -49382,7 +49998,7 @@
         ]
       },
       "put": {
-        "operationId": "misc.updateWebhook",
+        "operationId": "misc.updateWebhook_0",
         "parameters": [
           {
             "in": "path",

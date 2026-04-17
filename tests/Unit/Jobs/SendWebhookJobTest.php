@@ -4,6 +4,7 @@ namespace Tests\Unit\Jobs;
 
 use App\Jobs\SendWebhookJob;
 use App\Models\Webhook;
+use App\Services\CircuitBreaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -23,7 +24,7 @@ class SendWebhookJobTest extends TestCase
         ]);
 
         $job = new SendWebhookJob($webhook->id, 'booking.created', ['booking_id' => '123']);
-        $job->handle();
+        $job->handle(app(CircuitBreaker::class));
 
         Http::assertSent(function ($request) {
             return $request->url() === 'https://1.1.1.1/hook'
@@ -42,7 +43,7 @@ class SendWebhookJobTest extends TestCase
         ]);
 
         $job = new SendWebhookJob($webhook->id, 'booking.created', ['booking_id' => '123']);
-        $job->handle();
+        $job->handle(app(CircuitBreaker::class));
 
         Http::assertNothingSent();
     }
@@ -52,7 +53,7 @@ class SendWebhookJobTest extends TestCase
         Http::fake();
 
         $job = new SendWebhookJob('nonexistent-id', 'booking.created', ['booking_id' => '123']);
-        $job->handle();
+        $job->handle(app(CircuitBreaker::class));
 
         Http::assertNothingSent();
     }
@@ -69,7 +70,7 @@ class SendWebhookJobTest extends TestCase
         ]);
 
         $job = new SendWebhookJob($webhook->id, 'booking.created', ['booking_id' => '123']);
-        $job->handle();
+        $job->handle(app(CircuitBreaker::class));
 
         Http::assertSent(function ($request) {
             return str_starts_with($request->header('X-Parkhub-Signature')[0] ?? '', 'sha256=');
@@ -89,6 +90,6 @@ class SendWebhookJobTest extends TestCase
         $this->expectException(\RuntimeException::class);
 
         $job = new SendWebhookJob($webhook->id, 'booking.created', ['booking_id' => '123']);
-        $job->handle();
+        $job->handle(app(CircuitBreaker::class));
     }
 }
