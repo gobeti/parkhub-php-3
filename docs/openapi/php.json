@@ -5320,6 +5320,9 @@
             "application/json": {
               "schema": {
                 "properties": {
+                  "enabled": {
+                    "type": "string"
+                  },
                   "timeout_minutes": {
                     "type": "string"
                   }
@@ -5943,6 +5946,9 @@
             "application/json": {
               "schema": {
                 "properties": {
+                  "enabled": {
+                    "type": "string"
+                  },
                   "smtp_pass": {
                     "type": "string"
                   }
@@ -6191,6 +6197,9 @@
               "schema": {
                 "properties": {
                   "data_retention_days": {
+                    "type": "string"
+                  },
+                  "gdpr_enabled": {
                     "type": "string"
                   },
                   "policy_text": {
@@ -13120,7 +13129,10 @@
                               "type": "string"
                             },
                             "logs": {
-                              "type": "string"
+                              "type": [
+                                "object",
+                                "null"
+                              ]
                             }
                           },
                           "required": [
@@ -19754,8 +19766,8 @@
                           "type": "array"
                         },
                         "current": {
-                          "items": {},
-                          "type": "array"
+                          "additionalProperties": {},
+                          "type": "object"
                         }
                       },
                       "required": [
@@ -34070,8 +34082,8 @@
                       "properties": {
                         "company_name": {},
                         "use_case": {
-                          "items": {},
-                          "type": "array"
+                          "additionalProperties": {},
+                          "type": "object"
                         }
                       },
                       "required": [
