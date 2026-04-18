@@ -66,7 +66,7 @@ the authz Policy rollout.
 
 - **HTTP outbound calls gain 15 s timeouts + per-host circuit breaker**: hand-rolled `App\Services\CircuitBreaker` (no new composer dep) backed by Laravel Cache. Keys `cb:{host}:state|failures|opened_at`. Trips at 5 failures/60 s → OPEN, 30 s → HALF_OPEN, success → CLOSED. Wired in `SendWebhookJob::handle` via method injection.
 - **FormRequest migration complete**: 98 FormRequest classes, 0/91 → 93/91 inline `$request->validate(...)` calls migrated, 6 remaining carry `// intentional:` annotations with rationale (browser-defined payloads, private step helpers, wizard dispatch).
-- `dump-openapi.sh` now swaps in `.env.example` before running scramble so the snapshot always matches CI's fresh baseline; memory-limit raised to 1 GB so fresh clones don't OOM (drift-fix follow-up commits `75c61f4` + `d66c4c8`).
+- `dump-openapi.sh` now swaps in `.env.example` before running scramble so the snapshot always matches CI's fresh baseline; memory-limit raised to 1 GB so fresh clones don't OOM (drift-fix follow-up commits `254c559` + `04848de`).
 
 ### Security
 
