@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BulkExportInvoicesRequest;
 use App\Models\Booking;
 use App\Models\Setting;
+use App\Services\Compliance\InvoiceNumberService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -18,6 +19,8 @@ use Illuminate\Http\Request;
  */
 class BookingInvoiceController extends Controller
 {
+    public function __construct(private readonly InvoiceNumberService $invoiceNumbers) {}
+
     public function show(Request $request, string $id)
     {
         $user = $request->user();
@@ -96,9 +99,21 @@ class BookingInvoiceController extends Controller
         $endFmt = $booking->end_time?->format('d.m.Y H:i') ?? '-';
         $dateNow = date('d.m.Y');
 
-        $shortId = strtoupper(substr(str_replace('-', '', $booking->id), 0, 8));
-        $year = $booking->created_at ? $booking->created_at->format('Y') : date('Y');
-        $invoiceNo = 'INV-'.$year.'-'.$shortId;
+        // Fortlaufende invoice number per German § 14 UStG. Allocated under a
+        // SELECT ... FOR UPDATE lock on the per-year counter row; re-renders
+        // return the same number (idempotent) so gaps cannot arise from
+        // client retries or repeated PDF downloads. See
+        // App\Services\Compliance\InvoiceNumberService for the full policy.
+        $year = $booking->created_at
+            ? (int) $booking->created_at->format('Y')
+            : (int) date('Y');
+        $invoiceNo = $this->invoiceNumbers->getOrAssign((string) $booking->id, $year);
+
+        // Backwards-compatible display handle used by the existing PDF
+        // download filename. Historically derived from the booking UUID;
+        // now derived from the sequential invoice number so the filename
+        // stays compact while still matching the number shown on the page.
+        $shortId = str_replace('-', '', $invoiceNo);
 
         return compact(
             'company', 'vatId', 'street', 'zipCity', 'email',

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Stripe;
 
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Owns the Stripe webhook verification + event dispatch extracted from
@@ -47,15 +49,57 @@ final class StripeWebhookService
 
         $event = json_decode($payload, true);
         $type = is_array($event) ? ($event['type'] ?? 'unknown') : 'unknown';
+        $eventId = is_array($event) ? ($event['id'] ?? null) : null;
         $object = is_array($event) ? ($event['data']['object'] ?? []) : [];
 
         Log::info('Stripe webhook received', [
             'type' => $type,
-            'id' => is_array($object) ? ($object['id'] ?? null) : null,
+            'event_id' => $eventId,
+            'object_id' => is_array($object) ? ($object['id'] ?? null) : null,
         ]);
 
-        if ($type === 'checkout.session.completed' && is_array($object)) {
-            $this->handleCheckoutSessionCompleted($object);
+        if (! is_string($eventId) || $eventId === '') {
+            Log::warning('Stripe webhook missing top-level event id', [
+                'type' => $type,
+                'ip' => $ip,
+            ]);
+
+            return StripeWebhookResult::invalidSignature();
+        }
+
+        // Idempotency guard: Stripe delivers events at-least-once, so a retry
+        // of the same event_id must not double-credit the customer. The
+        // insert + credit grant happen in a single DB transaction — if the
+        // INSERT conflicts (UNIQUE on event_id), we short-circuit with a 200
+        // ack. If the mutation later throws, the transaction rolls back and
+        // Stripe's next retry will re-attempt cleanly.
+        try {
+            DB::transaction(function () use ($eventId, $type, $object): void {
+                DB::table('stripe_events')->insert([
+                    'event_id' => $eventId,
+                    'type' => $type,
+                    'received_at' => now(),
+                ]);
+
+                if ($type === 'checkout.session.completed' && is_array($object)) {
+                    $this->handleCheckoutSessionCompleted($object);
+                }
+            });
+        } catch (UniqueConstraintViolationException) {
+            Log::info('Stripe event replay suppressed by idempotency key', [
+                'event_id' => $eventId,
+                'type' => $type,
+            ]);
+
+            return StripeWebhookResult::alreadyProcessed($type);
+        } catch (Throwable $e) {
+            Log::error('Stripe webhook transaction failed', [
+                'event_id' => $eventId,
+                'type' => $type,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         }
 
         return StripeWebhookResult::received($type);

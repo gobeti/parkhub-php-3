@@ -72,7 +72,7 @@ class InvoicePdfTest extends TestCase
         );
     }
 
-    public function test_invoice_number_format_matches_inv_year_hex(): void
+    public function test_invoice_number_format_is_fortlaufend_year_counter(): void
     {
         $user = User::factory()->create();
         $token = $user->createToken('test')->plainTextToken;
@@ -84,10 +84,11 @@ class InvoicePdfTest extends TestCase
         $response->assertStatus(200);
         $content = $response->getContent();
 
-        // Invoice number: INV-{YEAR}-{HEX8}
-        $year = date('Y');
-        $shortId = strtoupper(substr(str_replace('-', '', $booking->id), 0, 8));
-        $expectedInvoiceNo = "INV-{$year}-{$shortId}";
+        // Invoice number must be fortlaufend per § 14 UStG: format YYYY-NNNNNNN
+        // where NNNNNNN is zero-padded to seven digits. The first allocation
+        // in a fresh test DB is 1, so the rendered value is YYYY-0000001.
+        $year = (int) $booking->created_at->format('Y');
+        $expectedInvoiceNo = sprintf('%04d-%07d', $year, 1);
         $this->assertStringContainsString($expectedInvoiceNo, $content);
     }
 

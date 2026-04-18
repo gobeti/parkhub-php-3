@@ -141,6 +141,10 @@ class StripeController extends Controller
 
         return match ($result->outcome) {
             StripeWebhookOutcome::Received => response()->json(['received' => true]),
+            StripeWebhookOutcome::AlreadyProcessed => response()->json([
+                'received' => true,
+                'already_processed' => true,
+            ]),
             StripeWebhookOutcome::InvalidSignature => response()->json(['error' => 'Invalid signature'], 403),
             StripeWebhookOutcome::NotConfigured => response()->json([
                 'error' => 'Webhook signature verification is not configured on this server',

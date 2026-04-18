@@ -13,6 +13,7 @@ namespace App\Services\Stripe;
 enum StripeWebhookOutcome: string
 {
     case Received = 'received';
+    case AlreadyProcessed = 'already_processed';
     case NotConfigured = 'not_configured';
     case InvalidSignature = 'invalid_signature';
 }
@@ -29,6 +30,16 @@ final class StripeWebhookResult
     public static function received(?string $eventType): self
     {
         return new self(StripeWebhookOutcome::Received, 200, eventType: $eventType);
+    }
+
+    /**
+     * The webhook was delivered at-least-once and we have already processed
+     * this event_id — ack the retry with 200 so Stripe stops resending, but
+     * do not run the domain mutation again.
+     */
+    public static function alreadyProcessed(?string $eventType): self
+    {
+        return new self(StripeWebhookOutcome::AlreadyProcessed, 200, eventType: $eventType);
     }
 
     public static function notConfigured(): self
@@ -51,6 +62,7 @@ final class StripeWebhookResult
 
     public function isOk(): bool
     {
-        return $this->outcome === StripeWebhookOutcome::Received;
+        return $this->outcome === StripeWebhookOutcome::Received
+            || $this->outcome === StripeWebhookOutcome::AlreadyProcessed;
     }
 }

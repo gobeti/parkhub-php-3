@@ -42,6 +42,7 @@ class StripeWebhookServiceTest extends TestCase
         ]);
 
         $payload = json_encode([
+            'id' => 'evt_happy_001',
             'type' => 'checkout.session.completed',
             'data' => ['object' => ['id' => 'cs_test_grant_001']],
         ]);
@@ -57,6 +58,10 @@ class StripeWebhookServiceTest extends TestCase
         $this->assertDatabaseHas('stripe_payments', [
             'id' => 'cs_test_grant_001',
             'status' => 'completed',
+        ]);
+        $this->assertDatabaseHas('stripe_events', [
+            'event_id' => 'evt_happy_001',
+            'type' => 'checkout.session.completed',
         ]);
         $this->assertSame(5, (int) $user->fresh()->credits_balance);
     }

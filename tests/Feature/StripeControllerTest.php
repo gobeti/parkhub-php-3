@@ -277,6 +277,7 @@ class StripeControllerTest extends TestCase
         ]);
 
         $payload = json_encode([
+            'id' => 'evt_grant_test_'.bin2hex(random_bytes(8)),
             'type' => 'checkout.session.completed',
             'data' => ['object' => ['id' => 'cs_grant_test']],
         ]);
