@@ -75,19 +75,25 @@ ParkHub is different. It runs on your server -- a shared hosting plan, a VPS, or
 
 ```bash
 git clone https://github.com/nash87/parkhub-php.git && cd parkhub-php
+cp .env.example .env                  # set MYSQL_ROOT_PASSWORD + admin creds — see docs/INSTALLATION.md
 docker compose up -d
-# Open http://localhost:8080 -- Login: admin@parkhub.test / demo
+# Open http://localhost:8080 -- Login: the PARKHUB_ADMIN_EMAIL / PARKHUB_ADMIN_PASSWORD you set in .env
 ```
 
-The first build takes 2--5 minutes (installs Composer + Node dependencies, builds the React frontend). After that, starts are instant. Custom credentials from the start:
+The first build takes 2--5 minutes (installs Composer + Node dependencies, builds the React frontend). After that, starts are instant. Skip `.env` bootstrap and pass credentials inline instead:
 
 ```bash
-PARKHUB_ADMIN_EMAIL=you@company.com PARKHUB_ADMIN_PASSWORD=secure docker compose up -d
+MYSQL_ROOT_PASSWORD=strong-root-pw \
+MYSQL_PASSWORD=strong-db-pw \
+DB_PASSWORD=strong-db-pw \
+PARKHUB_ADMIN_EMAIL=you@company.com \
+PARKHUB_ADMIN_PASSWORD=secure \
+  docker compose up -d
 ```
 
 ### Shared Hosting
 
-ParkHub PHP runs on any 3 EUR/month shared hosting with PHP 8.2+ and MySQL. Upload via FTP, open `install.php` in your browser, done. See [Installation Guide](docs/INSTALLATION.md).
+ParkHub PHP runs on any 3 EUR/month shared hosting with PHP 8.4+ and MySQL. Upload via FTP, open `install.php` in your browser, done. See [Installation Guide](docs/INSTALLATION.md).
 
 ### Laravel Sail
 

@@ -12,8 +12,8 @@ Deploy ParkHub PHP (Laravel) to Kubernetes using Helm.
 ## Install
 
 ```bash
-# Generate an APP_KEY first
-APP_KEY=$(docker run --rm -it ghcr.io/nash87/parkhub-php:3.9.0 php artisan key:generate --show)
+# Generate an APP_KEY first (no Docker required)
+APP_KEY="base64:$(openssl rand -base64 32)"
 
 helm install parkhub ./helm/parkhub \
   --namespace parkhub --create-namespace \

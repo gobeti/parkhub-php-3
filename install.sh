@@ -39,15 +39,21 @@ fi
 echo "→ Downloading docker-compose.yml..."
 curl -fsSL "https://raw.githubusercontent.com/nash87/parkhub-php/main/docker-compose.yml" -o docker-compose.yml
 
-# Create .env
+# Generate strong database secrets so MySQL 8 can boot (it refuses without a root password)
+DB_PASSWORD_GENERATED=$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c24)
+MYSQL_ROOT_PASSWORD_GENERATED=$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c24)
+
+# Create .env — DB_HOST must match the compose service name (`db`)
 cat > .env <<EOF
 PARKHUB_ADMIN_EMAIL=$ADMIN_EMAIL
 PARKHUB_ADMIN_PASSWORD=$ADMIN_PASSWORD
 DB_CONNECTION=mysql
-DB_HOST=mysql
+DB_HOST=db
 DB_DATABASE=parkhub
 DB_USERNAME=parkhub
-DB_PASSWORD=parkhub
+DB_PASSWORD=$DB_PASSWORD_GENERATED
+MYSQL_PASSWORD=$DB_PASSWORD_GENERATED
+MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD_GENERATED
 EOF
 
 # Update port if non-default

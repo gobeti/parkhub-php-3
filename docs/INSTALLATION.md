@@ -40,11 +40,49 @@ SQLite requires no separate server — the database is a single file at `databas
 
 The fastest path to a production-ready instance with MySQL persistence.
 
-### Step 1 — Clone and start
+### Step 1 — Clone
 
 ```bash
 git clone https://github.com/nash87/parkhub-php.git
 cd parkhub-php
+```
+
+### Step 2 — Create `.env` with database + admin secrets (required)
+
+The shipped `docker-compose.yml` bundles a MySQL 8 container, which refuses to
+start without `MYSQL_ROOT_PASSWORD`. Create `.env` next to `docker-compose.yml`
+before the first boot:
+
+```bash
+cp .env.example .env
+
+cat >> .env <<EOF
+# MySQL container bootstrap (the db service reads these on first boot)
+MYSQL_ROOT_PASSWORD=$(openssl rand -base64 24)
+MYSQL_PASSWORD=$(openssl rand -base64 24)
+
+# Laravel app DB credentials must match the MySQL user the db service provisions
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=parkhub
+DB_USERNAME=parkhub
+DB_PASSWORD=\${MYSQL_PASSWORD}
+
+# First-boot admin account (Laravel creates it only if no admin exists yet)
+PARKHUB_ADMIN_EMAIL=admin@parkhub.test
+PARKHUB_ADMIN_PASSWORD=$(openssl rand -base64 16 | tr -dc 'A-Za-z0-9' | head -c16)
+EOF
+
+# Record the credentials — you'll need them to log in
+grep -E '^(MYSQL_ROOT_PASSWORD|PARKHUB_ADMIN_(EMAIL|PASSWORD))=' .env
+```
+
+`.env` is already listed in `.gitignore`, so the secrets stay local.
+
+### Step 3 — Start the stack
+
+```bash
 docker compose up -d
 ```
 
@@ -54,33 +92,40 @@ This starts four containers:
 - `worker` — Queue worker for background jobs
 - `scheduler` — Cron scheduler for recurring tasks
 
-### Step 2 — Open the setup wizard
+### Step 4 — Open the setup wizard
 
 Visit **http://localhost:8080**. The container entrypoint automatically:
 
-1. Runs all pending database migrations
-2. Creates a default admin account: username `admin`, password `demo`
-3. Caches the Laravel configuration and routes
+1. Generates `APP_KEY` if unset
+2. Runs all pending database migrations
+3. Creates the first admin account from `PARKHUB_ADMIN_EMAIL` / `PARKHUB_ADMIN_PASSWORD` (skipped if an admin already exists)
+4. Caches the Laravel configuration and routes
 
-The setup wizard guides you through:
+Log in with the email + password you wrote to `.env` in Step 2. The setup wizard guides you through:
 1. Company name and use case selection
 2. Changing the default admin password (required)
 3. Creating your first parking lot
 
-### Step 3 — Configure for production
+### Step 5 — Verify the stack came up
 
-Edit `docker-compose.yml` before going live:
+```bash
+docker compose ps
+curl http://localhost:8080/api/v1/health/live
+# {"status":"ok","uptime":"..."}
+```
 
-```yaml
-environment:
-  - APP_URL=https://parking.yourdomain.com
-  - APP_DEBUG=false
-  - DB_PASSWORD=your-very-secure-database-password
-  - MAIL_MAILER=smtp
-  - MAIL_HOST=smtp.yourprovider.com
-  - MAIL_PORT=587
-  - MAIL_USERNAME=parking@yourdomain.com
-  - MAIL_PASSWORD=your-smtp-password
+### Step 6 — Configure for production
+
+Extend `.env` (preferred — keeps secrets out of the tracked `docker-compose.yml`):
+
+```dotenv
+APP_URL=https://parking.yourdomain.com
+APP_DEBUG=false
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.yourprovider.com
+MAIL_PORT=587
+MAIL_USERNAME=parking@yourdomain.com
+MAIL_PASSWORD=your-smtp-password
 ```
 
 Add a reverse proxy (Nginx, Caddy, or Traefik) for HTTPS termination.
@@ -107,10 +152,18 @@ docker run -d \
   -p 8080:10000 \
   -e APP_URL=http://localhost:8080 \
   -e DB_CONNECTION=sqlite \
+  -e PARKHUB_ADMIN_EMAIL=admin@parkhub.test \
+  -e PARKHUB_ADMIN_PASSWORD="$(openssl rand -base64 16 | tr -dc 'A-Za-z0-9' | head -c16)" \
   -v parkhub-storage:/var/www/html/storage \
   -v parkhub-db:/var/www/html/database \
   --name parkhub \
   parkhub-php
+```
+
+Capture the generated admin password before it scrolls out of your shell:
+
+```bash
+docker logs parkhub | grep "Default admin created"
 ```
 
 The named volumes ensure data persists across container restarts and upgrades.
@@ -267,8 +320,21 @@ echo 'Admin created\n';
 
 ## Kubernetes
 
-Kubernetes deployment manifests are planned as a separate chart. In the interim,
-use the Docker image as a standard Deployment:
+A production-ready Helm chart ships in `helm/parkhub/` — the fastest path is:
+
+```bash
+helm install parkhub ./helm/parkhub \
+  --namespace parkhub --create-namespace \
+  --set config.appKey="base64:$(openssl rand -base64 32)" \
+  --set config.dbHost=mysql.parkhub.svc \
+  --set config.dbPassword=secret \
+  --set config.redisHost=redis.parkhub.svc
+```
+
+See [`helm/README.md`](../helm/README.md) for the full value reference.
+
+The raw manifest below is kept for clusters where Helm is unavailable or for
+learning what the chart renders to.
 
 ### Namespace
 
@@ -284,8 +350,9 @@ metadata:
 ```bash
 kubectl create secret generic parkhub-secrets \
   --namespace parkhub \
+  --from-literal=db-username='parkhub' \
   --from-literal=db-password='your-secure-password' \
-  --from-literal=app-key='base64:YOUR_GENERATED_KEY'
+  --from-literal=app-key="base64:$(openssl rand -base64 32)"
 ```
 
 ### Deployment
@@ -312,7 +379,8 @@ spec:
         fsGroup: 33
       containers:
         - name: parkhub
-          image: your-registry/parkhub-php:latest
+          # Pin to a specific release tag in production; `latest` only for evaluation.
+          image: ghcr.io/nash87/parkhub-php:latest
           ports:
             - containerPort: 80
           env:
