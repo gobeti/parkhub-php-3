@@ -9,6 +9,8 @@ use App\Http\Requests\BulkExportInvoicesRequest;
 use App\Models\Booking;
 use App\Models\Setting;
 use App\Services\Compliance\InvoiceNumberService;
+use App\Services\Tax\ResolvedRate;
+use App\Services\Tax\TaxProfileRegistry;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -115,11 +117,53 @@ class BookingInvoiceController extends Controller
         // stays compact while still matching the number shown on the page.
         $shortId = str_replace('-', '', $invoiceNo);
 
+        // Multi-country VAT resolution. Seller country comes from the
+        // admin settings store; buyer country / VAT ID come from per-user
+        // settings so international B2B customers can be marked without a
+        // schema migration. Reverse-charge kicks in automatically when
+        // seller + buyer are different EU member states and the buyer
+        // supplied a plausible VAT ID — see App\Services\Tax.
+        $sellerCountry = TaxProfileRegistry::resolveSellerCountryFromSettings();
+        $buyerVatId = trim((string) Setting::get('user_vat_id_'.$user->id, ''));
+        $buyerCountry = trim((string) Setting::get(
+            'user_country_'.$user->id,
+            (string) Setting::get('tax_default_country', $sellerCountry),
+        ));
+        $resolvedRate = TaxProfileRegistry::resolveRate(
+            $sellerCountry,
+            $buyerCountry,
+            $buyerVatId !== '' ? $buyerVatId : null,
+        );
+        $vatLabel = $this->formatVatLabel($resolvedRate);
+        $reverseChargeNote = $resolvedRate->isReverseCharge()
+            ? TaxProfileRegistry::REVERSE_CHARGE_NOTE
+            : null;
+
         return compact(
             'company', 'vatId', 'street', 'zipCity', 'email',
             'booking', 'user', 'hours', 'startFmt', 'endFmt',
-            'dateNow', 'invoiceNo', 'shortId'
+            'dateNow', 'invoiceNo', 'shortId',
+            'vatLabel', 'reverseChargeNote'
         );
+    }
+
+    /**
+     * Produce the MwSt./VAT line label for the invoice.
+     */
+    private function formatVatLabel(ResolvedRate $rate): string
+    {
+        if ($rate->isReverseCharge()) {
+            return 'MwSt. 0% (Reverse Charge, Art. 194 VAT Directive)';
+        }
+
+        $pct = $rate->asRate() * 100.0;
+        // Emit "19%" (no trailing .0) for whole percentages, "7.7%" for
+        // fractional ones. Matches the Rust-side label format.
+        if (abs($pct - round($pct)) < 1e-9) {
+            return sprintf('MwSt. %d%% (§ 12 UStG)', (int) round($pct));
+        }
+
+        return sprintf('MwSt. %s%% (§ 12 UStG)', rtrim(rtrim(number_format($pct, 1, '.', ''), '0'), '.'));
     }
 
     private function renderPdf(array $d)
@@ -153,22 +197,30 @@ class BookingInvoiceController extends Controller
         $address = array_filter([$d['street'], $d['zipCity']]);
         $addressHtml = implode('<br>', array_map($e, $address));
 
-        // Pricing breakdown
+        // Pricing breakdown — `vatLabel` comes from the resolved tax
+        // profile so the label reflects the seller country (and the
+        // Art. 194 reverse-charge note for EU B2B invoices).
         $pricingHtml = '';
         if ($d['booking']->total_price) {
             $curr = $d['booking']->currency ?? 'EUR';
             $base = number_format((float) $d['booking']->base_price, 2, ',', '.');
             $tax = number_format((float) $d['booking']->tax_amount, 2, ',', '.');
             $total = number_format((float) $d['booking']->total_price, 2, ',', '.');
+            $vatLabel = $e((string) ($d['vatLabel'] ?? 'MwSt. (19%)'));
             $pricingHtml = <<<PRICE
   <div class="totals">
     <table>
       <tr><td>Nettobetrag</td><td style="text-align:right;">{$base} {$e($curr)}</td></tr>
-      <tr><td>MwSt. (19%)</td><td style="text-align:right;">{$tax} {$e($curr)}</td></tr>
+      <tr><td>{$vatLabel}</td><td style="text-align:right;">{$tax} {$e($curr)}</td></tr>
       <tr class="total"><td>Gesamtbetrag</td><td style="text-align:right;">{$total} {$e($curr)}</td></tr>
     </table>
   </div>
 PRICE;
+        }
+
+        $reverseChargeHtml = '';
+        if (! empty($d['reverseChargeNote'])) {
+            $reverseChargeHtml = '<div class="notice"><strong>'.$e((string) $d['reverseChargeNote']).'</strong></div>';
         }
 
         return <<<HTML
@@ -282,6 +334,7 @@ PRICE;
   </table>
 
   {$pricingHtml}
+  {$reverseChargeHtml}
   {$vatRow}
 
   <div class="notice">

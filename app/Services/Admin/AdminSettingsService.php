@@ -38,6 +38,8 @@ final class AdminSettingsService
         'min_booking_duration_hours', 'max_booking_duration_hours',
         'credits_enabled', 'credits_per_booking',
         'primary_color', 'secondary_color',
+        // Multi-country VAT profile configuration (see App\Services\Tax).
+        'tax_default_country', 'tax_seller_country',
     ];
 
     /**

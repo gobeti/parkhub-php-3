@@ -15,6 +15,7 @@ use App\Models\ParkingSlot;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Webhook;
+use App\Services\Tax\TaxProfileRegistry;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -279,7 +280,14 @@ final class BookingCreationService
     }
 
     /**
-     * Apply lot hourly/daily pricing with 19% German VAT.
+     * Apply lot hourly/daily pricing using the seller-country VAT profile.
+     *
+     * The rate is resolved through {@see TaxProfileRegistry} so the
+     * booking's persisted `tax_amount` matches whatever jurisdiction the
+     * operator configured via `tax_seller_country` / `impressum_country`.
+     * Reverse-charge is *not* applied at booking-creation time — it only
+     * engages later at invoice-render when the buyer's country and VAT
+     * ID are known and may differ from the seller.
      */
     private function applyPricing(Booking $booking, ParkingLot $lot): void
     {
@@ -296,7 +304,9 @@ final class BookingCreationService
             $basePrice = round((float) $lot->daily_max, 2);
         }
 
-        $taxAmount = round($basePrice * 0.19, 2);
+        $sellerCountry = TaxProfileRegistry::resolveSellerCountryFromSettings();
+        $vatRate = TaxProfileRegistry::resolveProfile($sellerCountry)->standardRate;
+        $taxAmount = round($basePrice * $vatRate, 2);
         $totalPrice = round($basePrice + $taxAmount, 2);
 
         $booking->update([
