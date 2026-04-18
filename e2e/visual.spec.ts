@@ -20,13 +20,29 @@ import { loginViaUi } from './helpers';
  */
 
 const SURFACES = [
+  // Public
   { name: 'login', path: '/login', auth: false },
+  { name: 'register', path: '/register', auth: false },
+  { name: 'forgot-password', path: '/forgot-password', auth: false },
+  { name: 'welcome', path: '/welcome', auth: false },
+  // Authenticated user
   { name: 'dashboard', path: '/', auth: true },
   { name: 'book', path: '/book', auth: true },
   { name: 'bookings', path: '/bookings', auth: true },
   { name: 'vehicles', path: '/vehicles', auth: true },
+  { name: 'credits', path: '/credits', auth: true },
+  { name: 'favorites', path: '/favorites', auth: true },
+  { name: 'absences', path: '/absences', auth: true },
+  { name: 'notifications', path: '/notifications', auth: true },
+  { name: 'calendar', path: '/calendar', auth: true },
+  { name: 'profile', path: '/profile', auth: true },
+  // Admin
   { name: 'admin', path: '/admin', auth: true },
   { name: 'admin-modules', path: '/admin/modules', auth: true },
+  { name: 'admin-settings', path: '/admin/settings', auth: true },
+  { name: 'admin-users', path: '/admin/users', auth: true },
+  { name: 'admin-lots', path: '/admin/lots', auth: true },
+  { name: 'admin-analytics', path: '/admin/analytics', auth: true },
 ];
 
 const VIEWPORTS = [
@@ -120,7 +136,12 @@ for (const viewport of VIEWPORTS) {
           await expect(page).toHaveScreenshot(
             `${surface.name}-${viewport.name}-${theme}.png`,
             {
-              maxDiffPixelRatio: 0.02,
+              // 0.05 absorbs inter-runner drift (font hinting, subpixel AA)
+              // between the baseline-generation environment and the
+              // GitHub-hosted runner, while still catching layout-scale
+              // regressions. 0.02 was too tight: CI drifted 0.03–0.04 on
+              // green runs.
+              maxDiffPixelRatio: 0.05,
               fullPage: false,
               animations: 'disabled',
             },
