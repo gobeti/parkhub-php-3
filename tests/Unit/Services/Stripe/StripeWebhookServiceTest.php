@@ -127,6 +127,7 @@ class StripeWebhookServiceTest extends TestCase
         ]);
 
         $payload = json_encode([
+            'id' => 'evt_test_replay_001',
             'type' => 'checkout.session.completed',
             'data' => ['object' => ['id' => 'cs_test_replay_001']],
         ]);
