@@ -359,14 +359,9 @@ jobs:
           STATIC_ANALYSIS: ${{ needs.static-analysis.result }}
           INTEGRATION: ${{ needs.integration.result }}
         run: |
-          for check in BACKEND_TESTS DOCKER_VALIDATE; do
+          for check in BACKEND_TESTS DOCKER_VALIDATE WORKFLOW_HYGIENE BACKEND_QUALITY FRONTEND E2E_SMOKE STATIC_ANALYSIS INTEGRATION; do
             if [[ "${!check}" != "success" ]]; then
               echo "REQUIRED: ${check} failed: ${!check}"
               exit 1
-            fi
-          done
-          for check in WORKFLOW_HYGIENE BACKEND_QUALITY FRONTEND E2E_SMOKE STATIC_ANALYSIS INTEGRATION; do
-            if [[ "${!check}" != "success" ]]; then
-              echo "ADVISORY: ${check}: ${!check}"
             fi
           done
