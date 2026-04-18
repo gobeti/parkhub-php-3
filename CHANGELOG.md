@@ -22,7 +22,7 @@ the authz Policy rollout.
 
 ### Added
 
-#### Modular UX platform (T-1720 v1 + v2 + v3)
+#### Modular UX platform (v1 + v2 + v3)
 
 - **`GET /api/v1/modules` returns enriched ModuleInfo**: 68 modules across 11 categories (Core, Booking, Vehicle, Admin, Payment, Integration, Analytics, Compliance, Notification, Enterprise, Experimental) with `{name, category, description, enabled, runtime_toggleable, runtime_enabled, config_keys, ui_route, depends_on, version, config_schema}`. Response envelope keeps the legacy flat `{modules: {name: bool}}` map so existing callers don't break.
 - **`GET /api/v1/modules/{name}`**: single-module detail endpoint.
@@ -31,32 +31,32 @@ the authz Policy rollout.
 - **`ModuleGate` middleware** (`App\Http\Middleware\ModuleGate`): runtime-disabled modules return `404 MODULE_DISABLED`. Applied to ~5 representative routes as a proof of concept.
 - **Frontend `ModulesDashboard`** (`/admin/modules`), **`CommandPalette` (Cmd+K)**, `CommandPaletteProvider`, `ConfigEditor` + `ConfigEditorModal`: byte-identical with parkhub-rust across all 14 shared `parkhub-web/` files (verified via `diff -q`). Hand-rolled JSON Schema form renderer for 6 field shapes (string, enum, email, time, integer min/max, boolean); zero external runtime deps. All 10 locales updated (en / de / es / fr / it / ja / pl / pt / tr / zh).
 
-#### Authz — Laravel Policies (T-1745)
+#### Authz — Laravel Policies
 
 - **8 new Policy classes** — `VehiclePolicy`, `WebhookPolicy`, `NotificationPolicy`, `FavoritePolicy`, `TenantPolicy`, `AnnouncementPolicy`, `AuditLogPolicy`, `WidgetPolicy` — registered in `AppServiceProvider::boot()` via `Gate::policy()` (explicit, grep-able). Coverage moves from 3/77 controllers (≈ 4 %) to 11/77 (≈ 14 %). `AdminAnnouncementController` now delegates to `AnnouncementPolicy` via `$this->authorize(...)`; the inline `requireAdmin()` helper was removed.
 - **70 new Policy unit tests** (1231 → 1701 total unit+feature).
 
-#### Testing infrastructure (T-1734 full 6 items shipped on the PHP side too)
+#### Testing infrastructure (full 6 items shipped on the PHP side too)
 
 - **`infection/infection` 0.32.6 mutation testing** scoped to `app/Rules` + `app/Http/Middleware`. Nightly workflow at `.github/workflows/infection.yml` (05:00 UTC, soft-fail).
 - **`schemathesis` 4.15.2 nightly contract fuzzing** against `docs/openapi/php.json`. Local smoke surfaced 48 contract violations across 5 categories (server errors, schema-violating accepts, schema-compliant rejects, undocumented status, unsupported methods) — follow-up triage backlog. Workflow at `.github/workflows/schemathesis.yml` (06:00 UTC, soft-fail, 20-min cap).
 
 #### Observability / security
 
-- **Session absolute lifetime middleware** `App\Http\Middleware\EnforceAbsoluteSessionLifetime` (T-1744): reads `config('session.absolute_lifetime')` (default 1440 min). Invalidates + 401s with JSON error on lifetime expiry.
-- **Audit log purge job** `App\Jobs\PurgeAuditLogsJob` (T-1745, admin purge not security-Policy): scheduled daily at 03:15 UTC via `bootstrap/app.php` with `onOneServer` + `withoutOverlapping`. Retention default 90 days (`AUDIT_RETENTION_DAYS` env), 1000-row chunks via `chunkById`.
-- **CSP + NEL reporting endpoints** (T-1749): `POST /api/v1/security/csp-report` + `POST /api/v1/security/nel-report` surface browser-reported violations. Payload is browser-defined (intentionally not FormRequest-validated).
+- **Session absolute lifetime middleware** `App\Http\Middleware\EnforceAbsoluteSessionLifetime`: reads `config('session.absolute_lifetime')` (default 1440 min). Invalidates + 401s with JSON error on lifetime expiry.
+- **Audit log purge job** `App\Jobs\PurgeAuditLogsJob` (admin purge, not a security Policy): scheduled daily at 03:15 UTC via `bootstrap/app.php` with `onOneServer` + `withoutOverlapping`. Retention default 90 days (`AUDIT_RETENTION_DAYS` env), 1000-row chunks via `chunkById`.
+- **CSP + NEL reporting endpoints**: `POST /api/v1/security/csp-report` + `POST /api/v1/security/nel-report` surface browser-reported violations. Payload is browser-defined (intentionally not FormRequest-validated).
 
 ### Changed
 
-#### Multi-tenancy enforcement (T-1731 part 1)
+#### Multi-tenancy enforcement (part 1)
 
 - **`AdminAnalyticsController`** — every Booking/User/ParkingLot query pins an explicit `->when(TenantScope::currentId(), fn ($q, $id) => $q->where('tenant_id', $id))` predicate on top of the existing `BelongsToTenant` global scope; join predicates qualify `bookings.tenant_id` so siblings can't leak through join seams.
 - **`AdminReportController`** — `stats`, `heatmap`, `reports`, `dashboardCharts`, `revenue`, `occupancy`, `usersReport`, `exportBookingsCsv`, `exportUsersCsv` all filter on the builder BEFORE `->cursor()`; `parking_slots` + `absences` (no `tenant_id` column) scoped transitively via `whereHas('lot'|'user')`.
 - **Rate-limit cache keys** are now tenant-namespaced (`AppServiceProvider`): `t:{$tenantId}:login:...`, `host:tenant-a.example.com:...` pre-auth, `default:...` flag-off. Tenant A can no longer exhaust Tenant B's quota.
 - Formalised `TenantScope::isPlatformAdmin()` + `TenantScope::rateLimitKey()` + `User::isPlatformAdmin()` (`role === 'superadmin' && empty($tenant_id)`).
 
-#### Admin N+1 elimination (T-1747)
+#### Admin N+1 elimination
 
 - **`ParkingHistoryController::history`** adds `->with(['lot', 'slot'])`; the `map()` fallback now reads the canonical `$b->lot?->name` / `$b->slot?->slot_number` instead of the alias methods that fired one query per row. `/api/v1/bookings/history?per_page=10` went from 12 → 4 queries.
 - **`TranslationController::proposals`** pre-loads the current user's votes via `whereIn()->pluck('vote', 'proposal_id')`, replacing the per-row `TranslationVote::where()->first()` O(page) loop.
@@ -64,22 +64,22 @@ the authz Policy rollout.
 
 #### Validation hardening
 
-- **HTTP outbound calls gain 15 s timeouts + per-host circuit breaker** (T-1732): hand-rolled `App\Services\CircuitBreaker` (no new composer dep) backed by Laravel Cache. Keys `cb:{host}:state|failures|opened_at`. Trips at 5 failures/60 s → OPEN, 30 s → HALF_OPEN, success → CLOSED. Wired in `SendWebhookJob::handle` via method injection.
-- **FormRequest migration complete (T-1748 + T-1749)**: 98 FormRequest classes, 0/91 → 93/91 inline `$request->validate(...)` calls migrated, 6 remaining carry `// T-1749-intentional:` annotations with rationale (browser-defined payloads, private step helpers, wizard dispatch).
-- `dump-openapi.sh` now swaps in `.env.example` before running scramble so the snapshot always matches CI's fresh baseline; memory-limit raised to 1 GB so fresh clones don't OOM (T-1736 drift-fix follow-up commits `75c61f4` + `d66c4c8`).
+- **HTTP outbound calls gain 15 s timeouts + per-host circuit breaker**: hand-rolled `App\Services\CircuitBreaker` (no new composer dep) backed by Laravel Cache. Keys `cb:{host}:state|failures|opened_at`. Trips at 5 failures/60 s → OPEN, 30 s → HALF_OPEN, success → CLOSED. Wired in `SendWebhookJob::handle` via method injection.
+- **FormRequest migration complete**: 98 FormRequest classes, 0/91 → 93/91 inline `$request->validate(...)` calls migrated, 6 remaining carry `// intentional:` annotations with rationale (browser-defined payloads, private step helpers, wizard dispatch).
+- `dump-openapi.sh` now swaps in `.env.example` before running scramble so the snapshot always matches CI's fresh baseline; memory-limit raised to 1 GB so fresh clones don't OOM (drift-fix follow-up commits `75c61f4` + `d66c4c8`).
 
 ### Security
 
-- **T-1736 — SVG removed from branding logo upload mimes**. `UploadBrandingLogoRequest` accepted `svg`, which can carry inline `<script>` or `javascript:` refs → stored XSS on the served logo. Matches the Rust side which already magic-byte-checks only JPEG/PNG/GIF/WebP.
-- **T-1737 — Cross-tenant admin write guards** (parity with the Rust side). Admin mutation handlers load the target user and check `matches_tenant` before mutating; cross-tenant targets return 404 (no existence leak); platform-admin override preserved.
+- **SVG removed from branding logo upload mimes**. `UploadBrandingLogoRequest` accepted `svg`, which can carry inline `<script>` or `javascript:` refs → stored XSS on the served logo. Matches the Rust side which already magic-byte-checks only JPEG/PNG/GIF/WebP.
+- **Cross-tenant admin write guards** (parity with the Rust side). Admin mutation handlers load the target user and check `matches_tenant` before mutating; cross-tenant targets return 404 (no existence leak); platform-admin override preserved.
 - **JWT handling** (via Sanctum 4) kept parity with Rust's family-rotation + Redis-revocation story; PHP relies on Sanctum token hashes + single-session enforcement.
 
 ### Fixed
 
-- **Mobile-Safari / WebKit cookie race in e2e tests** (T-1751): `loginViaUi()` now polls `page.context().cookies()` for `laravel_session` / `XSRF-TOKEN` / `parkhub_token` after `waitForURL` returns. Prevents the race where the caller's `page.goto('/protected-route')` ran before `Set-Cookie` committed.
-- **`MultiTenantTest` username collision** with `BookingSimulation` seeder (T-1735): integration admin/user now use deterministic `integration-admin-{uniqid}` / `integration-user-{uniqid}` usernames that cannot collide with faker-generated word usernames.
-- **Webhook job test DI** (T-1732 follow-up): `SendWebhookJobTest` passes `app(CircuitBreaker::class)` to `handle(...)` so unit tests match the method-injection signature (`dispatch()` uses container resolution; direct unit calls don't).
-- **Dashboard test alignment** (T-1750): `Dashboard.test.tsx` KpiCard mock now honours `data-testid`; missing `Leaf` phosphor-icon mock export fixed.
+- **Mobile-Safari / WebKit cookie race in e2e tests**: `loginViaUi()` now polls `page.context().cookies()` for `laravel_session` / `XSRF-TOKEN` / `parkhub_token` after `waitForURL` returns. Prevents the race where the caller's `page.goto('/protected-route')` ran before `Set-Cookie` committed.
+- **`MultiTenantTest` username collision** with `BookingSimulation` seeder: integration admin/user now use deterministic `integration-admin-{uniqid}` / `integration-user-{uniqid}` usernames that cannot collide with faker-generated word usernames.
+- **Webhook job test DI** (circuit-breaker follow-up): `SendWebhookJobTest` passes `app(CircuitBreaker::class)` to `handle(...)` so unit tests match the method-injection signature (`dispatch()` uses container resolution; direct unit calls don't).
+- **Dashboard test alignment**: `Dashboard.test.tsx` KpiCard mock now honours `data-testid`; missing `Leaf` phosphor-icon mock export fixed.
 
 ### Tests
 
@@ -91,7 +91,7 @@ the authz Policy rollout.
 - `opis/json-schema` 2.6.0 added (JSON Schema 2020-12 validator).
 - `infection/infection` 0.32.6 added (dev-dep, mutation testing).
 - `schemathesis` 4.15.2 pinned in the nightly contract-fuzz workflow (Python-only, not in `composer.json`).
-- `laravel/pint` kept at current stable; `phpstan` stays at level 5 intentionally (T-1746) — the baseline was shrunk from **1795 → 763 lines (−57 %)** by adding `@property` PHPDoc to 13 Eloquent models and `@mixin` to 13 matching `JsonResource` subclasses. A level-6 promotion attempt surfaced 328 additional real PHPDoc/generics findings; held at level 5 to preserve the shrink gain. Level-6 promotion is the next documented follow-up. Three Event classes (`BookingCancelled`, `BookingCreated`, `OccupancyChanged`) got proper `array<string, mixed>` / `array<int, Channel|PrivateChannel>` return types inline.
+- `laravel/pint` kept at current stable; `phpstan` stays at level 5 intentionally — the baseline was shrunk from **1795 → 763 lines (−57 %)** by adding `@property` PHPDoc to 13 Eloquent models and `@mixin` to 13 matching `JsonResource` subclasses. A level-6 promotion attempt surfaced 328 additional real PHPDoc/generics findings; held at level 5 to preserve the shrink gain. Level-6 promotion is the next documented follow-up. Three Event classes (`BookingCancelled`, `BookingCreated`, `OccupancyChanged`) got proper `array<string, mixed>` / `array<int, Channel|PrivateChannel>` return types inline.
 
 ### Earlier in this release cycle
 

@@ -13,7 +13,7 @@ The parkhub-rust edition carries the full product feature showcase in [its own `
 
 This file exists to record:
 
-1. The **Modular UX Platform** (shipped v4.13.0 — T-1720 v1 + v2 + v3) which is new enough that the pointer doc alone isn't enough to orient a PHP reader.
+1. The **Modular UX Platform** (shipped v4.13.0 — v1 + v2 + v3) which is new enough that the pointer doc alone isn't enough to orient a PHP reader.
 2. A short list of **PHP-specific implementation differences** — anywhere the lang-level choice leaks into something a developer or operator actually sees.
 
 For everything else — multi-tenant isolation, analytics dashboard, credits, Stripe, EV charging, webhooks, SAML/OAuth, GDPR export/erasure, PWA, mobile — read the Rust `FEATURES.md`. The behaviour described there holds here.
@@ -22,7 +22,7 @@ For everything else — multi-tenant isolation, analytics dashboard, credits, St
 
 ## Modular UX Platform
 
-*Added in v4.13.0 (T-1720 v1 + v2 + v3).*
+*Added in v4.13.0 (v1 + v2 + v3).*
 
 Every compiled-in feature is a first-class **module**. The registry, admin dashboard, and command palette turn ParkHub from a fixed installation into a configurable product surface — operators can see what's installed, flip safe modules on and off, and tune per-module settings without a redeploy.
 

@@ -44,7 +44,7 @@ Two remotes are always configured on this repo:
 Always `git push origin <branch>` first, then `git push github <branch>`. Never push only to GitHub. CI runs on GitHub; operator review happens on Gitea.
 
 ## Code Conventions
-- **`declare(strict_types=1);` is mandatory** on every PHP file in `app/` — 171/171 app files are strict today (T-1727 closed). Any new `.php` file under `app/` MUST start with `<?php` then a blank line then `declare(strict_types=1);` before the namespace.
+- **`declare(strict_types=1);` is mandatory** on every PHP file in `app/` — 171/171 app files are strict today. Any new `.php` file under `app/` MUST start with `<?php` then a blank line then `declare(strict_types=1);` before the namespace.
 - **PHPStan level 4** is the current gate (`phpstan.neon`). Do not regress level; raising is welcome.
 - **Pint** runs clean; no style regressions allowed through `composer ci`.
 - **Tenant-aware queries** (multi-tenancy scaffold, flag `MODULE_MULTI_TENANT` still off by default):

@@ -24,13 +24,13 @@ parkhub-php/
 │   │   ├── GenerateVapidKeys.php      # VAPID key generation for Web Push
 │   │   └── RefillMonthlyCredits.php   # Monthly credit quota refill
 │   ├── Http/
-│   │   ├── Controllers/Api/    # API controllers — `BookingController` split into 5 focused controllers in T-1743
+│   │   ├── Controllers/Api/    # API controllers — `BookingController` split into 5 focused controllers
 │   │   │   ├── AuthController.php                 # Login, register, forgot/reset password (delegates to AuthenticationService)
-│   │   │   ├── BookingController.php              # CRUD + quick-book (1035 → 640 LOC after T-1743)
-│   │   │   ├── BookingCalendarController.php      # Calendar view + iCal (T-1743 split)
-│   │   │   ├── BookingCheckInController.php       # Check-in / check-out (T-1743 split)
-│   │   │   ├── BookingInvoiceController.php       # PDF invoice generation (T-1743 split)
-│   │   │   ├── BookingSwapController.php          # Swap request lifecycle (T-1743 split)
+│   │   │   ├── BookingController.php              # CRUD + quick-book (1035 → 640 LOC after split)
+│   │   │   ├── BookingCalendarController.php      # Calendar view + iCal (split from BookingController)
+│   │   │   ├── BookingCheckInController.php       # Check-in / check-out (split from BookingController)
+│   │   │   ├── BookingInvoiceController.php       # PDF invoice generation (split from BookingController)
+│   │   │   ├── BookingSwapController.php          # Swap request lifecycle (split from BookingController)
 │   │   │   ├── GuestBookingController.php         # Guest bookings without user accounts
 │   │   │   ├── MobileBookingController.php        # Mobile-optimized booking endpoints
 │   │   │   ├── AdminController.php                # User/booking management, audit log
@@ -38,7 +38,7 @@ parkhub-php/
 │   │   │   ├── AdminReportController.php          # Stats, heatmap, CSV export
 │   │   │   ├── AdminCreditController.php          # Credit grants, refills, transactions
 │   │   │   ├── AdminAnnouncementController.php    # Announcement CRUD
-│   │   │   ├── AdminModulesController.php         # Runtime toggle + JSON Schema config editor (T-1720)
+│   │   │   ├── AdminModulesController.php         # Runtime toggle + JSON Schema config editor
 │   │   │   ├── LotController.php                  # Parking lot CRUD + occupancy
 │   │   │   ├── SlotController.php                 # Slot CRUD within lots
 │   │   │   ├── ZoneController.php                 # Zone management
@@ -59,15 +59,15 @@ parkhub-php/
 │   │   │   ├── ApiResponseWrapper.php       # Wraps responses in { success, data } envelope
 │   │   │   ├── ForceJsonResponse.php        # Forces Accept: application/json
 │   │   │   ├── RequireAdmin.php             # Admin role gate
-│   │   │   ├── ModuleGate.php               # Returns 404 MODULE_DISABLED for runtime-disabled modules (T-1720)
+│   │   │   ├── ModuleGate.php               # Returns 404 MODULE_DISABLED for runtime-disabled modules
 │   │   │   └── SecurityHeaders.php          # CSP, HSTS, X-Frame, etc.
 │   │   └── Resources/           # API Resource transformers
 │   ├── Jobs/                    # Queue jobs (push notifications, etc.)
 │   ├── Mail/                    # Mailable classes
 │   ├── Models/                  # Eloquent models
-│   ├── Policies/                # Laravel Policies — 11 total (T-1745, up from 3): Absence, Announcement, AuditLog, Booking, Favorite, Notification, ParkingLot, Tenant, Vehicle, Webhook, Widget
+│   ├── Policies/                # Laravel Policies — 11 total (up from 3): Absence, Announcement, AuditLog, Booking, Favorite, Notification, ParkingLot, Tenant, Vehicle, Webhook, Widget
 │   ├── Providers/               # Service providers (ModuleServiceProvider binds runtime-toggle bus)
-│   └── Services/                # Business-logic services — 12 focused services extracted across T-1742 passes 1–6:
+│   └── Services/                # Business-logic services — 12 focused services extracted across 6 passes:
 │                                #   Authentication/AuthenticationService.php
 │                                #   Booking/BookingCreationService.php
 │                                #   Stripe/StripeWebhookService.php
@@ -379,8 +379,8 @@ Eloquent models are transformed via Laravel API Resources before serialization:
 Feature tests cover the full HTTP surface: auth flows, booking CRUD, admin
 operations, credit system, edge cases, GDPR compliance, webhooks, module
 runtime toggle + JSON Schema config editor, tenant scope, etc. Unit tests
-cover the 12 services extracted in T-1742, the 11 policies shipped in
-T-1745, and the module registry/gate.
+cover the 12 extracted services, the 11 policies, and the module
+registry/gate.
 
 Run with: `php artisan test` or `composer test`
 

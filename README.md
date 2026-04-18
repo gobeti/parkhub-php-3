@@ -43,13 +43,13 @@
 
 | Feature | Description |
 |---------|-------------|
-| **Modular UX Platform (T-1720)** | 70-module registry with admin dashboard at `/admin/modules`, runtime enable/disable via `PATCH /api/v1/admin/modules/{name}`, per-module JSON Schema config editor, and Command Palette (`Cmd+K` / `Ctrl+K` / `/`). See [docs/FEATURES.md § Modular UX Platform](docs/FEATURES.md#modular-ux-platform) |
-| **Service layer extraction (T-1742)** | 12 focused services extracted over 6 passes, replacing the fat-controller pattern: `BookingCreationService`, `AuthenticationService`, `StripeWebhookService`, `VehicleService`, `AdminSettingsService`, `ComplianceService`, `ModuleConfigurationService`, `UserAccountService`, `AdminUserManagementService`, `WebhookDispatchService`, `AuditLogQueryService`, plus supporting result DTOs |
-| **Controller split (T-1743)** | `BookingController` (1035 LOC) decomposed into 5 focused controllers: `BookingController`, `BookingCalendarController`, `BookingCheckInController`, `BookingInvoiceController`, `BookingSwapController` |
-| **Laravel Policies (T-1745)** | 11 policies covering the primary domain models (`Booking`, `Vehicle`, `Absence`, `Announcement`, `AuditLog`, `Favorite`, `Notification`, `ParkingLot`, `Tenant`, `Webhook`, `Widget`) — up from 3 |
-| **Security hardening (T-1736, T-1737)** | SVG dropped from branding logo uploads; cross-tenant admin write guards on user updates |
-| **Testing depth (T-1734)** | 1,320 feature tests + 434 unit tests + `infection-php` (nightly) + `schemathesis` (OpenAPI contract fuzzing, nightly) |
-| **Perf (T-1747)** | Admin list endpoints eager-load relations to eliminate N+1 queries |
+| **Modular UX Platform** | 70-module registry with admin dashboard at `/admin/modules`, runtime enable/disable via `PATCH /api/v1/admin/modules/{name}`, per-module JSON Schema config editor, and Command Palette (`Cmd+K` / `Ctrl+K` / `/`). See [docs/FEATURES.md § Modular UX Platform](docs/FEATURES.md#modular-ux-platform) |
+| **Service layer extraction** | 12 focused services extracted over 6 passes, replacing the fat-controller pattern: `BookingCreationService`, `AuthenticationService`, `StripeWebhookService`, `VehicleService`, `AdminSettingsService`, `ComplianceService`, `ModuleConfigurationService`, `UserAccountService`, `AdminUserManagementService`, `WebhookDispatchService`, `AuditLogQueryService`, plus supporting result DTOs |
+| **Controller split** | `BookingController` (1035 LOC) decomposed into 5 focused controllers: `BookingController`, `BookingCalendarController`, `BookingCheckInController`, `BookingInvoiceController`, `BookingSwapController` |
+| **Laravel Policies** | 11 policies covering the primary domain models (`Booking`, `Vehicle`, `Absence`, `Announcement`, `AuditLog`, `Favorite`, `Notification`, `ParkingLot`, `Tenant`, `Webhook`, `Widget`) — up from 3 |
+| **Security hardening** | SVG dropped from branding logo uploads; cross-tenant admin write guards on user updates |
+| **Testing depth** | 1,320 feature tests + 434 unit tests + `infection-php` (nightly) + `schemathesis` (OpenAPI contract fuzzing, nightly) |
+| **Perf** | Admin list endpoints eager-load relations to eliminate N+1 queries |
 
 ---
 
@@ -170,11 +170,11 @@ php artisan test                      # Run PHPUnit (1,320 feature + 434 unit)
 - **httpOnly cookie auth** with SameSite=Lax (XSS-proof, Bearer fallback for APIs)
 - bcrypt password hashing (12 rounds), configurable password policies
 - 2FA/TOTP with QR enrollment, backup codes
-- **Laravel Policies** (11 total, covering `Booking`, `Vehicle`, `Absence`, `Announcement`, `AuditLog`, `Favorite`, `Notification`, `ParkingLot`, `Tenant`, `Webhook`, `Widget` -- up from 3 in previous releases, T-1745)
-- **Multi-tenancy hardening** -- tenant scope enforced on admin analytics + CSV exports + rate-limit cache keys (T-1731), plus cross-tenant admin write guards on user updates (T-1737)
+- **Laravel Policies** (11 total, covering `Booking`, `Vehicle`, `Absence`, `Announcement`, `AuditLog`, `Favorite`, `Notification`, `ParkingLot`, `Tenant`, `Webhook`, `Widget` -- up from 3 in previous releases)
+- **Multi-tenancy hardening** -- tenant scope enforced on admin analytics + CSV exports + rate-limit cache keys, plus cross-tenant admin write guards on user updates
 - Per-endpoint rate limiting (login, register, payments) with tenant-namespaced cache keys
 - Nonce-based CSP, security headers middleware
-- SVG blocked from branding logo uploads (T-1736)
+- SVG blocked from branding logo uploads
 - Full audit log with IP tracking
 - API key authentication for integrations
 - OWASP Top 10 compliance -- see [Security Model](docs/SECURITY.md)
@@ -215,7 +215,7 @@ php artisan test                      # Run PHPUnit (1,320 feature + 434 unit)
 
 ParkHub organizes functionality into **70 modules** across **11 categories** — Core, Booking, Vehicle, Admin, Payment, Integration, Analytics, Compliance, Notification, Enterprise, Experimental — in a single declarative registry at [`app/Services/ModuleRegistry.php`](app/Services/ModuleRegistry.php).
 
-Every module is exposed in the admin dashboard at `/admin/modules` with status pills, category grouping, search, dependency chain, and config-keys count. Shipped in **v4.13.0** (T-1720 v1 + v2 + v3):
+Every module is exposed in the admin dashboard at `/admin/modules` with status pills, category grouping, search, dependency chain, and config-keys count. Shipped in **v4.13.0** (v1 + v2 + v3):
 
 - **Runtime enable/disable** — 13 safe modules flip via `PATCH /api/v1/admin/modules/{name}` without a redeploy (widgets, themes, favorites, lobby-display, accessible, calendar-drag, ev-charging, maintenance, geofence, map, graphql, api-docs, setup-wizard). Security-sensitive modules (`auth`, `payments`, `rbac`, `webhooks`, `audit-export`, `multi-tenant`, `notifications`) stay env-flagged.
 - **JSON Schema config editor** — 5 modules ship a `config_schema` (JSON Schema 2020-12) and surface a per-module config modal: `themes`, `announcements`, `notifications`, `email-templates`, `widgets`. Writes validate server-side via `opis/json-schema`; failures return `422 CONFIG_VALIDATION_FAILED` with a structured `details` array.
