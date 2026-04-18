@@ -31534,15 +31534,34 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "received": {
-                      "type": "boolean"
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "received": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "received"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "already_processed": {
+                          "type": "boolean"
+                        },
+                        "received": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "received",
+                        "already_processed"
+                      ],
+                      "type": "object"
                     }
-                  },
-                  "required": [
-                    "received"
-                  ],
-                  "type": "object"
+                  ]
                 }
               }
             },
