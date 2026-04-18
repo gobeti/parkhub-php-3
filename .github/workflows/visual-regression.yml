@@ -1,0 +1,144 @@
+name: Visual Regression
+
+# Soft-fail visual regression gate (T-1770). Not yet a required check — triage
+# diff artifacts in the PR review before requiring this to be green. Once the
+# baselines are stable for a few weeks, promote to required in branch
+# protection.
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'bootstrap/**'
+      - 'config/**'
+      - 'database/**'
+      - 'public/**'
+      - 'resources/**'
+      - 'routes/**'
+      - 'parkhub-web/**'
+      - 'e2e/visual.spec.ts'
+      - 'e2e/helpers.ts'
+      - 'e2e/visual.spec.ts-snapshots/**'
+      - 'playwright.config.ts'
+      - 'scripts/ci/bootstrap-laravel.sh'
+      - 'scripts/ci/wait-for-url.sh'
+      - '.github/workflows/visual-regression.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: visual-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PHP_VERSION: '8.4'
+  NODE_VERSION: '22.12.0'
+
+jobs:
+  visual:
+    name: Playwright toHaveScreenshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Soft-fail: diffs surface as downloadable artifacts but don't block merge.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: bcmath, curl, gd, intl, mbstring, pdo_mysql, pdo_sqlite, sqlite3, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer downloads
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Set up Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            parkhub-web/package-lock.json
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-playwright-
+
+      - name: Install backend dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install frontend dependencies
+        run: |
+          npm ci
+          npm ci --prefix parkhub-web
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build browser assets for Laravel
+        run: npm run build:php --prefix parkhub-web
+
+      - name: Run visual regression suite
+        env:
+          CI: 'true'
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+          DEMO_MODE: 'true'
+          E2E_BASE_URL: http://127.0.0.1:8000
+          PARKHUB_ADMIN_EMAIL: admin@parkhub.test
+          PARKHUB_ADMIN_PASSWORD: demo
+          PARKHUB_DISABLE_RATE_LIMITS: 'true'
+          RUN_STORAGE_LINK: '1'
+        run: |
+          ./scripts/ci/bootstrap-laravel.sh
+          php artisan migrate:fresh --seed --seeder=ProductionSimulationSeeder --force
+
+          php artisan serve --host=127.0.0.1 --port=8000 > /tmp/parkhub-visual.log 2>&1 &
+          server_pid=$!
+          trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
+
+          ./scripts/ci/wait-for-url.sh http://127.0.0.1:8000/api/v1/health/live 60
+          npx playwright test --project=chromium --workers=1 --reporter=github e2e/visual.spec.ts
+
+      - name: Upload diff artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: visual-regression-diffs
+          path: |
+            test-results/**/*-diff.png
+            test-results/**/*-actual.png
+            test-results/**/*-expected.png
+            playwright-report/
+          retention-days: 14
+
+      - name: Upload full Playwright report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-visual-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload Laravel server log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: visual-server-log
+          path: /tmp/parkhub-visual.log
+          retention-days: 7
