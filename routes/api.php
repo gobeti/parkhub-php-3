@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingSwapController;
 use App\Http\Controllers\Api\GuestBookingController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LotController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\MiscController;
@@ -28,6 +29,9 @@ use Illuminate\Support\Facades\Route;
 
 // Health check (no auth)
 Route::get('/health', [PublicController::class, 'healthCheck']);
+Route::get('/health/live', [HealthController::class, 'live']);
+Route::get('/health/ready', [HealthController::class, 'ready']);
+Route::get('/health/detailed', [HealthController::class, 'info']);
 
 // Public routes (no auth) — rate limited to prevent brute-force and registration spam
 Route::middleware('throttle:auth')->group(function () {
