@@ -42,8 +42,41 @@ describe('VorhersagenV5', () => {
     await waitFor(() => expect(screen.getByText('Fehler beim Laden')).toBeInTheDocument());
   });
 
-  it('surfaces error when success:false', async () => {
+  it('renders fallback 7-day forecast when admin stats are forbidden (non-admin)', async () => {
+    // Regression for PR #374: `/api/v1/admin/stats` is admin-gated; non-admin
+    // users must see the deterministic weekday/weekend fallback instead of a
+    // blocking error page.
     mockGetStats.mockResolvedValue({ success: false, data: null, error: { code: 'FORBIDDEN', message: 'denied' } });
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId('day-card')).toHaveLength(7));
+    expect(screen.queryByText('Fehler beim Laden')).toBeNull();
+    // Fallback confidence is 40% on every day when no historical data arrived.
+    expect(screen.getAllByText(/40% Konfidenz/).length).toBe(7);
+  });
+
+  it('also degrades on HTTP_403 error code from admin stats', async () => {
+    mockGetStats.mockResolvedValue({ success: false, data: null, error: { code: 'HTTP_403', message: 'forbidden' } });
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId('day-card')).toHaveLength(7));
+    expect(screen.queryByText('Fehler beim Laden')).toBeNull();
+  });
+
+  it('also degrades when admin middleware returns raw string error (PHP RequireAdmin)', async () => {
+    // Regression for Codex #336: PHP RequireAdmin returns
+    // `{"error": "Forbidden. Administrator access required."}` — string, not
+    // object. `res.error?.code` is undefined; screen must still fall back.
+    mockGetStats.mockResolvedValue({
+      success: false,
+      data: null,
+      error: 'Forbidden. Administrator access required.',
+    });
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId('day-card')).toHaveLength(7));
+    expect(screen.queryByText('Fehler beim Laden')).toBeNull();
+  });
+
+  it('still surfaces error when stats fail with non-auth error', async () => {
+    mockGetStats.mockResolvedValue({ success: false, data: null, error: { code: 'HTTP_500', message: 'server error' } });
     renderScreen();
     await waitFor(() => expect(screen.getByText('Fehler beim Laden')).toBeInTheDocument());
   });

@@ -74,9 +74,48 @@ describe('RanglisteV5', () => {
     await waitFor(() => expect(screen.getByText('Fehler beim Laden')).toBeInTheDocument());
   });
 
-  it('surfaces error when stats success:false', async () => {
-    mockGetTeam.mockResolvedValue({ success: true, data: [TEAM_ALICE] });
+  it('renders leaderboard with empty stats when admin stats are forbidden (non-admin)', async () => {
+    // Regression for PR #374: `/api/v1/admin/stats` is admin-gated in the Rust
+    // backend (`check_admin`), but /rangliste is reachable by normal users.
+    // FORBIDDEN must degrade gracefully, not hard-fail the screen.
+    mockGetTeam.mockResolvedValue({ success: true, data: [TEAM_ALICE, TEAM_BOB] });
     mockGetAdminStats.mockResolvedValue({ success: false, data: null, error: { code: 'FORBIDDEN', message: 'denied' } });
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId('rank-row')).toHaveLength(2));
+    expect(screen.queryByText('Fehler beim Laden')).toBeNull();
+    // Alice/Bob names may appear both in the highlight cards and the leaderboard
+    // rows, so assert on presence via getAllByText.
+    expect(screen.getAllByText('Alice').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Bob').length).toBeGreaterThan(0);
+  });
+
+  it('also degrades on HTTP_403 error code from admin stats', async () => {
+    mockGetTeam.mockResolvedValue({ success: true, data: [TEAM_ALICE] });
+    mockGetAdminStats.mockResolvedValue({ success: false, data: null, error: { code: 'HTTP_403', message: 'forbidden' } });
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId('rank-row')).toHaveLength(1));
+    expect(screen.queryByText('Fehler beim Laden')).toBeNull();
+  });
+
+  it('also degrades when admin middleware returns raw string error (PHP RequireAdmin)', async () => {
+    // Regression for Codex #336: PHP's RequireAdmin middleware returns
+    // `{"error": "Forbidden. Administrator access required."}` — a string,
+    // not an object. requestOnce passes that string through as `res.error`,
+    // so `res.error?.code` is undefined. Screen must still degrade gracefully.
+    mockGetTeam.mockResolvedValue({ success: true, data: [TEAM_ALICE] });
+    mockGetAdminStats.mockResolvedValue({
+      success: false,
+      data: null,
+      error: 'Forbidden. Administrator access required.',
+    });
+    renderScreen();
+    await waitFor(() => expect(screen.getAllByTestId('rank-row')).toHaveLength(1));
+    expect(screen.queryByText('Fehler beim Laden')).toBeNull();
+  });
+
+  it('still surfaces error when stats fail with non-auth error', async () => {
+    mockGetTeam.mockResolvedValue({ success: true, data: [TEAM_ALICE] });
+    mockGetAdminStats.mockResolvedValue({ success: false, data: null, error: { code: 'HTTP_500', message: 'server error' } });
     renderScreen();
     await waitFor(() => expect(screen.getByText('Fehler beim Laden')).toBeInTheDocument());
   });

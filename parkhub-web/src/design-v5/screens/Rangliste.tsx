@@ -46,6 +46,27 @@ const EMPTY_STATS: UserBookingStats = {
 
 const MEDAL_COLOR = ['oklch(0.82 0.16 85)', 'oklch(0.72 0 0)', 'oklch(0.55 0.1 55)'];
 
+/**
+ * Admin-denial detector. Works across three possible error shapes returned by
+ * `api.getAdminStatsExtended()`:
+ *   1. Structured `{ code: 'FORBIDDEN', … }` — Rust backend
+ *   2. Structured `{ code: 'HTTP_403', … }` — requestOnce fallback when
+ *      `json.error` was absent or non-object-with-code
+ *   3. Raw string `"Forbidden. Administrator access required."` — PHP
+ *      `RequireAdmin` middleware returns `{"error": "…"}`; requestOnce passes
+ *      the string straight through as `res.error`.
+ */
+function isForbiddenError(err: unknown): boolean {
+  if (typeof err === 'string') {
+    return /forbidden|administrator access/i.test(err);
+  }
+  if (err && typeof err === 'object') {
+    const code = (err as { code?: unknown }).code;
+    return code === 'FORBIDDEN' || code === 'HTTP_403';
+  }
+  return false;
+}
+
 export function RanglisteV5({ navigate: _navigate }: { navigate: (id: ScreenId) => void }) {
   const teamQuery = useQuery({
     queryKey: ['team-members'],
@@ -58,11 +79,26 @@ export function RanglisteV5({ navigate: _navigate }: { navigate: (id: ScreenId) 
     refetchOnWindowFocus: true,
   });
 
+  // Admin stats are optional decoration on the leaderboard — `/api/v1/admin/stats`
+  // is admin-gated on both the Rust (`check_admin`) and PHP (admin middleware)
+  // backends, so non-admin users predictably receive FORBIDDEN. We degrade
+  // gracefully: the leaderboard still renders with team data only, every
+  // entry falling through to EMPTY_STATS (no badges, score = 0). Network or
+  // other non-auth failures continue to be treated as hard errors so they
+  // surface in the UI.
   const statsQuery = useQuery({
     queryKey: ['admin-stats-extended'],
     queryFn: async () => {
       const res = await api.getAdminStatsExtended();
-      if (!res.success) throw new Error(res.error?.message ?? 'Statistiken konnten nicht geladen werden');
+      if (!res.success) {
+        if (isForbiddenError(res.error)) {
+          return null;
+        }
+        const message = typeof res.error === 'string'
+          ? res.error
+          : res.error?.message ?? 'Statistiken konnten nicht geladen werden';
+        throw new Error(message);
+      }
       return res.data;
     },
     staleTime: 30_000,
