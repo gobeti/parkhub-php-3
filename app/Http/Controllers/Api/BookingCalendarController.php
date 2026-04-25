@@ -14,6 +14,10 @@ use Illuminate\Http\Request;
  *
  * Split out of BookingController (T-1743). Method bodies are moved
  * verbatim — behavioural refactors happen in a follow-up pass.
+ *
+ * Tier-2 item 9 adds the single-booking {id}.ics variant alongside the
+ * existing user-scoped feed so "Zum Kalender hinzufügen" on a Buchungen
+ * row can download one VEVENT without subscribing the whole calendar.
  */
 class BookingCalendarController extends Controller
 {
@@ -71,10 +75,11 @@ class BookingCalendarController extends Controller
             // instead of stringifying through strtotime(), both for
             // strict_types correctness and to dodge the double-timezone
             // roundtrip that the parse-string-back detour used to incur.
+            // end_time is declared non-null on the bookings table (see
+            // Booking @property and the initial migration), so no fallback
+            // ternary — larastan/phpstan flags the dead branch at level 5.
             $start = gmdate('Ymd\THis\Z', $b->start_time->timestamp);
-            $end = $b->end_time
-                ? gmdate('Ymd\THis\Z', $b->end_time->timestamp)
-                : gmdate('Ymd\THis\Z', $b->start_time->timestamp + 3600);
+            $end = gmdate('Ymd\THis\Z', $b->end_time->timestamp);
             $summary = "Parking: {$b->slot_number} ({$b->lot_name})";
             $location = $b->lot_name ?? '';
             $description = $b->vehicle_plate ? "Vehicle: {$b->vehicle_plate}" : '';
@@ -101,6 +106,59 @@ class BookingCalendarController extends Controller
         return response($ical, 200, [
             'Content-Type' => 'text/calendar; charset=utf-8',
             'Content-Disposition' => 'inline; filename="parkhub-bookings.ics"',
+        ]);
+    }
+
+    /**
+     * Tier-2 item 9 — single-booking .ics download.
+     * GET /api/v1/bookings/{id}.ics → RFC5545 VCALENDAR with one VEVENT.
+     */
+    public function icalSingle(Request $request, string $id)
+    {
+        $user = $request->user();
+        $booking = Booking::where('user_id', $user->id)->findOrFail($id);
+
+        $orgName = Setting::get('company_name', 'ParkHub');
+        $prodId = '-//ParkHub//Bookings//EN';
+        $now = gmdate('Ymd\THis\Z');
+        $uid = $booking->id.'@parkhub';
+        // end_time is non-null on bookings — same reasoning as ical() above.
+        $start = gmdate('Ymd\THis\Z', $booking->start_time->timestamp);
+        $end = gmdate('Ymd\THis\Z', $booking->end_time->timestamp);
+        $summary = "Parking: {$booking->slot_number} ({$booking->lot_name})";
+        $location = $booking->lot_name ?? '';
+        $description = $booking->vehicle_plate ? "Vehicle: {$booking->vehicle_plate}" : '';
+
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            "PRODID:{$prodId}",
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            "X-WR-CALNAME:{$orgName} Parking",
+            'BEGIN:VEVENT',
+            "UID:{$uid}",
+            "DTSTAMP:{$now}",
+            "DTSTART:{$start}",
+            "DTEND:{$end}",
+            "SUMMARY:{$summary}",
+        ];
+        if ($location) {
+            $lines[] = "LOCATION:{$location}";
+        }
+        if ($description) {
+            $lines[] = "DESCRIPTION:{$description}";
+        }
+        $lines[] = 'STATUS:CONFIRMED';
+        $lines[] = 'END:VEVENT';
+        $lines[] = 'END:VCALENDAR';
+
+        $ical = implode("\r\n", $lines)."\r\n";
+        $filename = "parkhub-booking-{$booking->id}.ics";
+
+        return response($ical, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
 }
