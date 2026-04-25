@@ -73,7 +73,7 @@ describe('AdminWebhooksPage', () => {
   it('creates webhook', async () => {
     render(<AdminWebhooksPage />);
     await waitFor(() => fireEvent.click(screen.getByText('webhooksV2.create')));
-    const urlInput = screen.getAllByRole('textbox')[0];
+    const urlInput = screen.getAllByRole('textbox')[0]!;
     fireEvent.change(urlInput, { target: { value: 'https://new.com' } });
     fireEvent.click(screen.getByText('booking.created')); // toggle event
     fireEvent.click(screen.getByText('webhooksV2.save'));
@@ -84,7 +84,7 @@ describe('AdminWebhooksPage', () => {
     render(<AdminWebhooksPage />);
     await waitFor(() => {
       const editBtns = screen.getAllByLabelText('webhooksV2.edit');
-      fireEvent.click(editBtns[0]!!);
+      fireEvent.click(editBtns[0]!);
     });
     expect(screen.getByText('webhooksV2.editWebhook')).toBeInTheDocument();
   });
@@ -93,7 +93,7 @@ describe('AdminWebhooksPage', () => {
     render(<AdminWebhooksPage />);
     await waitFor(() => {
       const delBtns = screen.getAllByLabelText('webhooksV2.delete');
-      fireEvent.click(delBtns[0]!!);
+      fireEvent.click(delBtns[0]!);
     });
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('webhooksV2.deleted'));
   });
@@ -102,7 +102,7 @@ describe('AdminWebhooksPage', () => {
     render(<AdminWebhooksPage />);
     await waitFor(() => {
       const testBtns = screen.getAllByLabelText('webhooksV2.test');
-      fireEvent.click(testBtns[0]!!);
+      fireEvent.click(testBtns[0]!);
     });
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('webhooksV2.testSuccess'));
   });
@@ -113,7 +113,7 @@ describe('AdminWebhooksPage', () => {
       return Promise.resolve({ json: () => Promise.resolve({ success: true, data: webhooks }) } as Response);
     }) as any;
     render(<AdminWebhooksPage />);
-    await waitFor(() => fireEvent.click(screen.getAllByLabelText('webhooksV2.test')[0]));
+    await waitFor(() => fireEvent.click(screen.getAllByLabelText('webhooksV2.test')[0]!));
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('webhooksV2.testFailed'));
   });
 
@@ -121,14 +121,14 @@ describe('AdminWebhooksPage', () => {
     render(<AdminWebhooksPage />);
     await waitFor(() => {
       const delivBtns = screen.getAllByLabelText('webhooksV2.deliveries');
-      fireEvent.click(delivBtns[0]!!);
+      fireEvent.click(delivBtns[0]!);
     });
     await waitFor(() => expect(screen.getByText('webhooksV2.deliveryLog')).toBeInTheDocument());
   });
 
   it('closes delivery log', async () => {
     render(<AdminWebhooksPage />);
-    await waitFor(() => fireEvent.click(screen.getAllByLabelText('webhooksV2.deliveries')[0]));
+    await waitFor(() => fireEvent.click(screen.getAllByLabelText('webhooksV2.deliveries')[0]!));
     await waitFor(() => expect(screen.getByText('webhooksV2.deliveryLog')).toBeInTheDocument());
     fireEvent.click(screen.getByText('common.close'));
     await waitFor(() => expect(screen.queryByText('webhooksV2.deliveryLog')).not.toBeInTheDocument());
@@ -146,7 +146,7 @@ describe('AdminWebhooksPage', () => {
       return Promise.resolve({ json: () => Promise.resolve({ success: true, data: webhooks }) } as Response);
     }) as any;
     render(<AdminWebhooksPage />);
-    await waitFor(() => fireEvent.click(screen.getAllByLabelText('webhooksV2.deliveries')[0]));
+    await waitFor(() => fireEvent.click(screen.getAllByLabelText('webhooksV2.deliveries')[0]!));
     await waitFor(() => expect(screen.getByText('webhooksV2.noDeliveries')).toBeInTheDocument());
   });
 
@@ -175,7 +175,7 @@ describe('AdminWebhooksPage', () => {
     }) as any;
     render(<AdminWebhooksPage />);
     await waitFor(() => fireEvent.click(screen.getByText('webhooksV2.create')));
-    fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'bad' } });
+    fireEvent.change(screen.getAllByRole('textbox')[0]!, { target: { value: 'bad' } });
     fireEvent.click(screen.getByText('booking.created'));
     fireEvent.click(screen.getByText('webhooksV2.save'));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Invalid URL'));
