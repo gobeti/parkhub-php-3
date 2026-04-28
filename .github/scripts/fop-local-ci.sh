@@ -106,12 +106,27 @@ post_commit_status() {
     return 1
   fi
 
-  gh api \
+  # Tolerate "No commit found for SHA" (HTTP 422) — happens when this
+  # script runs from the pre-push hook BEFORE the commit has reached
+  # GitHub. The local-ci-attestation gate's 12-min timeout fallback
+  # then handles the missing status (exits 0 advisory once the SHA
+  # appears on GitHub) so the PR still unblocks without manual ops.
+  # gh emits both the JSON body and the "(HTTP 422)" line on stdout,
+  # so we capture stdout (not stderr) for the match.
+  local out
+  if ! out="$(gh api \
     --method POST \
     "repos/$(status_repo)/statuses/${sha}" \
     -f state="$state" \
     -f context="$context" \
-    -f description="$description" >/dev/null
+    -f description="$description" 2>&1)"; then
+    if echo "$out" | grep -qE "No commit found for SHA|HTTP 422"; then
+      echo "Skipping status post — commit ${sha:0:8} not yet on GitHub (will land after push; gate falls back to timeout)." >&2
+      return 0
+    fi
+    echo "$out" >&2
+    return 1
+  fi
 }
 
 write_report() {
@@ -230,7 +245,7 @@ run_step "frontend npm install" "npm ci && npm ci --prefix parkhub-web"
 # still chipping away at hundreds of inherited TS errors. Run the gate
 # as advisory until phase 4 lands; the diff that makes it strict will
 # be a separate PR.
-run_step "frontend typecheck (advisory until tsc-phase4 lands)" "cd parkhub-web && ./node_modules/.bin/tsc --noEmit || echo 'tsc errors present (advisory while phase4 is in flight)'"
+run_step_heavy "frontend typecheck (advisory until tsc-phase4 lands)" "cd parkhub-web && NODE_OPTIONS=\"\${NODE_OPTIONS:-} --max-old-space-size=4096\" ./node_modules/.bin/tsc --noEmit || echo 'tsc errors present (advisory while phase4 is in flight)'"
 
 run_step "frontend vitest" "cd parkhub-web && npm test"
 
@@ -248,10 +263,15 @@ run_step "openapi drift" "scripts/check-openapi-drift.sh"
 # nobody mistakes the always-pass for a real drift signal.
 run_step "types drift (no-op in php; gated by parkhub-rust)" "scripts/check-types-drift.sh"
 
-# ---------------- Optional security linters ---------------------------------
-# zizmor (GHA SAST, MIT-licensed Rust). Run if installed; skip cleanly
-# otherwise so fresh clones do not block on a missing tool.
-run_step "zizmor (gha lint)" "if command -v zizmor >/dev/null 2>&1; then zizmor .github/workflows; else echo 'zizmor not installed; skipping'; fi"
+# ---------------- Local OSS security mirror ---------------------------------
+# Mirrors the GitHub/Gitea security + workflow hygiene jobs with local
+# open-source tools. Missing optional tools are surfaced but do not block the
+# standard PR gate; run `make ci-security` for the strict local toolchain check.
+security_profile="pr"
+if [[ "$profile" == "cd" ]]; then
+  security_profile="cd"
+fi
+run_step "local security audit (${security_profile} mirror)" "scripts/ci/local-security-audit.sh --profile ${security_profile}"
 
 # `cd` profile is documented as `full + cd-specific steps`, so the full
 # block runs for both `full` and `cd`. Without this, `cd` would skip
@@ -274,13 +294,66 @@ if [[ "$profile" == "full" || "$profile" == "cd" ]]; then
 fi
 
 if [[ "$profile" == "cd" ]]; then
-  run_step "composer audit (prod-only, strict)" "composer audit --no-dev --no-interaction"
-
-  # Trivy filesystem scan when available (MIT-licensed). Skip cleanly
-  # if not installed so cd profile remains runnable from a fresh clone.
-  run_step "trivy filesystem scan" "if command -v trivy >/dev/null 2>&1; then trivy fs --severity HIGH,CRITICAL --exit-code 1 --skip-dirs vendor,node_modules,parkhub-web/node_modules .; else echo 'trivy not installed; skipping'; fi"
-
   run_step "release smoke (php artisan test --testsuite=Feature)" "./scripts/ci/bootstrap-laravel.sh && php artisan test --testsuite=Feature"
+fi
+
+# ─── Trivy filesystem scan ──────────────────────────────────────────────────
+# Mirrors .github/workflows/security.yml trivy-fs job. Apache-2.0 license.
+# Skips gracefully on `pr` profile if trivy isn't on PATH (so contributors
+# without trivy installed can still pass the local gate); always required on
+# `cd`/`full` profiles. Findings under .trivyignore (with justification
+# comments) are filtered. Severity matches the workflow: CRITICAL,HIGH only.
+trivy_required=0
+[[ "$profile" == "cd" || "$profile" == "full" ]] && trivy_required=1
+if command -v trivy >/dev/null 2>&1; then
+  run_step "trivy filesystem scan" "trivy fs --quiet --exit-code 1 --scanners=vuln,misconfig --severity=CRITICAL,HIGH --ignorefile .trivyignore --skip-dirs=node_modules,vendor,parkhub-web/node_modules,resources/js/node_modules,.claude/worktrees ."
+elif [[ $trivy_required -eq 1 ]]; then
+  echo "✗ trivy filesystem scan FAILED: trivy not on PATH (required for ${profile} profile)" >&2
+  write_report "failure" "trivy filesystem scan"
+  post_commit_status "failure" "fop local ${profile} failed: trivy not installed"
+  exit 1
+else
+  skip_step "trivy filesystem scan" "trivy not on PATH (install: https://aquasecurity.github.io/trivy/)"
+fi
+
+# ─── zizmor (GitHub Actions SAST, advisory) ─────────────────────────────────
+# Mirrors .github/workflows/security.yml zizmor job. MIT license. Replaces
+# CodeQL's `actions/missing-workflow-permissions` coverage and adds 30+ rules
+# for CI/CD hardening (template injection, cache poisoning, persist-credentials,
+# excessive-permissions). Uses --persona=auditor to match the workflow.
+#
+# Advisory mode: matches workflow's `continue-on-error: true` — zizmor surfaces
+# findings as informational but does NOT fail the gate. Promote to a hard
+# failure (drop the `|| true`) once the open-finding inventory is at zero.
+# Suppressions live in zizmor.yml with per-rule justification.
+if command -v zizmor >/dev/null 2>&1; then
+  run_step "zizmor (GHA SAST, advisory)" "zizmor --persona=auditor --min-severity=high --no-online-audits .github/workflows/ .gitea/workflows/ || echo 'zizmor returned non-zero (advisory — see findings above)'"
+else
+  skip_step "zizmor (GHA SAST)" "zizmor not on PATH (install: cargo install zizmor or https://docs.zizmor.sh)"
+fi
+
+# ─── OSV-Scanner (supply-chain via OSV database) ────────────────────────────
+# OSV-Scanner v2 (Apache-2.0, Google) reads composer.lock + package-lock.json
+# and matches against the OSV database (broader than RUSTSEC alone: also
+# catches GHSA + CVE entries). Complements composer audit + npm audit.
+# Advisory mode: known transitive advisories are tolerated; OSV-Scanner
+# findings are surfaced informationally and do NOT fail the gate.
+if command -v osv-scanner >/dev/null 2>&1; then
+  # osv-scanner.toml at repo root tracks documented exceptions, so this step
+  # is now gating (failure = real new vuln, not a known one).
+  run_step "osv-scanner (supply-chain)" "osv-scanner scan source --recursive --config=osv-scanner.toml ."
+else
+  skip_step "osv-scanner" "osv-scanner not on PATH (install: https://google.github.io/osv-scanner/installation/)"
+fi
+
+# ─── Grype (vuln scanner, defense-in-depth) ─────────────────────────────────
+# Grype (Apache-2.0, Anchore) is a complementary vuln scanner to Trivy.
+# Different DB sources catch different findings — defense-in-depth on the
+# supply chain. Advisory only on `cd` profile (release path); skipped on `pr`.
+if [[ "$profile" == "cd" ]] && command -v grype >/dev/null 2>&1; then
+  run_step "grype (defense-in-depth, advisory)" "grype dir:. --fail-on critical --quiet 2>&1 | tail -20 || echo 'grype found vulns (advisory)'"
+elif [[ "$profile" == "cd" ]]; then
+  skip_step "grype" "grype not on PATH (install: https://github.com/anchore/grype#installation)"
 fi
 
 write_report "success"

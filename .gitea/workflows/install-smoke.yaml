@@ -1,3 +1,7 @@
+# Mirror of .github/workflows/install-smoke.yml for Gitea Actions runner.
+# Action refs rewritten to http://192.168.178.212:3000/actions/* where mirrored.
+# Edit .github/workflows/install-smoke.yml as source-of-truth, then re-mirror.
+
 name: Install Smoke
 on:
   schedule:
@@ -8,22 +12,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
   docker-compose:
-    name: Cold-install Docker Compose smoke test
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Smoke test only checks out and runs Docker Compose locally; no GHCR push,
-    # no GitHub API writes — read-only is sufficient.
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Cold clone
         run: |
           git clone --depth 1 https://github.com/nash87/parkhub-php.git /tmp/smoke

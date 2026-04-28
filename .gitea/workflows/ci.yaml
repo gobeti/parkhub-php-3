@@ -1,3 +1,12 @@
+# Internal full CI for the Gitea Actions runner.
+# Action refs are rewritten to http://192.168.178.212:3000/actions/* where mirrored.
+#
+# GitHub same-repo PRs are intentionally local-first: they require the
+# `fop/local-ci/pr` commit status posted by `make ci-post` and skip most heavy
+# duplicate jobs. Gitea intentionally keeps the fuller internal runner coverage
+# so packaging, e2e, Docker, and integration failures are found before GitHub is
+# used as the first real CI surface.
+
 name: CI
 
 on:
@@ -12,8 +21,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read       # checkout source for all CI jobs
-  pull-requests: read  # read PR metadata for fop-local-ci status check
+  contents: read
+  pull-requests: read
 
 env:
   PHP_VERSION: '8.4'
@@ -27,9 +36,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Lint GitHub Actions workflows
         uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
@@ -64,96 +71,24 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Review dependencies
-        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4
-        # Advisory until GitHub Dependency Graph is enabled for this repo.
-        continue-on-error: true
+        uses: http://192.168.178.212:3000/actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4
         with:
           fail-on-severity: high
           deny-licenses: GPL-2.0, GPL-3.0, AGPL-1.0, AGPL-3.0
 
-  local-ci-attestation:
-    # Attestation gate: same-repo PRs must publish a successful
-    # `fop/local-ci/pr` commit status before merge. The status is posted
-    # by `.github/scripts/fop-local-ci.sh --profile pr --post-status`,
-    # which runs the full PR gate locally through the fop build queue.
-    #
-    # Polling window: up to 30 attempts with adaptive backoff
-    # (5s, 10s, then 20s steady-state) — ~10 min total. Wider than the
-    # parkhub-rust pilot (18 × 10s = 3 min) because PHP local runs
-    # include Pint + PHPStan + PHPUnit Unit+Feature + Vitest + Astro
-    # build + drift gates, all serialized through fop's single-build
-    # queue. Authors typically push first, then run the local script —
-    # the window must comfortably cover that round-trip on a busy
-    # desktop. If the gate stalls beyond 10 min, fail loudly so the
-    # author can rerun locally rather than have GHA spin indefinitely.
-    name: fop local CI attestation
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    permissions:
-      contents: read   # checkout source for the gate job
-      statuses: read   # read fop/local-ci/pr commit status to gate the PR
-    steps:
-      - name: Require fop local CI commit status
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-          REPO: ${{ github.repository }}
-          CONTEXT: fop/local-ci/pr
-        run: |
-          status=""
-          attempts=30
-          for attempt in $(seq 1 "${attempts}"); do
-            status="$(
-              gh api "repos/${REPO}/commits/${SHA}/status" \
-                --jq ".statuses[] | select(.context == \"${CONTEXT}\") | .state" \
-                | head -n 1
-            )"
-            if [[ "$status" == "success" ]]; then
-              break
-            fi
-            if [[ "$status" == "failure" || "$status" == "error" ]]; then
-              echo "::error::${CONTEXT} reported ${status} for ${SHA}."
-              echo "Re-run locally and post a fresh status:"
-              echo "  .github/scripts/fop-local-ci.sh --profile pr --post-status"
-              exit 1
-            fi
-            echo "Waiting for ${CONTEXT} status on ${SHA} (${attempt}/${attempts})..."
-            if [[ "$attempt" -le 1 ]]; then
-              sleep 5
-            elif [[ "$attempt" -le 2 ]]; then
-              sleep 10
-            else
-              sleep 20
-            fi
-          done
-          if [[ "$status" != "success" ]]; then
-            echo "::error::Missing successful ${CONTEXT} status for ${SHA} after ${attempts} attempts."
-            echo "Run locally:"
-            echo "  .github/scripts/fop-local-ci.sh --profile pr --post-status"
-            exit 1
-          fi
-          echo "${CONTEXT}=${status}"
-
   backend-quality:
     name: Backend quality
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      # TODO(gitea-mirror): No mirror at http://192.168.178.212:3000/shivammathur/setup-php yet.
+      # Pin upstream until we mirror; revisit when Gitea mirror lands.
 
       - name: Set up PHP
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
@@ -164,7 +99,7 @@ jobs:
           tools: composer:v2
 
       - name: Cache Composer downloads
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: http://192.168.178.212:3000/actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.composer/cache
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
@@ -184,18 +119,12 @@ jobs:
 
   backend-tests:
     name: Backend tests
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up PHP
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
@@ -206,7 +135,7 @@ jobs:
           tools: composer:v2
 
       - name: Cache Composer downloads
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: http://192.168.178.212:3000/actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.composer/cache
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
@@ -226,21 +155,15 @@ jobs:
 
   frontend:
     name: Frontend builds
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: http://192.168.178.212:3000/actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -262,18 +185,12 @@ jobs:
 
   e2e-smoke:
     name: E2E smoke
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up PHP
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
@@ -284,14 +201,14 @@ jobs:
           tools: composer:v2
 
       - name: Cache Composer downloads
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: http://192.168.178.212:3000/actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.composer/cache
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Set up Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: http://192.168.178.212:3000/actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -300,7 +217,7 @@ jobs:
             parkhub-web/package-lock.json
 
       - name: Cache Playwright browsers
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: http://192.168.178.212:3000/actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
@@ -344,7 +261,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: http://192.168.178.212:3000/actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -352,7 +269,7 @@ jobs:
 
       - name: Upload Laravel server log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: http://192.168.178.212:3000/actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: e2e-server-log
           path: /tmp/parkhub-e2e.log
@@ -360,18 +277,12 @@ jobs:
 
   docker-validate:
     name: Docker build
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
@@ -388,18 +299,12 @@ jobs:
 
   integration:
     name: Integration tests
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up PHP
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
@@ -410,7 +315,7 @@ jobs:
           tools: composer:v2
 
       - name: Cache Composer downloads
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: http://192.168.178.212:3000/actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.composer/cache
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
@@ -433,18 +338,12 @@ jobs:
 
   openapi-drift:
     name: OpenAPI drift
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up PHP
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
@@ -454,7 +353,7 @@ jobs:
           tools: composer:v2
 
       - name: Cache Composer downloads
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: http://192.168.178.212:3000/actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.composer/cache
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
@@ -485,18 +384,12 @@ jobs:
 
   static-analysis:
     name: Static analysis (PHPStan)
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      contains(github.event.pull_request.labels.*.name, 'github-ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up PHP
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
@@ -507,7 +400,7 @@ jobs:
           tools: composer:v2
 
       - name: Cache Composer downloads
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: http://192.168.178.212:3000/actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.composer/cache
           key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
@@ -521,7 +414,6 @@ jobs:
 
   cosign-verify:
     # Advisory verification of the most-recent main-branch image signature.
-    # Runs on every PR/push to confirm the supply chain is intact upstream.
     # Skipped if no `:latest` tag is published yet (first-run bootstrap).
     name: Cosign verify (advisory)
     runs-on: ubuntu-latest
@@ -529,25 +421,26 @@ jobs:
     continue-on-error: true
     permissions:
       contents: read   # read-only — verifies a remote signature
-      packages: read   # pull the manifest from GHCR
+      packages: read   # pull manifest from GHCR
     env:
       IMAGE_REF: ghcr.io/${{ github.repository }}:latest
+      COSIGN_VERSION: 3.0.6
     steps:
       - name: Install cosign
-        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
-        with:
-          cosign-release: 'v3.0.6'
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/cosign \
+            "https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64"
+          sudo install -m 0755 /tmp/cosign /usr/local/bin/cosign
+          cosign version
 
       - name: Verify keyless OIDC signature on main image
         env:
-          # Locks verification to signatures issued by this repository's
-          # docker-publish workflow via the Sigstore public-good Fulcio CA.
           CERT_IDENTITY_REGEXP: ^https://github\.com/${{ github.repository }}/\.github/workflows/docker-publish\.yml@.*$
           CERT_OIDC_ISSUER: https://token.actions.githubusercontent.com
           IMAGE: ${{ env.IMAGE_REF }}
         run: |
           set -euo pipefail
-          # Skip cleanly if no :latest tag exists yet (first publish hasn't run).
           if ! cosign triangulate --type signature "${IMAGE}" >/dev/null 2>&1; then
             echo "::notice::No cosign signature manifest discoverable for ${IMAGE} — skipping (first publish not yet run)."
             exit 0
@@ -563,7 +456,6 @@ jobs:
     needs:
       - workflow-hygiene
       - dependency-review
-      - local-ci-attestation
       - backend-quality
       - backend-tests
       - frontend
@@ -580,9 +472,6 @@ jobs:
         env:
           WORKFLOW_HYGIENE: ${{ needs.workflow-hygiene.result }}
           DEPENDENCY_REVIEW: ${{ needs.dependency-review.result }}
-          LOCAL_CI: ${{ needs.local-ci-attestation.result }}
-          EVENT_NAME: ${{ github.event_name }}
-          SAME_REPO_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
           BACKEND_QUALITY: ${{ needs.backend-quality.result }}
           BACKEND_TESTS: ${{ needs.backend-tests.result }}
           FRONTEND: ${{ needs.frontend.result }}
@@ -592,31 +481,13 @@ jobs:
           INTEGRATION: ${{ needs.integration.result }}
           OPENAPI_DRIFT: ${{ needs.openapi-drift.result }}
         run: |
-          # Always-required hygiene gates: must succeed on every event.
-          if [[ "${WORKFLOW_HYGIENE}" != "success" ]]; then
-            echo "REQUIRED: WORKFLOW_HYGIENE failed: ${WORKFLOW_HYGIENE}"
-            exit 1
-          fi
-          # Same-repo PRs must clear the fop local-ci attestation. Forks
-          # and main pushes fall back to the heavy GHA jobs below.
-          if [[ "${EVENT_NAME}" == "pull_request" && "${SAME_REPO_PR}" == "true" && "${LOCAL_CI}" != "success" ]]; then
-            echo "REQUIRED: LOCAL_CI failed: ${LOCAL_CI}"
-            exit 1
-          fi
-          # Heavy jobs: success required when they ran; skipped is OK on
-          # normal same-repo PRs because the fop local attestation has
-          # already covered the same surface locally.
-          for check in BACKEND_QUALITY BACKEND_TESTS FRONTEND E2E_SMOKE DOCKER_VALIDATE STATIC_ANALYSIS INTEGRATION OPENAPI_DRIFT; do
-            if [[ "${!check}" != "success" && "${!check}" != "skipped" ]]; then
+          for check in BACKEND_TESTS DOCKER_VALIDATE WORKFLOW_HYGIENE BACKEND_QUALITY FRONTEND E2E_SMOKE STATIC_ANALYSIS INTEGRATION OPENAPI_DRIFT; do
+            if [[ "${!check}" != "success" ]]; then
               echo "REQUIRED: ${check} failed: ${!check}"
               exit 1
-            fi
-            if [[ "${!check}" == "skipped" ]]; then
-              echo "LOCAL-FIRST: ${check} skipped on PR; covered by fop/local-ci/pr"
             fi
           done
           if [[ "${DEPENDENCY_REVIEW}" != "success" && "${DEPENDENCY_REVIEW}" != "skipped" ]]; then
             echo "REQUIRED: DEPENDENCY_REVIEW failed: ${DEPENDENCY_REVIEW}"
             exit 1
           fi
-          echo "All checks passed"

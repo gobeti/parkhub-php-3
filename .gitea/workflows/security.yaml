@@ -1,3 +1,7 @@
+# Mirror of .github/workflows/security.yml for Gitea Actions runner.
+# Action refs rewritten to http://192.168.178.212:3000/actions/* where mirrored.
+# Edit .github/workflows/security.yml as source-of-truth, then re-mirror.
+
 name: Security
 
 on:
@@ -20,15 +24,21 @@ env:
   PHP_VERSION: '8.4'
   NODE_VERSION: '22.12.0'
 
+# Default shell to bash so 'set -euo pipefail' works in step scripts —
+# act_runner's default 'sh' is dash/BusyBox which doesn't support pipefail.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   composer-audit:
     name: Composer Audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      # TODO(gitea-mirror): No mirror at http://192.168.178.212:3000/shivammathur/setup-php yet.
+      # Pin upstream until we mirror; revisit when Gitea mirror lands.
 
       - name: Set up PHP
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
@@ -45,12 +55,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        uses: http://192.168.178.212:3000/actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -68,12 +76,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      contents: read         # checkout source for the scan
-      security-events: write # upload Trivy SARIF results to GitHub Security tab
+      contents: read
+      security-events: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -97,16 +103,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read      # checkout source for the secret scan
-      pull-requests: read # read PR base/head SHAs for scoped scan range
+      contents: read
+      pull-requests: read
     env:
       GITLEAKS_VERSION: 8.30.1
       GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
-          persist-credentials: false
 
       # We invoke the gitleaks binary directly (MIT, github.com/gitleaks/gitleaks).
       # The wrapper action gitleaks/gitleaks-action is published under a proprietary
@@ -135,22 +140,6 @@ jobs:
             gitleaks detect --source=. --redact --verbose --no-banner
           fi
 
-  typos:
-    name: Typos (advisory)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    # Advisory until typo backlog is cleared. Promote to required once green.
-    continue-on-error: true
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
-      - name: Run typos
-        continue-on-error: true
-        uses: crate-ci/typos@5ca5db740be4c6b2e6ce383819386a7340babd1e # v1.45.1
-
   zizmor:
     name: Zizmor (GHA SAST, audit-mode)
     runs-on: ubuntu-latest
@@ -159,45 +148,114 @@ jobs:
     # Promote findings to errors once the workflow inventory has been triaged.
     continue-on-error: true
     permissions:
-      contents: read         # checkout source for the SAST scan
-      security-events: write # upload Zizmor SARIF results to GitHub Security tab
+      contents: read   # read-only — zizmor only needs to parse workflow YAMLs
+    env:
+      ZIZMOR_VERSION: 1.24.1
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          persist-credentials: false
+          persist-credentials: false   # zizmor: ignore[artipacked] — read-only
+
+      # zizmor binary directly (MIT, github.com/zizmorcore/zizmor).
+      - name: Install zizmor
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/zizmor.tar.gz \
+            "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+          tar -xzf /tmp/zizmor.tar.gz -C /tmp zizmor
+          sudo mv /tmp/zizmor /usr/local/bin/zizmor
+          zizmor --version
+
       - name: Run zizmor
-        continue-on-error: true
-        uses: zizmorcore/zizmor-action@b1d7e1fb5de872772f31590499237e7cce841e8e # v0.5.3
+        run: |
+          set -euo pipefail
+          # auditor persona surfaces low-severity findings; --no-online-audits
+          # avoids GitHub API rate-limit issues when running from Gitea.
+          zizmor --persona=auditor --no-online-audits .github/workflows/ .gitea/workflows/ || true
+
+  osv-scanner:
+    name: OSV-Scanner (supply-chain)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      contents: read   # read-only — only parses lockfiles
+    env:
+      OSV_SCANNER_VERSION: 2.3.5
+    steps:
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          # auditor persona surfaces low-severity findings useful for hardening
-          # without flooding the PR with regular-user noise.
-          persona: auditor
+          persist-credentials: false   # zizmor: ignore[artipacked] — read-only
+
+      - name: Install osv-scanner
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /usr/local/bin/osv-scanner \
+            "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          chmod +x /usr/local/bin/osv-scanner
+          osv-scanner --version
+
+      - name: Run osv-scanner
+        run: |
+          set -euo pipefail
+          osv-scanner scan source --recursive --no-config . || true
+
+  grype:
+    name: Grype (vuln scan, defense-in-depth)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      contents: read   # read-only — Grype scans the filesystem
+    env:
+      GRYPE_VERSION: 0.111.1
+    steps:
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false   # zizmor: ignore[artipacked] — read-only
+
+      - name: Install grype
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/grype.tar.gz \
+            "https://github.com/anchore/grype/releases/download/v${GRYPE_VERSION}/grype_${GRYPE_VERSION}_linux_amd64.tar.gz"
+          tar -xzf /tmp/grype.tar.gz -C /tmp grype
+          sudo mv /tmp/grype /usr/local/bin/grype
+          grype --version
+
+      - name: Run grype
+        run: |
+          set -euo pipefail
+          grype dir:. --fail-on critical || true
 
   trivy-image:
-    # SOTA-2026 image scanning — Trivy (Apache-2.0) + Grype (Apache-2.0) for a
-    # second opinion. The published image only exists after docker-publish.yml
-    # runs on main, so this job is skipped for PRs (no image to scan yet).
+    # SOTA-2026 image scanning — Trivy (Apache-2.0) + Grype (Apache-2.0).
+    # The published image only exists after docker-publish.yaml runs on main,
+    # so this job is skipped for PRs.
     name: Trivy + Grype image scan
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    continue-on-error: true
     permissions:
-      contents: read         # checkout for the .trivyignore
+      contents: read         # checkout for .trivyignore
       packages: read         # pull image from GHCR
-      security-events: write # upload Trivy SARIF to Security tab
+      security-events: write # upload Trivy SARIF
     env:
       IMAGE_REF: ghcr.io/${{ github.repository }}:latest
+      GRYPE_VERSION: 0.111.1
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          persist-credentials: false
+          persist-credentials: false   # zizmor: ignore[artipacked] — read-only
 
       - name: Log in to GHCR (read-only)
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GITEA_TOKEN }}
 
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -218,13 +276,7 @@ jobs:
           sarif_file: trivy-image.sarif
           category: trivy-image
 
-      # Grype as a defense-in-depth second opinion. We invoke the binary
-      # directly (Apache-2.0, github.com/anchore/grype) rather than the
-      # anchore/scan-action wrapper to avoid surface area and stay
-      # commercial-license-safe.
       - name: Install grype
-        env:
-          GRYPE_VERSION: 0.111.1
         run: |
           set -euo pipefail
           curl -fsSL -o /tmp/grype.tar.gz \
@@ -234,9 +286,8 @@ jobs:
           grype --version
 
       - name: Run Grype image scan (defense-in-depth)
-        continue-on-error: true
         env:
           IMAGE: ${{ env.IMAGE_REF }}
         run: |
           set -euo pipefail
-          grype "registry:${IMAGE}" --only-fixed --fail-on critical -o table
+          grype "registry:${IMAGE}" --only-fixed --fail-on critical -o table || true

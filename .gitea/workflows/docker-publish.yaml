@@ -1,3 +1,7 @@
+# Mirror of .github/workflows/docker-publish.yml for Gitea Actions runner.
+# Action refs rewritten to http://192.168.178.212:3000/actions/* where mirrored.
+# Edit .github/workflows/docker-publish.yml as source-of-truth, then re-mirror.
+
 name: Release Container
 
 on:
@@ -30,16 +34,14 @@ jobs:
       packages: write        # push built image to GHCR
       id-token: write        # cosign keyless signing (Sigstore OIDC) + attest-build-provenance
       attestations: write    # actions/attest-build-provenance writes against the image digest
-      security-events: write # Trivy scan upload to GitHub Security tab
+      security-events: write # Trivy scan upload to Security tab
 
     outputs:
       digest: ${{ steps.push.outputs.digest }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+        uses: http://192.168.178.212:3000/actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
@@ -49,7 +51,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GITEA_TOKEN }}
 
       - name: Extract image metadata
         id: meta
@@ -118,10 +120,7 @@ jobs:
         run: |
           cosign sign --yes "${IMAGE_REF}@${IMAGE_DIGEST}"
 
-      # SOTA-2026 supply-chain hardening: generate an SBOM with Syft (Apache-2.0,
-      # github.com/anchore/syft) and attach it as an SPDX attestation via cosign.
-      # docker/build-push-action already publishes the BuildKit-native SBOM; this
-      # step is a defense-in-depth, second-source SBOM signed against the digest.
+      # SOTA-2026 supply-chain hardening: SBOM via Syft (Apache-2.0) + cosign attest.
       - name: Install syft
         env:
           SYFT_VERSION: 1.42.3
@@ -168,10 +167,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
-    # Bind Render deploy secrets to a dedicated environment so they can be
-    # gated by environment-level reviewers/branch rules rather than living as
-    # plain repo-level secrets. Falls back to repo secrets if the environment
-    # isn't configured (Render-deploy step skips when env vars are empty).
+    # Bind Render deploy secrets to a dedicated environment (see
+    # .github/workflows/docker-publish.yml for the rationale).
     environment: demo
     env:
       RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
