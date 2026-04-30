@@ -196,6 +196,14 @@ run_step_heavy() {
   fop build --backend local --resource-profile batch-medium . --preset custom -- bash -euo pipefail -c "$command"
 }
 
+run_advisory_step_heavy() {
+  local name="$1"
+  local command="$2"
+  if ! run_step_heavy "$name" "$command"; then
+    echo "$name returned non-zero (advisory; continuing)"
+  fi
+}
+
 # `run_direct` is for instantaneous shell checks (git diff, etc.) that
 # would be pure overhead inside the fop queue.
 run_direct() {
@@ -254,16 +262,16 @@ run_step "phpunit unit + feature" "./vendor/bin/phpunit --testsuite=Unit --no-co
 # ---------------- Frontend (Astro 5 + React 19 + Vitest 3) ------------------
 run_step "frontend npm install" "npm ci && npm ci --prefix parkhub-web"
 
-# tsc --noEmit on parkhub-web is not yet green on main as of 4.15.0 —
-# the `chore/web-tsc-phase4c-*` series (PRs #379..#382 and ongoing) is
-# still chipping away at hundreds of inherited TS errors. Run the gate
-# as advisory until phase 4 lands; the diff that makes it strict will
-# be a separate PR.
-run_step_heavy "frontend typecheck (advisory until tsc-phase4 lands)" "cd parkhub-web && NODE_OPTIONS=\"\${NODE_OPTIONS:-} --max-old-space-size=4096\" ./node_modules/.bin/tsc --noEmit || echo 'tsc errors present (advisory while phase4 is in flight)'"
-
 run_step "frontend vitest" "cd parkhub-web && npm test"
 
 run_step "frontend build" "cd parkhub-web && npm run build && cd .. && npm run build"
+
+# tsc --noEmit on parkhub-web is not yet green on main as of 4.15.0 —
+# the `chore/web-tsc-phase4c-*` series (PRs #379..#382 and ongoing) is
+# still chipping away at hundreds of inherited TS errors. Keep this after
+# hard frontend gates and make the fop wrapper advisory too, so host pressure
+# cannot fail the PR gate before the intentionally non-gating check completes.
+run_advisory_step_heavy "frontend typecheck (advisory until tsc-phase4 lands)" "cd parkhub-web && NODE_OPTIONS=\"\${NODE_OPTIONS:-} --max-old-space-size=4096\" ./node_modules/.bin/tsc --noEmit || echo 'tsc errors present (advisory while phase4 is in flight)'"
 
 # ---------------- Drift gates -----------------------------------------------
 # Both scripts already follow the same pattern as the rust side: they
@@ -347,18 +355,10 @@ else
 fi
 
 # ─── OSV-Scanner (supply-chain via OSV database) ────────────────────────────
-# OSV-Scanner v2 (Apache-2.0, Google) reads composer.lock + package-lock.json
-# and matches against the OSV database (broader than RUSTSEC alone: also
-# catches GHSA + CVE entries). Complements composer audit + npm audit.
-# Advisory mode: known transitive advisories are tolerated; OSV-Scanner
-# findings are surfaced informationally and do NOT fail the gate.
-if command -v osv-scanner >/dev/null 2>&1; then
-  # osv-scanner.toml at repo root tracks documented exceptions, so this step
-  # is now gating (failure = real new vuln, not a known one).
-  run_step "osv-scanner (supply-chain)" "osv-scanner scan source --recursive --config=osv-scanner.toml ."
-else
-  skip_step "osv-scanner" "osv-scanner not on PATH (install: https://google.github.io/osv-scanner/installation/)"
-fi
+# OSV-Scanner is invoked once via scripts/ci/local-security-audit.sh above
+# (composer.lock + package-lock.json + parkhub-web/package-lock.json with
+# osv-scanner.toml ignore config). Dedup'd here to avoid running the same
+# scan twice per fop-local-ci invocation — addresses #409 review.
 
 # ─── Grype (vuln scanner, defense-in-depth) ─────────────────────────────────
 # Grype (Apache-2.0, Anchore) is a complementary vuln scanner to Trivy.
