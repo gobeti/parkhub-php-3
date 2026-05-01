@@ -108,9 +108,8 @@ post_commit_status() {
 
   # Tolerate "No commit found for SHA" (HTTP 422) — happens when this
   # script runs from the pre-push hook BEFORE the commit has reached
-  # GitHub. The local-ci-attestation gate's 12-min timeout fallback
-  # then handles the missing status (exits 0 advisory once the SHA
-  # appears on GitHub) so the PR still unblocks without manual ops.
+  # GitHub. The local-ci-attestation gate's extended polling window then
+  # handles the missing status once the SHA appears on GitHub.
   # gh emits both the JSON body and the "(HTTP 422)" line on stdout,
   # so we capture stdout (not stderr) for the match.
   local out
@@ -311,6 +310,8 @@ if [[ "$profile" == "full" || "$profile" == "cd" ]]; then
   run_step "schemathesis contract fuzz (soft, opt-in)" "if [[ \"\${FOP_LOCAL_CI_RUN_SCHEMATHESIS:-0}\" != \"1\" ]]; then echo 'schemathesis disabled by default; export FOP_LOCAL_CI_RUN_SCHEMATHESIS=1 with a running php artisan serve on :8082 to enable'; elif command -v schemathesis >/dev/null 2>&1; then ./scripts/dump-openapi.sh && schemathesis run --checks=all --hypothesis-max-examples=50 docs/openapi/php.json --base-url=http://127.0.0.1:8082 || echo 'schemathesis returned non-zero (soft on full profile)'; else echo 'schemathesis not installed; skipping'; fi"
 
   run_step_heavy "infection mutation testing" "./vendor/bin/infection --threads=4 --no-progress"
+
+  run_step_heavy "playwright chromium browser install" "npx playwright install --with-deps chromium"
 
   run_step_heavy "playwright chromium e2e" "e2e_db=\"\${FOP_LOCAL_CI_E2E_DB:-/tmp/parkhub-e2e-\$\$.sqlite}\"; rm -f \"\$e2e_db\"; export DB_CONNECTION=sqlite DB_DATABASE=\"\$e2e_db\" DEMO_MODE=true PARKHUB_ADMIN_PASSWORD=demo PARKHUB_DISABLE_RATE_LIMITS=true; ./scripts/ci/bootstrap-laravel.sh && php artisan migrate:fresh --seed --force --no-interaction && npm run build:php --prefix parkhub-web && pid=''; cleanup() { if [[ -n \"\${pid:-}\" ]]; then kill \"\$pid\" 2>/dev/null || true; fi; rm -f \"\$e2e_db\"; }; trap cleanup EXIT; { php artisan serve --host=127.0.0.1 --port=8082 >/tmp/parkhub-e2e.log 2>&1 & pid=\$!; }; ./scripts/ci/wait-for-url.sh http://127.0.0.1:8082/api/v1/health/live 60 && npx playwright test e2e/api.spec.ts e2e/pages.spec.ts e2e/v5-a11y.spec.ts --project=chromium"
 fi
