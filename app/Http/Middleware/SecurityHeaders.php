@@ -34,6 +34,12 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SecurityHeaders
 {
+    public const OPENSTREETMAP_TILE_HOSTS = [
+        'https://a.tile.openstreetmap.org',
+        'https://b.tile.openstreetmap.org',
+        'https://c.tile.openstreetmap.org',
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         // Generate a per-request CSP nonce for inline styles
@@ -148,8 +154,8 @@ class SecurityHeaders
             "script-src 'self' 'unsafe-inline'",
             // Styles: self + unsafe-inline for Tailwind + framer-motion inline styles
             "style-src 'self' 'unsafe-inline'",
-            // Images: self, data URIs (base64 avatars/QR), blob URIs
-            "img-src 'self' data: blob:",
+            // Images: self, data URIs (base64 avatars/QR), blob URIs, and map tiles
+            "img-src 'self' data: blob: ".implode(' ', self::OPENSTREETMAP_TILE_HOSTS),
             // Fonts: self + data URIs + Bunny Fonts CDN
             "font-src 'self' data: https://fonts.bunny.net",
             // API connections: self + configured app URL + Vite HMR websocket in dev
