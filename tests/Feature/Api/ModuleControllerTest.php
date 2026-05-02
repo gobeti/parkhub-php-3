@@ -102,6 +102,29 @@ class ModuleControllerTest extends TestCase
         }
     }
 
+    public function test_info_alias_returns_rust_compatible_top_level_module_registry(): void
+    {
+        $response = $this->getJson('/api/v1/modules/info');
+
+        $response->assertOk();
+
+        $modules = $response->json('modules');
+        $moduleInfo = $response->json('module_info');
+        $data = $response->json('data');
+        $version = $response->json('version');
+
+        $this->assertTrue($response->json('success'));
+        $this->assertIsArray($modules);
+        $this->assertIsArray($moduleInfo);
+        $this->assertIsArray($data);
+        $this->assertNotEmpty($moduleInfo);
+        $this->assertSame($moduleInfo, $data);
+        $this->assertIsString($version);
+        $this->assertNotSame('', $version);
+        $this->assertArrayHasKey('bookings', $modules);
+        $this->assertContains('bookings', array_column($moduleInfo, 'name'));
+    }
+
     public function test_index_uses_canonical_product_slugs_in_public_payloads(): void
     {
         $response = $this->getJson('/api/v1/modules');
