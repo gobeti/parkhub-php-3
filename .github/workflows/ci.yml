@@ -56,6 +56,12 @@ jobs:
       - name: Validate Docker Compose
         run: docker compose -f docker-compose.yml config -q
 
+      - name: Validate Nix/Garnix contract
+        run: make nix-contract
+
+      - name: Validate devcontainer contract
+        run: make devcontainer-contract
+
   dependency-review:
     name: Dependency review
     if: github.event_name == 'pull_request'
