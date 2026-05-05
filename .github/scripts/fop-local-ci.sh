@@ -78,6 +78,46 @@ context="fop/local-ci/${profile}"
 report_dir="$repo_root/.fop/reports"
 report_path="$report_dir/local-ci-${profile}-${sha}.json"
 started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+diff_paths=""
+diff_touch_design_smoke=0
+
+compute_design_smoke_gate() {
+  if [[ "${FOP_LOCAL_CI_NO_DIFF_AWARE:-}" == "1" ]] || [[ "$profile" != "pr" ]]; then
+    diff_touch_design_smoke=1
+    return 0
+  fi
+
+  local base_ref
+  for candidate in github/main upstream/main origin/main main; do
+    if git rev-parse --verify --quiet "$candidate" >/dev/null; then
+      base_ref="$candidate"
+      break
+    fi
+  done
+
+  if [[ -z "${base_ref:-}" ]]; then
+    printf 'ℹ design-smoke gate: no base ref resolvable; enabling\n'
+    diff_touch_design_smoke=1
+    return 0
+  fi
+
+  local merge_base
+  merge_base="$(git merge-base "$base_ref" HEAD 2>/dev/null || echo "$base_ref")"
+  diff_paths="$(git diff --name-only "${merge_base}..HEAD" 2>/dev/null || true)"
+
+  if [[ -z "$diff_paths" ]]; then
+    printf 'ℹ design-smoke gate: empty diff vs %s; enabling\n' "$base_ref"
+    diff_touch_design_smoke=1
+    return 0
+  fi
+
+  if grep -qE '^(parkhub-web/(src/(design-v5|views|components|context|api|lib|styles)/|src/(App|main)\.tsx|package(-lock)?\.json|astro\.config\.mjs|playwright\.config\.ts)|resources/js/|e2e/|playwright\.config\.ts|package(-lock)?\.json)$' <<<"$diff_paths"; then
+    diff_touch_design_smoke=1
+  fi
+
+  printf 'ℹ design-smoke gate (vs %s): enabled=%d (%d files)\n' \
+    "$base_ref" "$diff_touch_design_smoke" "$(wc -l <<<"$diff_paths")"
+}
 
 status_repo() {
   if [[ -n "${FOP_LOCAL_CI_STATUS_REPO:-}" ]]; then
@@ -131,6 +171,10 @@ post_commit_status() {
 write_report() {
   local state="$1"
   local failed_step="${2:-}"
+  if [[ "$dry_run" -eq 1 ]]; then
+    echo "DRY-RUN: not writing local-ci ${state} report for ${sha:0:8}"
+    return 0
+  fi
   mkdir -p "$report_dir"
   cat > "$report_path" <<EOF
 {
@@ -156,6 +200,38 @@ EOF
 # Playwright browser harness) opt back into a larger profile via
 # `run_step_heavy` below.
 #
+run_fop_step() {
+  local resource_profile="$1"
+  local command="$2"
+  local marker="__PARKHUB_FOP_STEP_OK_${RANDOM}_${RANDOM}__"
+  local log_file
+  local wrapped_command
+
+  log_file="$(mktemp -t parkhub-fop-step.XXXXXX.log)"
+  printf -v wrapped_command '%s\nprintf "%%s\\n" "$PARKHUB_FOP_STEP_MARKER"' "$command"
+
+  set +e
+  PARKHUB_FOP_STEP_MARKER="$marker" \
+    fop build --backend local --resource-profile "$resource_profile" . --preset custom -- \
+      bash -euo pipefail -c "$wrapped_command" 2>&1 | tee "$log_file"
+  local status=${PIPESTATUS[0]}
+  set -e
+
+  if [[ "$status" -ne 0 ]]; then
+    rm -f "$log_file"
+    return "$status"
+  fi
+
+  if ! grep -Fq "$marker" "$log_file"; then
+    echo "ERROR: fop build reported success but the inner step completion marker was missing." >&2
+    echo "This usually means the wrapped command exited before completion or fop masked its status." >&2
+    rm -f "$log_file"
+    return 1
+  fi
+
+  rm -f "$log_file"
+}
+
 # Setting FOP_LOCAL_CI_DIRECT=1 bypasses the fop queue wrapper and
 # runs each step directly in the current shell. Use this for the
 # bootstrap chicken-and-egg run that introduces this script (the queue
@@ -177,7 +253,7 @@ run_step() {
     bash -euo pipefail -c "$command"
     return 0
   fi
-  fop build --backend local --resource-profile interactive-small . --preset custom -- bash -euo pipefail -c "$command"
+  run_fop_step interactive-small "$command"
 }
 
 run_step_heavy() {
@@ -192,7 +268,7 @@ run_step_heavy() {
     bash -euo pipefail -c "$command"
     return 0
   fi
-  fop build --backend local --resource-profile batch-medium . --preset custom -- bash -euo pipefail -c "$command"
+  run_fop_step batch-medium "$command"
 }
 
 run_advisory_step_heavy() {
@@ -238,9 +314,12 @@ mark_failure() {
 }
 trap 'mark_failure "$LINENO"' ERR
 
+compute_design_smoke_gate
+
 post_commit_status "pending" "fop local ${profile} running"
 
 run_direct "working tree whitespace" "git diff --check"
+run_direct "ui polish contract" "scripts/tests/test-ui-polish-contract.sh"
 
 # ---------------- Backend (PHP) ---------------------------------------------
 run_step "composer validate" "composer validate --strict"
@@ -263,7 +342,13 @@ run_step "frontend npm install" "npm ci && npm ci --prefix parkhub-web"
 
 run_step "frontend vitest" "cd parkhub-web && npm test"
 
-run_step "frontend build" "cd parkhub-web && npm run build && cd .. && npm run build"
+run_step "frontend build" "cd parkhub-web && CI=true npm run build && cd .. && CI=true npm run build"
+
+if (( diff_touch_design_smoke )); then
+  run_step_heavy "frontend route + v5 design smoke" "npm run test:e2e:design-smoke"
+else
+  skip_step "frontend route + v5 design smoke" "diff-aware: no route/design/e2e files touched"
+fi
 
 # tsc --noEmit on parkhub-web is not yet green on main as of 4.15.0 —
 # the `chore/web-tsc-phase4c-*` series (PRs #379..#382 and ongoing) is
@@ -320,7 +405,7 @@ if [[ "$profile" == "full" || "$profile" == "cd" ]]; then
 
   run_step_heavy "playwright chromium browser install" "npx playwright install --with-deps chromium"
 
-  run_step_heavy "playwright chromium e2e" "e2e_db=\"\${FOP_LOCAL_CI_E2E_DB:-/tmp/parkhub-e2e-\$\$.sqlite}\"; rm -f \"\$e2e_db\"; export DB_CONNECTION=sqlite DB_DATABASE=\"\$e2e_db\" DEMO_MODE=true PARKHUB_ADMIN_PASSWORD=demo PARKHUB_DISABLE_RATE_LIMITS=true E2E_BASE_URL=http://127.0.0.1:8082; ./scripts/ci/bootstrap-laravel.sh && php artisan migrate:fresh --seed --seeder=ProductionSimulationSeeder --force --no-interaction && npm run build:php --prefix parkhub-web && pid=''; cleanup() { if [[ -n \"\${pid:-}\" ]]; then kill \"\$pid\" 2>/dev/null || true; fi; rm -f \"\$e2e_db\"; }; trap cleanup EXIT; { php artisan serve --host=127.0.0.1 --port=8082 >/tmp/parkhub-e2e.log 2>&1 & pid=\$!; }; ./scripts/ci/wait-for-url.sh http://127.0.0.1:8082/api/v1/health/live 60 && npx playwright test e2e/api.spec.ts e2e/pages.spec.ts e2e/v5-a11y.spec.ts --project=chromium"
+  run_step_heavy "playwright chromium e2e" "e2e_db=\"\${FOP_LOCAL_CI_E2E_DB:-/tmp/parkhub-e2e-\$\$.sqlite}\"; rm -f \"\$e2e_db\"; export DB_CONNECTION=sqlite DB_DATABASE=\"\$e2e_db\" DEMO_MODE=true PARKHUB_ADMIN_PASSWORD=demo PARKHUB_DISABLE_RATE_LIMITS=true E2E_BASE_URL=http://127.0.0.1:8082; ./scripts/ci/bootstrap-laravel.sh && php artisan migrate:fresh --seed --seeder=ProductionSimulationSeeder --force --no-interaction && CI=true npm run build:php --prefix parkhub-web && pid=''; cleanup() { if [[ -n \"\${pid:-}\" ]]; then kill \"\$pid\" 2>/dev/null || true; fi; rm -f \"\$e2e_db\"; }; trap cleanup EXIT; { php artisan serve --host=127.0.0.1 --port=8082 >/tmp/parkhub-e2e.log 2>&1 & pid=\$!; }; ./scripts/ci/wait-for-url.sh http://127.0.0.1:8082/api/v1/health/live 60 && npx playwright test e2e/api.spec.ts e2e/pages.spec.ts e2e/v5-a11y.spec.ts --project=chromium"
 fi
 
 if [[ "$profile" == "cd" ]]; then
@@ -378,7 +463,11 @@ elif [[ "$profile" == "cd" ]]; then
   skip_step "grype" "grype not on PATH (install: https://github.com/anchore/grype#installation)"
 fi
 
-write_report "success"
-post_commit_status "success" "fop local ${profile} passed"
+if [[ "$dry_run" -eq 1 ]]; then
+  printf '\ndry-run local CI completed; no success report or commit status was written.\n'
+else
+  write_report "success"
+  post_commit_status "success" "fop local ${profile} passed"
 
-printf '\nlocal CI passed: %s\n' "$report_path"
+  printf '\nlocal CI passed: %s\n' "$report_path"
+fi

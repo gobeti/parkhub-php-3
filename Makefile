@@ -67,8 +67,8 @@ test:
 frontend:
 	npm ci
 	npm ci --prefix parkhub-web
-	npm test --prefix parkhub-web
-	npm run build
+	CI=true npm test --prefix parkhub-web
+	CI=true npm run build
 
 ## Mirrors: openapi-drift.yml
 drift:
@@ -107,7 +107,7 @@ lighthouse:
 		echo "npx not on PATH; skipping Lighthouse (advisory)."; \
 		exit 0; \
 	fi
-	npm run build --prefix parkhub-web
+	CI=true npm run build --prefix parkhub-web
 	npx --no-install @lhci/cli@latest autorun --config=lighthouserc.json || \
 		echo "@lhci/cli not installed; install with 'npm install -g @lhci/cli@latest' (advisory)."
 
@@ -129,6 +129,7 @@ ci-security:
 
 script-tests:
 	bash scripts/tests/test-drift-scripts.sh
+	bash scripts/tests/test-ui-polish-contract.sh
 	bash scripts/tests/test-fop-local-ci-failure-trap.sh
 	bash scripts/tests/test-local-ci-report-check.sh
 
