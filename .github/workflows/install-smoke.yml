@@ -29,6 +29,17 @@ jobs:
           git clone --depth 1 https://github.com/nash87/parkhub-php.git /tmp/smoke
       - name: Follow INSTALLATION.md Docker Compose steps
         working-directory: /tmp/smoke
+        # GitHub-hosted runners cannot reach the homelab internal registry
+        # (192.168.178.250:5000). Override the Dockerfile defaults via env vars
+        # consumed by docker-compose.yml's build args block, pointing at public
+        # images that match the same Wolfi/Node major versions.
+        env:
+          # Pin NODE_BASE to the same sha256 the Dockerfile defaults to so
+          # cloud + homelab smoke tests run on byte-identical bytes.
+          # WOLFI_BASE stays tag-only because Chainguard's continuous-CVE
+          # patching model recommends `:latest`.
+          NODE_BASE: docker.io/library/node:22-slim@sha256:aa8ccf90d87e2e60804816ddd256480a42f5cf3cafadf30618be606e4b894104
+          WOLFI_BASE: cgr.dev/chainguard/wolfi-base:latest
         run: |
           # Step 2 — seed required secrets
           {
