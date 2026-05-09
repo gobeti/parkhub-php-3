@@ -8,12 +8,20 @@ name: Visual Regression
 # `continue-on-error: true`).
 #
 # Run manually via `workflow_dispatch` when intentionally rebasing
-# baselines.
+# baselines: trigger with `update-snapshots: true` and the regenerated
+# PNGs are uploaded as the `visual-baselines` artifact (retained 14 days).
+# Download, extract over `e2e/*-snapshots/` locally, commit on a branch.
 
 on:
   schedule:
     - cron: '0 3 * * *'  # 03:00 UTC daily
   workflow_dispatch:
+    inputs:
+      update-snapshots:
+        description: 'Regenerate visual baselines (uploads new PNGs as artifact for manual commit)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: visual-${{ github.workflow }}-${{ github.ref }}
@@ -97,6 +105,9 @@ jobs:
           PARKHUB_ADMIN_PASSWORD: demo
           PARKHUB_DISABLE_RATE_LIMITS: 'true'
           RUN_STORAGE_LINK: '1'
+          # `inputs` is null on `schedule` triggers — coerce to false so we
+          # never accidentally regenerate baselines on the nightly run.
+          UPDATE_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.update-snapshots || false }}
         run: |
           ./scripts/ci/bootstrap-laravel.sh
           php artisan migrate:fresh --seed --seeder=ProductionSimulationSeeder --force
@@ -111,19 +122,39 @@ jobs:
           # render/runtime coverage lives in npm run test:e2e:design-smoke.
           # Keep workers=1 — php artisan serve is single-process and
           # concurrent logins race.
+          # When the dispatch input asks for a baseline rebase, pass
+          # `--update-snapshots` so Playwright writes new PNGs into the
+          # `*-snapshots/` directories. The artifact upload step picks
+          # them up — operators download + commit them on their own branch.
+          UPDATE_FLAG=""
+          if [ "${UPDATE_SNAPSHOTS}" = "true" ]; then
+            UPDATE_FLAG="--update-snapshots"
+            echo "::notice title=Regenerating visual baselines::Pass --update-snapshots to Playwright. Download the visual-baselines artifact after the run completes."
+          fi
+
           set +e
+          # shellcheck disable=SC2086
           npx playwright test \
             --project=chromium \
             --workers=1 \
             --reporter=github,html \
+            ${UPDATE_FLAG} \
             e2e/visual.spec.ts \
             e2e/v5-visual.spec.ts \
             e2e/v5-happy-paths.spec.ts
           visual_status=$?
           set -e
 
+          # Always emit a warning on non-zero exit. With UPDATE_SNAPSHOTS=true,
+          # Playwright should ALSO succeed (it just writes new baselines) — a
+          # crash there means the suite couldn't even start, so the warning
+          # is still the right signal.
           if [ "${visual_status}" -ne 0 ]; then
-            echo "::warning title=Visual regression detected::Playwright exited ${visual_status}. See uploaded diff and report artifacts."
+            if [ "${UPDATE_SNAPSHOTS}" = "true" ]; then
+              echo "::warning title=Baseline regen failed::Playwright exited ${visual_status} during --update-snapshots. The visual-baselines artifact may be partial; check uploaded report."
+            else
+              echo "::warning title=Visual regression detected::Playwright exited ${visual_status}. See uploaded diff and report artifacts."
+            fi
           fi
 
       - name: Upload diff artifacts
@@ -138,6 +169,19 @@ jobs:
             playwright-report/
           retention-days: 14
           if-no-files-found: ignore
+
+      - name: Upload regenerated baselines
+        # `inputs` is only populated for workflow_dispatch — guard so the
+        # nightly schedule never accidentally uploads a baselines artifact.
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.update-snapshots == true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: visual-baselines
+          path: |
+            e2e/visual.spec.ts-snapshots/**
+            e2e/v5-visual.spec.ts-snapshots/**
+            e2e/v5-happy-paths.spec.ts-snapshots/**
+          retention-days: 14
 
       - name: Upload full Playwright report
         if: always()
