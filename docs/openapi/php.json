@@ -27307,18 +27307,28 @@
                               "type": "string"
                             },
                             "docs": {
-                              "const": "/docs/api",
+                              "const": "/api/v1/docs",
                               "type": "string"
                             },
                             "health": {
                               "const": "/api/v1/health",
+                              "type": "string"
+                            },
+                            "openapi": {
+                              "const": "/api/v1/docs/openapi.json",
+                              "type": "string"
+                            },
+                            "postman": {
+                              "const": "/api/v1/docs/postman.json",
                               "type": "string"
                             }
                           },
                           "required": [
                             "auth",
                             "health",
-                            "docs"
+                            "docs",
+                            "openapi",
+                            "postman"
                           ],
                           "type": "object"
                         },
@@ -27367,6 +27377,152 @@
           }
         },
         "summary": "GET /api/v1/discover\nHandshake/discovery endpoint — returns API version, capabilities, and available modules",
+        "tags": [
+          "Public"
+        ]
+      }
+    },
+    "/v1/docs": {
+      "get": {
+        "operationId": "v1.docs",
+        "responses": {
+          "302": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Redirects to the Scramble documentation UI.",
+            "headers": {
+              "Location": {
+                "description": "Scramble documentation UI URL.",
+                "example": "/docs/api",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public"
+        ]
+      }
+    },
+    "/v1/docs/openapi.json": {
+      "get": {
+        "operationId": "v1.docs.openapi",
+        "responses": {
+          "302": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Redirects to the Scramble OpenAPI JSON document.",
+            "headers": {
+              "Location": {
+                "description": "Scramble OpenAPI JSON URL.",
+                "example": "/docs/api.json",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public"
+        ]
+      }
+    },
+    "/v1/docs/postman.json": {
+      "get": {
+        "operationId": "v1.docs.postman",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "info": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "item": {
+                      "items": {},
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "info",
+                    "item"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Postman collection JSON."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Postman collection asset not found."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Postman collection asset is unreadable or invalid."
+          }
+        },
         "tags": [
           "Public"
         ]
@@ -35366,6 +35522,39 @@
         "summary": "Get current SSE connection status info",
         "tags": [
           "Sse"
+        ]
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "operationId": "v1.status",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "const": "ok",
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "version"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "Public"
         ]
       }
     },
