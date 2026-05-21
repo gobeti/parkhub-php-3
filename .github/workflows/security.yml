@@ -165,11 +165,11 @@ jobs:
     # Audit-mode: surface findings as informational; do NOT fail the gate yet.
     # Promote findings to errors once the workflow inventory has been triaged.
     continue-on-error: true
-    env:
-      ZIZMOR_VERSION: "1.24.1"
     permissions:
       contents: read         # checkout source for the SAST scan
       security-events: write # upload Zizmor SARIF results to GitHub Security tab
+    env:
+      ZIZMOR_VERSION: "1.24.1"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:

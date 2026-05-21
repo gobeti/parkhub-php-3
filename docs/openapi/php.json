@@ -34264,60 +34264,181 @@
                   "properties": {
                     "data": {
                       "properties": {
-                        "acceptance_rate": {
-                          "anyOf": [
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "enum": [
-                                0
-                              ],
-                              "type": "integer"
-                            }
-                          ]
+                        "acceptance_metric_source": {
+                          "const": "not_tracked",
+                          "type": "string"
                         },
-                        "accepted": {
-                          "minimum": 0,
-                          "type": "integer"
+                        "acceptance_rate": {
+                          "type": "null"
+                        },
+                        "accepted_recommendations": {
+                          "type": "null"
+                        },
+                        "algorithm": {
+                          "const": "weighted_v1",
+                          "type": "string"
+                        },
+                        "algorithm_adapter": {
+                          "properties": {
+                            "attempted": {
+                              "type": "boolean"
+                            },
+                            "effective_algorithm": {
+                              "const": "weighted_v1",
+                              "type": "string"
+                            },
+                            "endpoint_configured": {
+                              "type": "boolean"
+                            },
+                            "error": {
+                              "type": "null"
+                            },
+                            "fallback_enabled": {
+                              "type": "boolean"
+                            },
+                            "pipeline_name": {
+                              "type": "null"
+                            },
+                            "requested_algorithm": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "const": "weighted_v1",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "requested_algorithm",
+                            "effective_algorithm",
+                            "attempted",
+                            "status",
+                            "pipeline_name",
+                            "endpoint_configured",
+                            "fallback_enabled",
+                            "error"
+                          ],
+                          "type": "object"
                         },
                         "algorithm_weights": {
                           "properties": {
+                            "accessibility_bonus": {
+                              "type": "number"
+                            },
                             "availability": {
-                              "const": 30,
-                              "type": "integer"
+                              "type": "number"
                             },
                             "distance": {
-                              "const": 10,
-                              "type": "integer"
+                              "type": "number"
+                            },
+                            "feature_bonus": {
+                              "type": "number"
                             },
                             "frequency": {
-                              "const": 40,
-                              "type": "integer"
+                              "type": "number"
+                            },
+                            "preferred_lot": {
+                              "type": "number"
                             },
                             "price": {
-                              "const": 20,
-                              "type": "integer"
+                              "type": "number"
                             }
                           },
                           "required": [
                             "frequency",
+                            "preferred_lot",
                             "availability",
                             "price",
-                            "distance"
+                            "distance",
+                            "accessibility_bonus",
+                            "feature_bonus"
                           ],
                           "type": "object"
                         },
+                        "avg_score": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "legal_boundary": {
+                          "properties": {
+                            "attorney_review_status": {
+                              "const": "required_before_customer_wording",
+                              "type": "string"
+                            },
+                            "disclaimer": {
+                              "const": "fop legal output is reference-only drafting support; attorney review, citation verification, client authorization, and final legal judgment remain required before customer-facing profiling or legal wording ships.",
+                              "type": "string"
+                            },
+                            "execution_allowed": {
+                              "type": "boolean"
+                            },
+                            "legal_review_required": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "legal_review_required",
+                            "attorney_review_status",
+                            "execution_allowed",
+                            "disclaimer"
+                          ],
+                          "type": "object"
+                        },
+                        "metrics_source": {
+                          "const": "audit_log.recommendation_served",
+                          "type": "string"
+                        },
+                        "top_recommended_lots": {
+                          "items": {
+                            "properties": {
+                              "count": {
+                                "type": "integer"
+                              },
+                              "lot_id": {
+                                "type": "string"
+                              },
+                              "lot_name": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "lot_id",
+                              "lot_name",
+                              "count"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "total_recommendations": {
                           "minimum": 0,
+                          "type": "integer"
+                        },
+                        "total_recommendations_served": {
+                          "type": "integer"
+                        },
+                        "unique_users": {
                           "type": "integer"
                         }
                       },
                       "required": [
                         "total_recommendations",
-                        "accepted",
+                        "total_recommendations_served",
+                        "accepted_recommendations",
                         "acceptance_rate",
-                        "algorithm_weights"
+                        "acceptance_metric_source",
+                        "unique_users",
+                        "avg_score",
+                        "metrics_source",
+                        "algorithm",
+                        "algorithm_weights",
+                        "algorithm_adapter",
+                        "legal_boundary",
+                        "top_recommended_lots"
                       ],
                       "type": "object"
                     },
