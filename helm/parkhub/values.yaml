@@ -6,6 +6,11 @@ image:
   repository: ghcr.io/nash87/parkhub-php
   pullPolicy: IfNotPresent
   tag: ""  # defaults to appVersion
+  # Optional sha256:... digest. A leading @ is accepted for copy/paste safety.
+  # PRECEDENCE: when digest is set it always wins — the chart renders
+  # repository@digest and image.tag is IGNORED (set tag "" to make that
+  # explicit). Mixing both is rejected by the tag+digest helper guard.
+  digest: ""
 
 imagePullSecrets: []
 nameOverride: ""
