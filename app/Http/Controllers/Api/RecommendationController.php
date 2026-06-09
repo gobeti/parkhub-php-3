@@ -10,6 +10,7 @@ use App\Models\Booking;
 use App\Models\ParkingLot;
 use App\Models\Setting;
 use App\Services\ModuleRegistry;
+use App\Services\Recommendations\ExactCoverAllocator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -187,6 +188,7 @@ class RecommendationController extends Controller
                 'metrics_source' => 'audit_log.recommendation_served',
                 'algorithm' => $engine['algorithm'],
                 'algorithm_weights' => $engine['weights'],
+                'allocation' => $engine['allocation'],
                 'algorithm_adapter' => $this->weightedV1AdapterStatus($engine),
                 'legal_boundary' => [
                     'legal_review_required' => true,
@@ -195,6 +197,89 @@ class RecommendationController extends Controller
                     'disclaimer' => 'fop legal output is reference-only drafting support; attorney review, citation verification, client authorization, and final legal judgment remain required before customer-facing profiling or legal wording ships.',
                 ],
                 'top_recommended_lots' => $servedStats['top_recommended_lots'],
+            ],
+            'error' => null,
+        ]);
+    }
+
+    /**
+     * POST /api/v1/recommendations/allocation/exact-cover
+     *
+     * Admin-only exact-cover utility for batch/recurring operational
+     * scheduling. The quick-booking endpoint keeps weighted_v1 as its default.
+     */
+    public function exactCoverAllocation(Request $request, ExactCoverAllocator $allocator): JsonResponse
+    {
+        $validated = $request->validate([
+            'required_constraints' => ['present', 'array', 'max:256'],
+            'required_constraints.*' => ['string', 'max:128'],
+            'options' => ['present', 'array', 'max:256'],
+            'options.*.id' => ['required', 'string', 'max:128'],
+            'options.*.covers' => ['present', 'array', 'min:1', 'max:256'],
+            'options.*.covers.*' => ['nullable', 'string', 'max:128'],
+            'options.*.weight' => ['sometimes', 'integer', 'min:-1000000', 'max:1000000'],
+            'limits' => ['sometimes', 'array'],
+            'limits.max_options' => ['sometimes', 'integer', 'min:1', 'max:256'],
+            'limits.max_search_nodes' => ['sometimes', 'integer', 'min:1', 'max:10000'],
+        ]);
+        $engine = $this->recommendationEngineConfig();
+        $limits = (array) ($validated['limits'] ?? []);
+        $options = array_values((array) $validated['options']);
+        $duplicateOptionIds = $this->duplicateExactCoverOptionIds($options);
+        if ($duplicateOptionIds !== []) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => [
+                    'code' => 'DUPLICATE_EXACT_COVER_OPTION_ID',
+                    'message' => 'Exact-cover option IDs must be unique: '.implode(', ', $duplicateOptionIds),
+                ],
+            ], 422);
+        }
+        $emptyCoverOptionIds = $this->emptyCoverExactCoverOptionIds($options);
+        if ($emptyCoverOptionIds !== []) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => [
+                    'code' => 'EXACT_COVER_OPTION_COVERS_REQUIRED',
+                    'message' => 'Exact-cover options must cover at least one constraint: '.implode(', ', $emptyCoverOptionIds),
+                ],
+            ], 422);
+        }
+        $effectiveLimits = [
+            'exact_cover_max_options' => $this->boundedInt(
+                $limits['max_options'] ?? $engine['allocation']['exact_cover_max_options'],
+                1,
+                $engine['allocation']['exact_cover_max_options']
+            ),
+            'exact_cover_max_search_nodes' => $this->boundedInt(
+                $limits['max_search_nodes'] ?? $engine['allocation']['exact_cover_max_search_nodes'],
+                1,
+                $engine['allocation']['exact_cover_max_search_nodes']
+            ),
+        ];
+
+        $result = $allocator->solve(
+            array_values((array) $validated['required_constraints']),
+            $options,
+            $effectiveLimits['exact_cover_max_options'],
+            $effectiveLimits['exact_cover_max_search_nodes']
+        );
+        $allocationTraceId = (string) Str::uuid();
+        $this->auditExactCoverAllocation($request, $allocationTraceId, $effectiveLimits, $validated, $result);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'allocation_trace_id' => $allocationTraceId,
+                'result' => $result,
+                'legal_boundary' => [
+                    'legal_review_required' => true,
+                    'attorney_review_status' => 'required_before_customer_wording',
+                    'execution_allowed' => false,
+                    'disclaimer' => 'exact_cover_v1 is operational scheduling support; attorney review, citation verification, client authorization, and final legal judgment remain required before customer-facing legal or profiling claims ship.',
+                ],
             ],
             'error' => null,
         ]);
@@ -210,7 +295,8 @@ class RecommendationController extends Controller
      *     max_results: int,
      *     explain: bool,
      *     profile_safe_mode: bool,
-     *     pipeline: array{endpoint: ?string, pipeline_name: string, timeout_ms: int, fallback_enabled: bool}
+     *     pipeline: array{endpoint: ?string, pipeline_name: string, timeout_ms: int, fallback_enabled: bool},
+     *     allocation: array{strategy: string, exact_cover_max_options: int, exact_cover_max_search_nodes: int}
      * }
      */
     private function recommendationEngineConfig(): array
@@ -232,6 +318,14 @@ class RecommendationController extends Controller
             $pipeline['pipeline_name'] ?? 'parkhub-recommendations'
         );
         $pipelineName = trim($pipelineName) !== '' ? trim($pipelineName) : 'parkhub-recommendations';
+        $allocation = (array) config('recommendations.allocation', []);
+        $allocationStrategy = (string) $this->moduleConfigValue(
+            'allocation_strategy',
+            $allocation['strategy'] ?? 'weighted_v1'
+        );
+        if (! in_array($allocationStrategy, ['weighted_v1', 'exact_cover_v1'], true)) {
+            $allocationStrategy = 'weighted_v1';
+        }
 
         return [
             'algorithm' => $algorithm,
@@ -289,6 +383,25 @@ class RecommendationController extends Controller
                     min(5000, (int) $this->moduleConfigValue('pipeline_timeout_ms', $pipeline['timeout_ms'] ?? 750))
                 ),
                 'fallback_enabled' => true,
+            ],
+            'allocation' => [
+                'strategy' => $allocationStrategy,
+                'exact_cover_max_options' => $this->boundedInt(
+                    $this->moduleConfigValue(
+                        'exact_cover_max_options',
+                        $allocation['exact_cover_max_options'] ?? 256
+                    ),
+                    1,
+                    256
+                ),
+                'exact_cover_max_search_nodes' => $this->boundedInt(
+                    $this->moduleConfigValue(
+                        'exact_cover_max_search_nodes',
+                        $allocation['exact_cover_max_search_nodes'] ?? 10000
+                    ),
+                    1,
+                    10000
+                ),
             ],
         ];
     }
@@ -554,7 +667,8 @@ class RecommendationController extends Controller
      *     max_results: int,
      *     explain: bool,
      *     profile_safe_mode: bool,
-     *     pipeline: array<string, mixed>
+     *     pipeline: array<string, mixed>,
+     *     allocation: array{strategy: string, exact_cover_max_options: int, exact_cover_max_search_nodes: int}
      * }  $engine
      * @param  array<string, mixed>  $adapter
      * @param  array<int, array<string, mixed>>  $recommendations
@@ -604,13 +718,82 @@ class RecommendationController extends Controller
     }
 
     /**
+     * @param  array{exact_cover_max_options: int, exact_cover_max_search_nodes: int}  $effectiveLimits
+     * @param  array{required_constraints: array<int, string>, options: array<int, array<string, mixed>>, limits?: array<string, int>}  $validated
+     * @param  array{strategy: string, status: string, selected_option_ids: array<int, string>, covered_constraints: array<int, string>, search_nodes: int}  $result
+     */
+    private function auditExactCoverAllocation(
+        Request $request,
+        string $allocationTraceId,
+        array $effectiveLimits,
+        array $validated,
+        array $result
+    ): void {
+        $actor = $request->user();
+        $selected = array_fill_keys($result['selected_option_ids'], true);
+        $candidateIds = array_values(array_filter(array_map(
+            static fn (array $option): string => trim((string) ($option['id'] ?? '')),
+            $validated['options']
+        )));
+        $rejectedCandidateIds = array_values(array_filter(
+            $candidateIds,
+            static fn (string $id): bool => ! isset($selected[$id])
+        ));
+
+        AuditLog::log([
+            'user_id' => $actor?->id,
+            'username' => $actor === null ? null : ($actor->email ?: $actor->username),
+            'action' => 'exact_cover_allocation_served',
+            'event_type' => 'ExactCoverAllocationServed',
+            'target_type' => 'recommendation_allocation',
+            'target_id' => $allocationTraceId,
+            'ip_address' => $request->ip(),
+            'details' => [
+                'request_id' => $allocationTraceId,
+                'solver_name' => 'exact_cover_v1',
+                'solver_version' => 1,
+                'config_hash' => $this->exactCoverConfigHash($effectiveLimits),
+                'constraint_set_hash' => $this->exactCoverConstraintHash($validated['required_constraints']),
+                'candidate_set_hash' => $this->exactCoverCandidateHash($validated['options']),
+                'effective_limits' => [
+                    'max_options' => $effectiveLimits['exact_cover_max_options'],
+                    'max_search_nodes' => $effectiveLimits['exact_cover_max_search_nodes'],
+                ],
+                'selected_option_ids' => $result['selected_option_ids'],
+                'rejected_candidate_ids' => $rejectedCandidateIds,
+                'covered_constraints' => $result['covered_constraints'],
+                'search_nodes' => $result['search_nodes'],
+                'tie_break_inputs' => [
+                    'candidate_order' => 'weight_desc_then_option_id_asc',
+                    'constraint_order' => 'fewest_candidates_then_constraint_asc',
+                    'max_options' => $effectiveLimits['exact_cover_max_options'],
+                    'max_search_nodes' => $effectiveLimits['exact_cover_max_search_nodes'],
+                ],
+                'actor' => [
+                    'user_id' => $actor?->id,
+                    'api_key_id' => null,
+                ],
+                'tenant_id' => $actor?->tenant_id,
+                'fallback_status' => $result['status'],
+                'retention_deletion_class' => 'operational_evidence_personal_data_possible',
+                'legal_boundary' => [
+                    'legal_review_required' => true,
+                    'attorney_review_status' => 'required_before_customer_wording',
+                    'execution_allowed' => false,
+                ],
+            ],
+        ]);
+    }
+
+    /**
      * @param  array{
      *     algorithm: string,
      *     weights: array<string, float>,
      *     max_results: int,
      *     explain: bool,
      *     profile_safe_mode: bool,
-     *     pipeline: array<string, mixed>
+     *     pipeline: array<string, mixed>,
+     *     allocation: array{strategy: string, exact_cover_max_options: int, exact_cover_max_search_nodes: int}
      * }  $engine
      */
     private function recommendationConfigHash(array $engine): string
@@ -622,6 +805,7 @@ class RecommendationController extends Controller
             'explain' => $engine['explain'],
             'profile_safe_mode' => $engine['profile_safe_mode'],
             'pipeline' => $engine['pipeline'],
+            'allocation' => $engine['allocation'],
         ], JSON_THROW_ON_ERROR));
     }
 
@@ -631,6 +815,104 @@ class RecommendationController extends Controller
     private function recommendationWeightsHash(array $weights): string
     {
         return hash('sha256', json_encode($weights, JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @param  array{exact_cover_max_options: int, exact_cover_max_search_nodes: int}  $allocation
+     */
+    private function exactCoverConfigHash(array $allocation): string
+    {
+        return hash('sha256', json_encode([
+            'strategy' => 'exact_cover_v1',
+            'max_options' => $allocation['exact_cover_max_options'],
+            'max_search_nodes' => $allocation['exact_cover_max_search_nodes'],
+        ], JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $options
+     * @return array<int, string>
+     */
+    private function duplicateExactCoverOptionIds(array $options): array
+    {
+        $seen = [];
+        $duplicates = [];
+        foreach ($options as $option) {
+            $id = trim((string) ($option['id'] ?? ''));
+            if ($id === '') {
+                continue;
+            }
+            if (isset($seen[$id])) {
+                $duplicates[$id] = true;
+
+                continue;
+            }
+            $seen[$id] = true;
+        }
+
+        $values = array_keys($duplicates);
+        sort($values, SORT_STRING);
+
+        return $values;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $options
+     * @return array<int, string>
+     */
+    private function emptyCoverExactCoverOptionIds(array $options): array
+    {
+        $ids = [];
+        foreach ($options as $option) {
+            $id = trim((string) ($option['id'] ?? ''));
+            if ($id !== '' && $this->normalizedExactCoverConstraints((array) ($option['covers'] ?? [])) === []) {
+                $ids[] = $id;
+            }
+        }
+
+        sort($ids, SORT_STRING);
+
+        return $ids;
+    }
+
+    /**
+     * @param  array<int, string>  $constraints
+     */
+    private function exactCoverConstraintHash(array $constraints): string
+    {
+        return hash('sha256', json_encode($this->normalizedExactCoverConstraints($constraints), JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $options
+     */
+    private function exactCoverCandidateHash(array $options): string
+    {
+        $normalized = array_values(array_filter(array_map(function (array $option): ?array {
+            $id = trim((string) ($option['id'] ?? ''));
+            if ($id === '') {
+                return null;
+            }
+
+            return [
+                'id' => $id,
+                'covers' => $this->normalizedExactCoverConstraints((array) ($option['covers'] ?? [])),
+                'weight' => (int) ($option['weight'] ?? 0),
+            ];
+        }, $options)));
+
+        usort($normalized, static fn (array $left, array $right): int => strcmp($left['id'], $right['id']));
+
+        return hash('sha256', json_encode($normalized, JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @param  array<int, mixed>  $constraints
+     * @return array<int, string>
+     */
+    private function normalizedExactCoverConstraints(array $constraints): array
+    {
+        return ExactCoverAllocator::normalizeConstraints($constraints);
     }
 
     private function moduleConfigValue(string $key, mixed $default): mixed
@@ -648,6 +930,13 @@ class RecommendationController extends Controller
     private function boundedFloat(mixed $value, float $min, float $max): float
     {
         $number = is_numeric($value) ? (float) $value : $min;
+
+        return max($min, min($max, $number));
+    }
+
+    private function boundedInt(mixed $value, int $min, int $max): int
+    {
+        $number = is_numeric($value) ? (int) $value : $min;
 
         return max($min, min($max, $number));
     }

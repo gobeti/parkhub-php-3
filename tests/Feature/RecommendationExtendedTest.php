@@ -366,12 +366,170 @@ class RecommendationExtendedTest extends TestCase
             ->assertJsonPath('data.algorithm_weights.price', 20)
             ->assertJsonPath('data.algorithm_weights.distance', 10)
             ->assertJsonPath('data.algorithm_weights.feature_bonus', 2)
+            ->assertJsonPath('data.allocation.strategy', 'weighted_v1')
+            ->assertJsonPath('data.allocation.exact_cover_max_options', 256)
+            ->assertJsonPath('data.allocation.exact_cover_max_search_nodes', 10000)
             ->assertJsonPath('data.algorithm_adapter.effective_algorithm', 'weighted_v1')
             ->assertJsonPath('data.algorithm_adapter.fallback_enabled', true)
             ->assertJsonPath('data.legal_boundary.legal_review_required', true)
             ->assertJsonPath('data.legal_boundary.attorney_review_status', 'required_before_customer_wording')
             ->assertJsonPath('data.legal_boundary.execution_allowed', false)
             ->assertJsonCount(0, 'data.top_recommended_lots');
+    }
+
+    public function test_admin_exact_cover_allocation_endpoint_solves_batch_constraints(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Setting::set(
+            ModuleRegistry::configSettingKey('recommendations', 'allocation_strategy'),
+            json_encode('exact_cover_v1')
+        );
+        Setting::set(
+            ModuleRegistry::configSettingKey('recommendations', 'exact_cover_max_options'),
+            json_encode(10)
+        );
+        Setting::set(
+            ModuleRegistry::configSettingKey('recommendations', 'exact_cover_max_search_nodes'),
+            json_encode(500)
+        );
+
+        $response = $this->actingAs($admin)->postJson('/api/v1/recommendations/allocation/exact-cover', [
+            'required_constraints' => ['tenant:alpha', 'tenant:beta', 'ev', 'accessible'],
+            'options' => [
+                ['id' => 'slot-a', 'covers' => ['tenant:alpha', 'ev'], 'weight' => 90],
+                ['id' => 'slot-b', 'covers' => ['tenant:beta', 'accessible'], 'weight' => 80],
+                ['id' => 'slot-c', 'covers' => ['tenant:beta'], 'weight' => 70],
+            ],
+            'limits' => [
+                'max_options' => 3,
+                'max_search_nodes' => 50,
+            ],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.result.strategy', 'exact_cover_v1')
+            ->assertJsonPath('data.result.status', 'solved')
+            ->assertJsonPath('data.result.selected_option_ids', ['slot-a', 'slot-b'])
+            ->assertJsonPath('data.legal_boundary.execution_allowed', false);
+
+        $this->assertNotEmpty($response->json('data.allocation_trace_id'));
+
+        $trace = AuditLog::query()
+            ->where('event_type', 'ExactCoverAllocationServed')
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($trace);
+        $this->assertSame($response->json('data.allocation_trace_id'), $trace->target_id);
+        $this->assertSame('recommendation_allocation', $trace->target_type);
+        $this->assertSame('exact_cover_v1', $trace->details['solver_name']);
+        $this->assertSame(['slot-a', 'slot-b'], $trace->details['selected_option_ids']);
+        $this->assertSame(['slot-c'], $trace->details['rejected_candidate_ids']);
+        $this->assertSame(3, $trace->details['tie_break_inputs']['max_options']);
+        $this->assertSame(50, $trace->details['tie_break_inputs']['max_search_nodes']);
+        $this->assertArrayHasKey('tenant_id', $trace->details);
+        $this->assertSame('solved', $trace->details['fallback_status']);
+        $this->assertSame('operational_evidence_personal_data_possible', $trace->details['retention_deletion_class']);
+    }
+
+    public function test_admin_exact_cover_allocation_audit_records_effective_request_limits(): void
+    {
+        $admin = User::factory()->admin()->create();
+        // Module defaults are deliberately wider than the request overrides so
+        // the audit trace must capture the effective limits actually used, not
+        // the configured defaults (otherwise fallback_*_limited is unreproducible).
+        Setting::set(
+            ModuleRegistry::configSettingKey('recommendations', 'exact_cover_max_options'),
+            json_encode(256)
+        );
+        Setting::set(
+            ModuleRegistry::configSettingKey('recommendations', 'exact_cover_max_search_nodes'),
+            json_encode(10000)
+        );
+
+        $this->actingAs($admin)->postJson('/api/v1/recommendations/allocation/exact-cover', [
+            'required_constraints' => ['tenant:alpha', 'tenant:beta'],
+            'options' => [
+                ['id' => 'slot-a', 'covers' => ['tenant:alpha'], 'weight' => 90],
+                ['id' => 'slot-b', 'covers' => ['tenant:beta'], 'weight' => 80],
+            ],
+            'limits' => [
+                'max_options' => 5,
+                'max_search_nodes' => 25,
+            ],
+        ])->assertOk();
+
+        $trace = AuditLog::query()
+            ->where('event_type', 'ExactCoverAllocationServed')
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($trace);
+        $this->assertArrayHasKey('effective_limits', $trace->details);
+        $this->assertSame(5, $trace->details['effective_limits']['max_options']);
+        $this->assertSame(25, $trace->details['effective_limits']['max_search_nodes']);
+        // The effective limits must reflect the request overrides, not the
+        // wider module defaults configured above.
+        $this->assertNotSame(256, $trace->details['effective_limits']['max_options']);
+        $this->assertNotSame(10000, $trace->details['effective_limits']['max_search_nodes']);
+    }
+
+    public function test_admin_exact_cover_allocation_rejects_duplicate_option_ids(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->postJson('/api/v1/recommendations/allocation/exact-cover', [
+            'required_constraints' => ['tenant:alpha', 'tenant:beta'],
+            'options' => [
+                ['id' => 'slot-a', 'covers' => ['tenant:alpha'], 'weight' => 90],
+                ['id' => 'slot-a', 'covers' => ['tenant:beta'], 'weight' => 80],
+            ],
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('data', null)
+            ->assertJsonPath('error.code', 'DUPLICATE_EXACT_COVER_OPTION_ID')
+            ->assertJsonPath('error.message', 'Exact-cover option IDs must be unique: slot-a');
+    }
+
+    public function test_admin_exact_cover_allocation_rejects_empty_option_covers(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        // An empty `covers` array must be rejected at the validation boundary
+        // via `min:1`, matching the OpenAPI schema's `covers.minItems: 1`.
+        $response = $this->actingAs($admin)->postJson('/api/v1/recommendations/allocation/exact-cover', [
+            'required_constraints' => ['tenant:alpha'],
+            'options' => [
+                ['id' => 'slot-a', 'covers' => [], 'weight' => 90],
+            ],
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('data', null)
+            ->assertJsonPath('error.code', 'VALIDATION_ERROR');
+        $this->assertStringContainsString('options.0.covers', (string) $response->json('error.message'));
+    }
+
+    public function test_admin_exact_cover_allocation_rejects_blank_option_covers(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->postJson('/api/v1/recommendations/allocation/exact-cover', [
+            'required_constraints' => ['tenant:alpha'],
+            'options' => [
+                ['id' => 'slot-a', 'covers' => ['  '], 'weight' => 90],
+            ],
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('data', null)
+            ->assertJsonPath('error.code', 'EXACT_COVER_OPTION_COVERS_REQUIRED')
+            ->assertJsonPath('error.message', 'Exact-cover options must cover at least one constraint: slot-a');
     }
 
     public function test_recommendations_stats_requires_admin(): void
