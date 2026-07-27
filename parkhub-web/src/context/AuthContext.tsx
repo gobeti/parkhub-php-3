@@ -46,21 +46,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, requires2fa: true, error: res.data.message };
     }
 
-    if (
-      res.success &&
-      res.data &&
-      'tokens' in res.data &&
-      res.data.tokens?.access_token
-    ) {
-      // Store token in memory as fallback (not localStorage -- XSS safe).
-      // The httpOnly cookie is the primary auth mechanism for the browser.
-      setInMemoryToken(res.data.tokens.access_token);
+    if (res.success) {
+      const data = res.data as any;
+
+      // Support known auth response shapes:
+      // - { data: { tokens: { access_token } } }
+      // - { data: { access_token } }
+      // - { data: { token } }
+      // - cookie-only session auth, where no token is returned
+      const accessToken =
+        data?.tokens?.access_token ??
+        data?.access_token ??
+        data?.token ??
+        null;
+
+      if (accessToken) {
+        setInMemoryToken(accessToken);
+      }
+
+      // Always verify the authenticated user after login.
+      // This supports both bearer-token auth and httpOnly cookie/session auth.
       const me = await api.me();
       if (me.success && me.data) {
         setUser(me.data);
         return { success: true };
       }
     }
+
     return { success: false, error: res.error?.message || 'Login failed' };
   }
 

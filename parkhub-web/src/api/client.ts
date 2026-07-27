@@ -55,14 +55,25 @@ async function attemptTokenRefresh(): Promise<boolean> {
         credentials: 'include',
       });
       if (!res.ok) return false;
-      const body = (await res.json().catch(() => null)) as
-        | { success?: boolean; data?: { access_token?: string } }
-        | null;
-      const next = body?.data?.access_token;
+      const body = (await res.json().catch(() => null)) as any;
+
+      // Support known refresh response shapes:
+      // - { data: { access_token } }
+      // - { data: { tokens: { access_token } } }
+      // - { access_token }
+      // - { token }
+      const next =
+        body?.data?.access_token ??
+        body?.data?.tokens?.access_token ??
+        body?.access_token ??
+        body?.token ??
+        null;
+
       if (next) {
         _inMemoryToken = next;
         return true;
       }
+
       return false;
     } catch {
       return false;
